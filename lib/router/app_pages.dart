@@ -26,15 +26,12 @@ import 'package:PiliPlus/pages/home/view.dart';
 import 'package:PiliPlus/pages/hot/view.dart';
 import 'package:PiliPlus/pages/later/view.dart';
 import 'package:PiliPlus/pages/later_search/view.dart';
-import 'package:PiliPlus/pages/live_dm_block/view.dart';
-import 'package:PiliPlus/pages/live_room/view.dart';
 import 'package:PiliPlus/pages/login/view.dart';
 import 'package:PiliPlus/pages/main/view.dart';
 import 'package:PiliPlus/pages/main_reply/view.dart';
 import 'package:PiliPlus/pages/match_info/view.dart';
 import 'package:PiliPlus/pages/member/view.dart';
 import 'package:PiliPlus/pages/member_dynamics/view.dart';
-import 'package:PiliPlus/pages/member_guard/view.dart';
 import 'package:PiliPlus/pages/member_profile/view.dart';
 import 'package:PiliPlus/pages/member_search/view.dart';
 import 'package:PiliPlus/pages/member_upower_rank/view.dart';
@@ -102,8 +99,6 @@ class Routes {
     GetPage(name: '/follow', page: () => const FollowPage()),
     // 粉丝
     GetPage(name: '/fan', page: () => const FansPage()),
-    // 直播详情
-    GetPage(name: '/liveRoom', page: () => const LiveRoomPage()),
     // 用户中心
     GetPage(name: '/member', page: () => const MemberPage()),
     GetPage(name: '/memberSearch', page: () => const MemberSearchPage()),
@@ -157,7 +152,6 @@ class Routes {
     GetPage(name: '/dynTopicRcmd', page: () => const DynTopicRcmdPage()),
     GetPage(name: '/matchInfo', page: () => const MatchInfoPage()),
     GetPage(name: '/msgLikeDetail', page: () => const LikeDetailPage()),
-    GetPage(name: '/liveDmBlockPage', page: () => const LiveDmBlockPage()),
     GetPage(name: '/createVote', page: () => const CreateVotePage()),
     GetPage(name: '/musicDetail', page: () => const MusicDetailPage()),
     GetPage(name: '/popularSeries', page: () => const PopularSeriesPage()),
@@ -171,7 +165,6 @@ class Routes {
     GetPage(name: '/myReply', page: () => const MyReply()),
     GetPage(name: '/videoWeb', page: () => const MemberVideoWeb()),
     GetPage(name: '/ssWeb', page: () => const MemberSSWeb()),
-    GetPage(name: '/memberGuard', page: () => const MemberGuard()),
     GetPage(name: '/bubble', page: () => const BubblePage()),
   ];
 }

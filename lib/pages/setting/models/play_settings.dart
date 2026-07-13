@@ -1,11 +1,9 @@
 import 'dart:io' show Platform;
 
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
-import 'package:PiliPlus/models/common/super_chat_type.dart';
 import 'package:PiliPlus/models/common/video/subtitle_pref_type.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
-import 'package:PiliPlus/pages/setting/pages/fullscreen_sc_size.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_progress_behavior.dart';
@@ -163,18 +161,6 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.keyboardControl,
     defaultVal: true,
   ),
-  NormalModel(
-    title: 'SuperChat (醒目留言) 显示类型',
-    leading: const Icon(Icons.live_tv),
-    getSubtitle: () => '当前:「${Pref.superChatType.title}」',
-    onTap: _showSuperChatDialog,
-  ),
-  NormalModel(
-    title: '全屏 SC 大小',
-    subtitle: 'SuperChat (醒目留言) 大小设置',
-    leading: const Icon(Icons.open_in_full),
-    onTap: (_, _) => Get.to(const FullScreenScSize()),
-  ),
   const SwitchModel(
     title: '竖屏扩大展示',
     subtitle: '小屏竖屏视频宽高比由16:9扩大至1:1（不支持收起）；横屏适配时，扩大至9:16',
@@ -309,24 +295,6 @@ Future<void> _showSubtitleDialog(
       SettingBoxKey.subtitlePreferenceV2,
       res.index,
     );
-    setState();
-  }
-}
-
-Future<void> _showSuperChatDialog(
-  BuildContext context,
-  VoidCallback setState,
-) async {
-  final res = await showDialog<SuperChatType>(
-    context: context,
-    builder: (context) => SelectDialog<SuperChatType>(
-      title: 'SuperChat (醒目留言) 显示类型',
-      value: Pref.superChatType,
-      values: SuperChatType.values.map((e) => (e, e.title)).toList(),
-    ),
-  );
-  if (res != null) {
-    await GStorage.setting.put(SettingBoxKey.superChatType, res.index);
     setState();
   }
 }

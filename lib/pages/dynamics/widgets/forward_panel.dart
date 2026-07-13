@@ -74,14 +74,6 @@ Widget forwardPanel(
         title = major?.pgc?.title;
         cover = major?.pgc?.cover;
         break;
-      case 'DYNAMIC_TYPE_LIVE_RCMD':
-        title = major?.liveRcmd?.title;
-        cover = major?.liveRcmd?.cover;
-        break;
-      case 'DYNAMIC_TYPE_LIVE':
-        title = major?.live?.title;
-        cover = major?.live?.cover;
-        break;
       default:
         return;
     }

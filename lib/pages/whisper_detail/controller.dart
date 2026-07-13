@@ -23,7 +23,6 @@ class WhisperDetailController extends CommonListController<RspSessionMsg, Msg> {
   late final String name;
   late final String face;
   late final int? mid;
-  late final bool isLive;
 
   Int64? msgSeqno;
 
@@ -38,7 +37,6 @@ class WhisperDetailController extends CommonListController<RspSessionMsg, Msg> {
     name = args['name'];
     face = args['face'];
     mid = args['mid'];
-    isLive = args['isLive'] ?? false;
     queryData();
   }
 

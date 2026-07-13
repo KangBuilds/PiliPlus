@@ -169,29 +169,10 @@ class DynamicPanel extends StatelessWidget {
           cover = pgc.cover;
         }
         break;
-      case 'DYNAMIC_TYPE_LIVE_RCMD':
-        if (major?.liveRcmd case final liveRcmd?) {
-          title = liveRcmd.title;
-          cover = liveRcmd.cover;
-        }
-        break;
-      case 'DYNAMIC_TYPE_LIVE':
-        if (major?.live case final live?) {
-          title = live.title;
-          cover = live.cover;
-        }
-        break;
       case 'DYNAMIC_TYPE_COURSES_SEASON':
         if (major?.courses case final courses?) {
           title = courses.title;
           cover = courses.cover;
-        }
-        break;
-      case 'DYNAMIC_TYPE_SUBSCRIPTION_NEW':
-        if (major?.subscriptionNew?.liveRcmd?.content?.livePlayInfo
-            case final livePlayInfo?) {
-          title = livePlayInfo.title;
-          cover = livePlayInfo.cover;
         }
         break;
       default:

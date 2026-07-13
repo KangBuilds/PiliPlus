@@ -8,7 +8,6 @@ class MatchContest {
   int? awayId;
   int? homeScore;
   int? awayScore;
-  int? liveRoom;
   Season? season;
   MatchTeam? homeTeam;
   MatchTeam? awayTeam;
@@ -21,7 +20,6 @@ class MatchContest {
     this.awayId,
     this.homeScore,
     this.awayScore,
-    this.liveRoom,
     this.season,
     this.homeTeam,
     this.awayTeam,
@@ -35,7 +33,6 @@ class MatchContest {
     awayId: json['away_id'] as int?,
     homeScore: json['home_score'] as int?,
     awayScore: json['away_score'] as int?,
-    liveRoom: json['live_room'] as int?,
     season: json['season'] == null
         ? null
         : Season.fromJson(json['season'] as Map<String, dynamic>),

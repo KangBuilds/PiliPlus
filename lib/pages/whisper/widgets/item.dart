@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/dialog/simple_dialog_option.dart';
@@ -11,7 +10,6 @@ import 'package:PiliPlus/grpc/bilibili/app/im/v1.pb.dart'
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/pages/whisper_secondary/view.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
-import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -139,7 +137,6 @@ class WhisperSessionItem extends StatelessWidget {
               'face': avatar,
               if (item.sessionInfo.avatar.hasMid())
                 'mid': item.sessionInfo.avatar.mid.toInt(),
-              'isLive': item.sessionInfo.isLive,
             },
           );
           return;
@@ -268,13 +265,6 @@ class WhisperSessionItem extends StatelessWidget {
                     fontSize: 10,
                     isBold: false,
                     text: item.sessionInfo.userLabel.style.borderedLabel.text,
-                  ),
-                if (item.sessionInfo.isLive)
-                  Image.asset(
-                    Assets.livingRect,
-                    height: 15,
-                    cacheHeight: 15.cacheSize(context),
-                    filterQuality: FilterQuality.low,
                   ),
               ],
             ),

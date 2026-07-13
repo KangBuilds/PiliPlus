@@ -6,9 +6,6 @@ import 'package:PiliPlus/grpc/bilibili/app/listener/v1.pbenum.dart'
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/audio/view.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/forward_panel.dart';
-import 'package:PiliPlus/pages/dynamics/widgets/live_panel.dart';
-import 'package:PiliPlus/pages/dynamics/widgets/live_panel_sub.dart';
-import 'package:PiliPlus/pages/dynamics/widgets/live_rcmd_panel.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/video_panel.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
@@ -86,24 +83,8 @@ Widget module(
         isDetail: isDetail,
         floor: floor + 1,
       );
-    // 直播
-    case 'DYNAMIC_TYPE_LIVE_RCMD':
-      return liveRcmdPanel(
-        context,
-        theme: theme,
-        isDetail: isDetail,
-        item: item,
-        floor: floor,
-      );
-    // 直播
-    case 'DYNAMIC_TYPE_LIVE':
-      return livePanel(
-        context,
-        theme: theme,
-        item: item,
-        floor: floor,
-        isDetail: isDetail,
-      );
+    case 'DYNAMIC_TYPE_LIVE_RCMD' || 'DYNAMIC_TYPE_LIVE':
+      return const SizedBox.shrink();
     // 活动
     case 'DYNAMIC_TYPE_COMMON_SQUARE':
       final common = major?.common ?? major?.upowerCommon;
@@ -302,13 +283,7 @@ Widget module(
 
     case 'DYNAMIC_TYPE_SUBSCRIPTION_NEW'
         when major?.type == 'MAJOR_TYPE_SUBSCRIPTION_NEW':
-      return livePanelSub(
-        context,
-        theme: theme,
-        isDetail: isDetail,
-        item: item,
-        floor: floor,
-      );
+      return const SizedBox.shrink();
 
     default:
       return Padding(

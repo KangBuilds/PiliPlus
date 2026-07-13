@@ -213,7 +213,7 @@ abstract final class Api {
 
   static const String deleteFolder = '/x/v3/fav/folder/del';
 
-  // 正在直播的up & 关注的up
+  // 关注的up
   // https://api.bilibili.com/x/polymer/web-dynamic/v1/portal
   static const String followUp = '/x/polymer/web-dynamic/v1/portal';
 
@@ -275,9 +275,6 @@ abstract final class Api {
 
   static const String historyReport = '/x/v2/history/report';
 
-  static const String roomEntryAction =
-      '${HttpString.liveBaseUrl}/xlive/web-room/v1/index/roomEntryAction';
-
   static const String mediaListHistory = '/x/v1/medialist/history';
 
   // 查询视频分P列表 (avid/bvid转cid)
@@ -303,32 +300,6 @@ abstract final class Api {
   // vmid 用户id pn 页码 ps 每页个数，最大50 order: desc
   // order_type 排序规则 最近访问传空，最常访问传 attention
   static const String fans = '/x/relation/fans';
-
-  // 直播
-  // ?page=1&page_size=30&platform=web
-  static const String liveList =
-      '${HttpString.liveBaseUrl}/xlive/web-interface/v1/second/getUserRecommend';
-
-  // 直播间详情
-  // cid roomId
-  // qn 80:流畅，150:高清，400:蓝光，10000:原画，20000:4K, 30000:杜比
-  static const String liveRoomInfo =
-      '${HttpString.liveBaseUrl}/xlive/web-room/v2/index/getRoomPlayInfo';
-
-  static const String sendLiveMsg = '${HttpString.liveBaseUrl}/msg/send';
-
-  // 直播间详情 H5
-  static const String liveRoomInfoH5 =
-      '${HttpString.liveBaseUrl}/xlive/web-room/v1/index/getH5InfoByRoom';
-
-  // 直播间弹幕预获取
-  // roomid roomId
-  static const String liveRoomDmPrefetch =
-      '${HttpString.liveBaseUrl}/xlive/web-room/v1/dM/gethistory';
-
-  //直播间弹幕密钥获取接口
-  static const String liveRoomDmToken =
-      '${HttpString.liveBaseUrl}/xlive/web-room/v1/index/getDanmuInfo';
 
   // 用户信息 需要Wbi签名
   // https://api.bilibili.com/x/space/wbi/acc/info?mid=503427686&token=&platform=web&web_location=1550101&w_rid=d709892496ce93e3d94d6d37c95bde91&wts=1689301482
@@ -748,9 +719,6 @@ abstract final class Api {
 
   static const String getCoin = '${HttpString.accountBaseUrl}/site/getCoin';
 
-  static const String getLiveEmoticons =
-      '${HttpString.liveBaseUrl}/xlive/web-ucenter/v2/emoticon/GetEmoticons';
-
   static const String pgcTimeline = '/pgc/web/timeline';
 
   static const String searchTrending = '/x/v2/search/trending/ranking';
@@ -779,31 +747,7 @@ abstract final class Api {
 
   static const String doVote = '/x/vote/do_vote';
 
-  static const String liveFeedIndex =
-      '${HttpString.liveBaseUrl}/xlive/app-interface/v2/index/feed';
-
-  static const String liveFollow =
-      '${HttpString.liveBaseUrl}/xlive/web-ucenter/user/following';
-
-  static const String liveSecondList =
-      '${HttpString.liveBaseUrl}/xlive/app-interface/v2/second/getList';
-
   static const String msgSetNotice = '/x/msgfeed/notice';
-
-  static const String liveAreaList =
-      '${HttpString.liveBaseUrl}/xlive/app-interface/v2/index/getAreaList';
-
-  static const String liveRoomAreaList =
-      '${HttpString.liveBaseUrl}/room/v1/Area/getList';
-
-  static const String getLiveFavTag =
-      '${HttpString.liveBaseUrl}/xlive/app-interface/v2/second/get_fav_tag';
-
-  static const String setLiveFavTag =
-      '${HttpString.liveBaseUrl}/xlive/app-interface/v2/second/set_fav_tag';
-
-  static const String liveSearch =
-      '${HttpString.liveBaseUrl}/xlive/app-interface/v2/search_live';
 
   static const String topicTop =
       '${HttpString.appBaseUrl}/x/topic/web/details/top';
@@ -829,12 +773,6 @@ abstract final class Api {
 
   static const String setPushSs =
       '${HttpString.tUrl}/link_setting/v1/link_setting/set_push_ss';
-
-  static const String dynReserve = '/x/dynamic/feed/reserve/click';
-
-  static const String spaceReserve = '/x/space/reserve';
-
-  static const String spaceReserveCancel = '/x/space/reserve/cancel';
 
   static const String favPugv = '/pugv/app/web/favorite/page';
 
@@ -893,21 +831,6 @@ abstract final class Api {
 
   static const String msgLikeDetail = '/x/msgfeed/like_detail';
 
-  static const String getLiveInfoByUser =
-      '${HttpString.liveBaseUrl}/xlive/web-room/v1/index/getInfoByUser';
-
-  static const String liveSetSilent =
-      '${HttpString.liveBaseUrl}/liveact/user_silent';
-
-  static const String addShieldKeyword =
-      '${HttpString.liveBaseUrl}/xlive/web-ucenter/v1/banned/AddShieldKeyword';
-
-  static const String delShieldKeyword =
-      '${HttpString.liveBaseUrl}/xlive/web-ucenter/v1/banned/DelShieldKeyword';
-
-  static const String liveShieldUser =
-      '${HttpString.liveBaseUrl}/liveact/shield_user';
-
   static const String spaceComic = '${HttpString.appBaseUrl}/x/v2/space/comic';
 
   static const String spaceAudio = '/audio/music-service/web/song/upper';
@@ -920,20 +843,11 @@ abstract final class Api {
 
   static const String updateVote = '/x/vote/update';
 
-  static const String createReserve = '/x/new-reserve/up/reserve/create';
-
-  static const String updateReserve = '/x/new-reserve/up/reserve/update';
-
-  static const String reserveInfo = '/x/new-reserve/up/reserve/info';
-
   static const String loginLog = '/x/member/web/login/log';
 
   static const String expLog = '/x/member/web/exp/log';
 
   static const String moralLog = '/x/member/web/moral/log';
-
-  static const String liveLikeReport =
-      '${HttpString.liveBaseUrl}/xlive/app-ucenter/v1/like_info_v3/like/likeReportV3';
 
   static const String loginDevices =
       '${HttpString.passBaseUrl}/x/safecenter/user_login_devices';
@@ -949,9 +863,6 @@ abstract final class Api {
   static const String spaceShop =
       '${HttpString.mallBaseUrl}/community-hub/small_shop/feed/tab/item';
 
-  static const String superChatMsg =
-      '${HttpString.liveBaseUrl}/av/v1/SuperChat/getMessageList';
-
   static const String popularSeriesOne = '/x/web-interface/popular/series/one';
 
   static const String popularSeriesList =
@@ -960,9 +871,6 @@ abstract final class Api {
   static const String popularPrecious = '/x/web-interface/popular/precious';
 
   static const String userRealName = '/x/member/app/up/realname';
-
-  static const String liveDmReport =
-      '${HttpString.liveBaseUrl}/xlive/web-ucenter/v1/dMReport/Report';
 
   static const String danmakuLike = '/x/v2/dm/thumbup/add';
 
@@ -981,12 +889,6 @@ abstract final class Api {
   static const String followeeVotes =
       '${HttpString.tUrl}/vote_svr/v1/vote_svr/followee_votes';
 
-  static const String liveContributionRank =
-      '${HttpString.liveBaseUrl}/xlive/general-interface/v1/rank/queryContributionRank';
-
-  static const String superChatReport =
-      '${HttpString.liveBaseUrl}/av/v1/SuperChat/report';
-
   static const String imMsgReport = '${HttpString.tUrl}/x/bplus/im/report/add';
 
   static const String dynPrivatePubSetting =
@@ -1000,12 +902,6 @@ abstract final class Api {
   static const String replySubjectModify = '/x/v2/reply/subject/modify';
 
   static const String videoshot = '/x/player/videoshot';
-
-  static const String liveMedalWall =
-      '${HttpString.liveBaseUrl}/xlive/web-ucenter/user/MedalWall';
-
-  static const String memberGuard =
-      '${HttpString.liveBaseUrl}/xlive/app-ucenter/v1/guard/MainGuardCardAll';
 
   static const String bubble = '/x/tribee/v1/dyn/all';
 

@@ -180,14 +180,6 @@ class _SearchTrendingPageState extends State<SearchTrendingPage> {
                             imageUrl: ImageUtils.thumbnailUrl(item.icon!),
                             placeholder: (_, _) => const SizedBox.shrink(),
                           ),
-                        ] else if (item.showLiveIcon == true) ...[
-                          const SizedBox(width: 4),
-                          Image.asset(
-                            Assets.livingRect,
-                            width: 51,
-                            height: 16,
-                            cacheHeight: 16.cacheSize(context),
-                          ),
                         ],
                       ],
                     ),

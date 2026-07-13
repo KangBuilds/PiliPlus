@@ -3,7 +3,6 @@ import 'dart:io' show File;
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/grpc/bilibili/app/listener/v1.pb.dart' show DetailItem;
 import 'package:PiliPlus/models_new/download/bili_download_entry_info.dart';
-import 'package:PiliPlus/models_new/live/live_room_info_h5/data.dart';
 import 'package:PiliPlus/models_new/pgc/pgc_info_model/episode.dart';
 import 'package:PiliPlus/models_new/video/video_detail/data.dart';
 import 'package:PiliPlus/models_new/video/video_detail/page.dart';
@@ -80,7 +79,6 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
   void setPlaybackState(
     PlayerStatus status,
     bool isBuffering,
-    bool isLive,
   ) {
     if (!enableBackgroundPlay ||
         _item.isEmpty ||
@@ -104,12 +102,11 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
             ? AudioProcessingState.buffering
             : processingState,
         controls: [
-          if (!isLive)
-            const MediaControl(
-              androidIcon: 'drawable/ic_player_rewind_10s',
-              label: 'Rewind',
-              action: MediaAction.rewind,
-            ),
+          const MediaControl(
+            androidIcon: 'drawable/ic_player_rewind_10s',
+            label: 'Rewind',
+            action: MediaAction.rewind,
+          ),
           if (playing)
             const MediaControl(
               androidIcon: 'drawable/ic_player_pause',
@@ -122,12 +119,11 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
               label: 'Play',
               action: MediaAction.play,
             ),
-          if (!isLive)
-            const MediaControl(
-              androidIcon: 'drawable/ic_player_fast_forward_10s',
-              label: 'Fast Forward',
-              action: MediaAction.fastForward,
-            ),
+          const MediaControl(
+            androidIcon: 'drawable/ic_player_fast_forward_10s',
+            label: 'Fast Forward',
+            action: MediaAction.fastForward,
+          ),
         ],
         playing: playing,
         systemActions: const {
@@ -137,11 +133,11 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
     );
   }
 
-  void onStatusChange(PlayerStatus status, bool isBuffering, isLive) {
+  void onStatusChange(PlayerStatus status, bool isBuffering) {
     if (!enableBackgroundPlay) return;
 
     if (_item.isEmpty) return;
-    setPlaybackState(status, isBuffering, isLive);
+    setPlaybackState(status, isBuffering);
   }
 
   void onVideoDetailChange(
@@ -192,14 +188,6 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
               ? Duration(seconds: data.duration ?? 0)
               : Duration(milliseconds: data.duration ?? 0),
           artUri: getUri(data.cover),
-        );
-      case RoomInfoH5Data():
-        mediaItem = MediaItem(
-          id: id,
-          title: data.roomInfo?.title ?? '',
-          artist: data.anchorInfo?.baseInfo?.uname,
-          artUri: getUri(data.roomInfo?.cover),
-          isLive: true,
         );
       case Part():
         mediaItem = MediaItem(

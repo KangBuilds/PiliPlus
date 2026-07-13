@@ -23,7 +23,6 @@ class PlayerFocus extends StatelessWidget {
     required this.onSendDanmaku,
     this.canPlay,
     this.onSkipSegment,
-    this.onRefresh,
   });
 
   final Widget child;
@@ -32,7 +31,6 @@ class PlayerFocus extends StatelessWidget {
   final VoidCallback onSendDanmaku;
   final ValueGetter<bool>? canPlay;
   final ValueGetter<bool>? onSkipSegment;
-  final VoidCallback? onRefresh;
 
   static bool _shouldHandle(LogicalKeyboardKey logicalKey) {
     return logicalKey == LogicalKeyboardKey.tab ||
@@ -98,12 +96,8 @@ class PlayerFocus extends StatelessWidget {
         return true;
       }
       if (event is KeyDownEvent) {
-        if (plPlayerController.isLive) {
-          onRefresh?.call();
-        } else {
-          introController!.onStartTriple();
-        }
-      } else if (event is KeyUpEvent && !plPlayerController.isLive) {
+        introController!.onStartTriple();
+      } else if (event is KeyUpEvent) {
         introController!.onCancelTriple(isKeyQ);
       }
       return true;
@@ -120,28 +114,26 @@ class PlayerFocus extends StatelessWidget {
     }
 
     if (key == LogicalKeyboardKey.arrowRight) {
-      if (!plPlayerController.isLive) {
-        if (event is KeyDownEvent) {
-          if (hasPlayer && !plPlayerController.longPressStatus.value) {
-            plPlayerController
-              ..longPressTimer?.cancel()
-              ..longPressTimer = Timer(
-                const Duration(milliseconds: 200),
-                () => plPlayerController
-                  ..cancelLongPressTimer()
-                  ..setLongPressStatus(true),
-              );
-          }
-        } else if (event is KeyUpEvent) {
-          plPlayerController.cancelLongPressTimer();
-          if (hasPlayer) {
-            if (plPlayerController.longPressStatus.value) {
-              plPlayerController.setLongPressStatus(false);
-            } else {
-              plPlayerController.onForward(
-                plPlayerController.fastForBackwardDuration,
-              );
-            }
+      if (event is KeyDownEvent) {
+        if (hasPlayer && !plPlayerController.longPressStatus.value) {
+          plPlayerController
+            ..longPressTimer?.cancel()
+            ..longPressTimer = Timer(
+              const Duration(milliseconds: 200),
+              () => plPlayerController
+                ..cancelLongPressTimer()
+                ..setLongPressStatus(true),
+            );
+        }
+      } else if (event is KeyUpEvent) {
+        plPlayerController.cancelLongPressTimer();
+        if (hasPlayer) {
+          if (plPlayerController.longPressStatus.value) {
+            plPlayerController.setLongPressStatus(false);
+          } else {
+            plPlayerController.onForward(
+              plPlayerController.fastForBackwardDuration,
+            );
           }
         }
       }
@@ -163,7 +155,7 @@ class PlayerFocus extends StatelessWidget {
 
       switch (key) {
         case LogicalKeyboardKey.space:
-          if (plPlayerController.isLive || canPlay!()) {
+          if (canPlay!()) {
             if (hasPlayer) {
               plPlayerController.onDoubleTapCenter();
             }
@@ -187,12 +179,7 @@ class PlayerFocus extends StatelessWidget {
           final newVal = !plPlayerController.enableShowDanmakuAdaptive.value;
           plPlayerController.enableShowDanmakuAdaptive.value = newVal;
           if (!plPlayerController.tempPlayerConf) {
-            GStorage.setting.put(
-              plPlayerController.isLive
-                  ? SettingBoxKey.enableShowLiveDanmaku
-                  : SettingBoxKey.enableShowDanmaku,
-              newVal,
-            );
+            GStorage.setting.put(SettingBoxKey.enableShowDanmaku, newVal);
           }
           return true;
 
@@ -238,53 +225,51 @@ class PlayerFocus extends StatelessWidget {
           return true;
       }
 
-      if (!plPlayerController.isLive) {
-        switch (key) {
-          case LogicalKeyboardKey.arrowLeft:
-            if (hasPlayer) {
-              plPlayerController.onBackward(
-                plPlayerController.fastForBackwardDuration,
-              );
+      switch (key) {
+        case LogicalKeyboardKey.arrowLeft:
+          if (hasPlayer) {
+            plPlayerController.onBackward(
+              plPlayerController.fastForBackwardDuration,
+            );
+          }
+          return true;
+
+        case LogicalKeyboardKey.keyW:
+          if (HardwareKeyboard.instance.isMetaPressed) {
+            return true;
+          }
+          introController?.actionCoinVideo();
+          return true;
+
+        case LogicalKeyboardKey.keyE:
+          introController?.actionFavVideo(isQuick: true);
+          return true;
+
+        case LogicalKeyboardKey.keyT || LogicalKeyboardKey.keyV:
+          introController?.viewLater();
+          return true;
+
+        case LogicalKeyboardKey.keyG:
+          if (introController case final UgcIntroController ugcCtr) {
+            ugcCtr.actionRelationMod(Get.context!);
+          }
+          return true;
+
+        case LogicalKeyboardKey.bracketLeft:
+          if (introController case final introController?) {
+            if (!introController.prevPlay()) {
+              SmartDialog.showToast('已经是第一集了');
             }
-            return true;
+          }
+          return true;
 
-          case LogicalKeyboardKey.keyW:
-            if (HardwareKeyboard.instance.isMetaPressed) {
-              return true;
+        case LogicalKeyboardKey.bracketRight:
+          if (introController case final introController?) {
+            if (!introController.nextPlay()) {
+              SmartDialog.showToast('已经是最后一集了');
             }
-            introController?.actionCoinVideo();
-            return true;
-
-          case LogicalKeyboardKey.keyE:
-            introController?.actionFavVideo(isQuick: true);
-            return true;
-
-          case LogicalKeyboardKey.keyT || LogicalKeyboardKey.keyV:
-            introController?.viewLater();
-            return true;
-
-          case LogicalKeyboardKey.keyG:
-            if (introController case final UgcIntroController ugcCtr) {
-              ugcCtr.actionRelationMod(Get.context!);
-            }
-            return true;
-
-          case LogicalKeyboardKey.bracketLeft:
-            if (introController case final introController?) {
-              if (!introController.prevPlay()) {
-                SmartDialog.showToast('已经是第一集了');
-              }
-            }
-            return true;
-
-          case LogicalKeyboardKey.bracketRight:
-            if (introController case final introController?) {
-              if (!introController.nextPlay()) {
-                SmartDialog.showToast('已经是最后一集了');
-              }
-            }
-            return true;
-        }
+          }
+          return true;
       }
     }
 

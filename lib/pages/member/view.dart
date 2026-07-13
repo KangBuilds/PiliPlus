@@ -1,25 +1,15 @@
-import 'dart:math' as math;
-
-import 'package:PiliPlus/common/style.dart';
-import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/dialog/report_member.dart';
 import 'package:PiliPlus/common/widgets/dynamic_sliver_app_bar/dynamic_sliver_app_bar.dart';
-import 'package:PiliPlus/common/widgets/gesture/tap_gesture_recognizer.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
-import 'package:PiliPlus/http/live.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/user.dart';
-import 'package:PiliPlus/models_new/live/live_medal_wall/data.dart';
-import 'package:PiliPlus/models_new/space/space/reservation_card_list.dart';
 import 'package:PiliPlus/pages/coin_log/controller.dart';
 import 'package:PiliPlus/pages/exp_log/controller.dart';
 import 'package:PiliPlus/pages/log_table/view.dart';
 import 'package:PiliPlus/pages/login_devices/view.dart';
 import 'package:PiliPlus/pages/login_log/controller.dart';
 import 'package:PiliPlus/pages/member/controller.dart';
-import 'package:PiliPlus/pages/member/widget/medal_wall.dart';
-import 'package:PiliPlus/pages/member/widget/reserve_button.dart';
 import 'package:PiliPlus/pages/member/widget/user_info_card.dart';
 import 'package:PiliPlus/pages/member_cheese/view.dart';
 import 'package:PiliPlus/pages/member_contribute/controller.dart';
@@ -32,8 +22,6 @@ import 'package:PiliPlus/pages/member_shop/view.dart';
 import 'package:PiliPlus/pages/member_video_web/archive/view.dart';
 import 'package:PiliPlus/pages/member_video_web/season_series/view.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
-import 'package:PiliPlus/utils/extension/context_ext.dart';
-import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
@@ -74,7 +62,6 @@ class _MemberPageState extends State<MemberPage> {
     _headerController?.dispose();
     _headerController = null;
     _cacheFollowTime = null;
-    _cacheMedalData = null;
     super.dispose();
   }
 
@@ -106,14 +93,10 @@ class _MemberPageState extends State<MemberPage> {
                         card: response.card!,
                         images: response.images!,
                         onFollow: () => _userController.onFollow(context),
-                        live: _userController.live,
                         silence: _userController.silence,
                         headerControllerBuilder: getHeaderController,
-                        showLiveMedalWall: _showLiveMedalWall,
                         charges: _userController.charges,
                         chargeCount: _userController.chargeCount,
-                        guards: _userController.guards,
-                        guardCount: _userController.guardCount,
                       ),
                     ),
                   ),
@@ -163,171 +146,7 @@ class _MemberPageState extends State<MemberPage> {
     );
   }
 
-  Widget _reserveBtn(List<ReservationCardItem> list, ColorScheme theme) {
-    return IconButton(
-      tooltip: '预约',
-      onPressed: () => _showReserveList(list),
-      icon: ReserveButton(
-        count: list.length,
-        color: theme.onSurfaceVariant,
-        child: const Icon(Icons.notifications_none),
-      ),
-    );
-  }
-
-  void _showReserveList(List<ReservationCardItem> list) {
-    showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxWidth: math.min(640, context.mediaQueryShortestSide),
-      ),
-      builder: (context) {
-        final scheme = ColorScheme.of(context);
-        return Padding(
-          padding: .only(bottom: MediaQuery.viewPaddingOf(context).bottom + 30),
-          child: Column(
-            mainAxisSize: .min,
-            children: [
-              InkWell(
-                onTap: Get.back,
-                borderRadius: Style.bottomSheetRadius,
-                child: SizedBox(
-                  height: 35,
-                  child: Center(
-                    child: Container(
-                      width: 32,
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: scheme.outline,
-                        borderRadius: const .all(.circular(1.5)),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              ...list.map((e) {
-                return Builder(
-                  builder: (context) {
-                    Widget trailing = FilledButton.tonal(
-                      onPressed: () async {
-                        final isFollow = e.isFollow;
-                        final res = await UserHttp.spaceReserve(
-                          sid: e.sid!,
-                          isFollow: isFollow,
-                        );
-                        if (res.isSuccess) {
-                          e
-                            ..total += isFollow ? -1 : 1
-                            ..isFollow = !isFollow;
-                          if (!context.mounted) return;
-                          (context as Element).markNeedsBuild();
-                        } else {
-                          res.toast();
-                        }
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: e.isFollow
-                            ? scheme.onInverseSurface
-                            : null,
-                        foregroundColor: e.isFollow ? scheme.outline : null,
-                        tapTargetSize: .shrinkWrap,
-                        minimumSize: const Size(68, 40),
-                        padding: const .symmetric(horizontal: 10),
-                        visualDensity: const .new(horizontal: -2, vertical: -3),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: .all(.circular(6)),
-                        ),
-                      ),
-                      child: Text(
-                        '${e.isFollow ? '已' : ''}预约',
-                        style: const TextStyle(fontSize: 13),
-                      ),
-                    );
-                    if (e.dynamicId?.isNotEmpty ?? false) {
-                      trailing = Row(
-                        spacing: 8,
-                        mainAxisSize: .min,
-                        children: [
-                          iconButton(
-                            tooltip: '预约动态',
-                            size: 32,
-                            iconSize: 20,
-                            iconColor: scheme.outline,
-                            icon: const Icon(Icons.open_in_browser),
-                            onPressed: () => PageUtils.pushDynFromId(
-                              id: e.dynamicId,
-                            ),
-                          ),
-                          trailing,
-                        ],
-                      );
-                    }
-                    return ListTile(
-                      dense: true,
-                      title: Text(
-                        e.name!,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      subtitle: Padding(
-                        padding: const .only(top: 2.0),
-                        child: Text.rich(
-                          style: TextStyle(fontSize: 12, color: scheme.outline),
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text:
-                                    '${e.descText1 == null ? '' : '${e.descText1}  '}'
-                                    '${NumUtils.numFormat(e.total)}人预约',
-                              ),
-                              if (e.lotteryPrizeInfo case final lottery?) ...[
-                                const TextSpan(text: '\n'),
-                                WidgetSpan(
-                                  alignment: .middle,
-                                  child: Icon(
-                                    size: 15,
-                                    Icons.card_giftcard,
-                                    color: scheme.primary,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: ' ${lottery.text}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: scheme.primary,
-                                  ),
-                                  recognizer:
-                                      lottery.jumpUrl?.isNotEmpty == true
-                                      ? (NoDeadlineTapGestureRecognizer()
-                                          ..onTap = () => Get.toNamed(
-                                            '/webview',
-                                            parameters: {
-                                              'url': lottery.jumpUrl!,
-                                            },
-                                          ))
-                                      : null,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                      trailing: trailing,
-                    );
-                  },
-                );
-              }),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   List<Widget> _actions(ColorScheme theme) => [
-    if (_userController.reserves?.isNotEmpty ?? false)
-      _reserveBtn(_userController.reserves!, theme),
     IconButton(
       tooltip: '搜索',
       onPressed: () => Get.toNamed(
@@ -404,22 +223,6 @@ class _MemberPageState extends State<MemberPage> {
         //         Icon(Icons.electric_bolt, size: 19),
         //         SizedBox(width: 10),
         //         Text('充电排行榜'),
-        //       ],
-        //     ),
-        //   ),
-        // if (_userController.hasGuard)
-        //   PopupMenuItem(
-        //     onTap: () => MemberGuard.toMemberGuard(
-        //       mid: _userController.mid,
-        //       name: _userController.username ?? '',
-        //       count: _userController.guardCount,
-        //     ),
-        //     child: const Row(
-        //       mainAxisSize: MainAxisSize.min,
-        //       children: [
-        //         Icon(Icons.anchor, size: 19),
-        //         SizedBox(width: 10),
-        //         Text('大航海舰队'),
         //       ],
         //     ),
         //   ),
@@ -630,31 +433,6 @@ class _MemberPageState extends State<MemberPage> {
           '关注时间: ${DateFormatUtils.longFormatDs.format(
             DateTime.fromMillisecondsSinceEpoch(response.mtime! * 1000),
           )}';
-      onShow();
-    } else {
-      res.toast();
-    }
-  }
-
-  MedalWallData? _cacheMedalData;
-  Future<void> _showLiveMedalWall() async {
-    void onShow() {
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => MedalWall(response: _cacheMedalData!),
-      );
-    }
-
-    if (_cacheMedalData != null) {
-      onShow();
-      return;
-    }
-    SmartDialog.showLoading();
-    final res = await LiveHttp.liveMedalWall(mid: _mid);
-    SmartDialog.dismiss();
-    if (res case Success(:final response)) {
-      _cacheMedalData = response;
       onShow();
     } else {
       res.toast();

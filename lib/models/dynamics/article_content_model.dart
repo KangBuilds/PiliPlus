@@ -210,7 +210,6 @@ class Card {
   Ugc? ugc;
   ItemNull? itemNull;
   Common? common;
-  Live? live;
   Opus? opus;
   SimpleVoteInfo? vote;
   Music? music;
@@ -224,7 +223,6 @@ class Card {
         ? null
         : ItemNull.fromJson(json['item_null']);
     common = json['common'] == null ? null : Common.fromJson(json['common']);
-    live = json['live'] == null ? null : Live.fromJson(json['live']);
     opus = json['opus'] == null ? null : Opus.fromJson(json['opus']);
     vote = json['vote'] == null ? null : SimpleVoteInfo.fromJson(json['vote']);
     music = json['music'] == null ? null : Music.fromJson(json['music']);
@@ -299,30 +297,6 @@ class Opus {
     jumpUrl = json['jump_url'];
     title = json['title'];
     statView = safeToInt(json['stat']?['view']);
-  }
-}
-
-class Live {
-  String? cover;
-  String? descFirst;
-  String? descSecond;
-  String? title;
-  String? jumpUrl;
-  int? id;
-  int? liveState;
-  int? reserveType;
-  String? badgeText;
-
-  Live.fromJson(Map<String, dynamic> json) {
-    cover = json['cover'];
-    descFirst = json['desc_first'];
-    descSecond = json['desc_second'];
-    title = json['title'];
-    jumpUrl = json['jump_url'];
-    id = safeToInt(json['id']);
-    liveState = safeToInt(json['live_state']);
-    reserveType = safeToInt(json['reserve_type']);
-    badgeText = json['badge']?['text'];
   }
 }
 

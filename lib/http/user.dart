@@ -571,23 +571,4 @@ abstract final class UserHttp {
       return Error(res.data['message']);
     }
   }
-
-  static Future<LoadingState<void>> spaceReserve({
-    required Object sid,
-    required bool isFollow,
-  }) async {
-    final res = await Request().post(
-      isFollow ? Api.spaceReserveCancel : Api.spaceReserve,
-      data: {
-        'sid': sid,
-        'csrf': Accounts.main.csrf,
-      },
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['code'] == 0) {
-      return const Success(null);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
 }

@@ -13,7 +13,6 @@ import 'package:PiliPlus/pages/dynamics/widgets/vote.dart';
 import 'package:PiliPlus/pages/fan/view.dart';
 import 'package:PiliPlus/pages/follow/view.dart';
 import 'package:PiliPlus/pages/follow_type/followed/view.dart';
-import 'package:PiliPlus/pages/live/view.dart';
 import 'package:PiliPlus/pages/rank/view.dart';
 import 'package:PiliPlus/pages/subscription_detail/view.dart';
 import 'package:PiliPlus/pages/video/reply_reply/view.dart';
@@ -173,14 +172,6 @@ abstract final class PiliScheme {
                   progress: _videoProgress(queryParameters),
                 );
               }
-              return true;
-            }
-            return false;
-          case 'live':
-            // bilibili://live/12345678?extra_jump_from=1&from=1&is_room_feed=1&h5awaken=random
-            String? roomId = uriDigitRegExp.firstMatch(path)?.group(1);
-            if (roomId != null) {
-              PageUtils.toLiveRoom(int.parse(roomId), off: off);
               return true;
             }
             return false;
@@ -364,15 +355,6 @@ abstract final class PiliScheme {
               return true;
             }
             return false;
-          case 'livearea':
-            Get.to(
-              Scaffold(
-                resizeToAvoidBottomInset: false,
-                appBar: AppBar(title: const Text('直播')),
-                body: const ViewSafeArea(child: LivePage()),
-              ),
-            );
-            return true;
           case 'rank':
             Get.to(
               Scaffold(
@@ -440,7 +422,6 @@ abstract final class PiliScheme {
   static const bilibili = 'bilibili.com';
   static const bilibili_m = 'm.bilibili.com';
   static const bilibili_t = 't.bilibili.com';
-  static const bilibili_live = 'live.bilibili.com';
   static const bilibili_space = 'space.bilibili.com';
   static const bilibili_search = 'search.bilibili.com';
   static const bilibili_music = 'music.bilibili.com';
@@ -497,14 +478,6 @@ abstract final class PiliScheme {
             return true;
           }
         }
-      }
-      launchURL();
-      return false;
-    } else if (host.contains(bilibili_live)) {
-      String? roomId = uriDigitRegExp.firstMatch(path)?.group(1);
-      if (roomId != null) {
-        PageUtils.toLiveRoom(int.parse(roomId), off: off);
-        return true;
       }
       launchURL();
       return false;

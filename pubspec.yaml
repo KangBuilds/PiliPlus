@@ -216,7 +216,6 @@ flutter:
   assets:
     - path: assets/images/
     - path: assets/images/logo/
-    - path: assets/images/live/
     - path: assets/images/paycoins/
     - path: assets/shaders/
 

@@ -11,7 +11,6 @@ import 'package:PiliPlus/models/dynamics/result.dart'
     show PicModel, FilePicModel, OpusPicModel;
 import 'package:PiliPlus/models_new/dynamic/dyn_mention/item.dart';
 import 'package:PiliPlus/models_new/emote/emote.dart' as e;
-import 'package:PiliPlus/models_new/live/live_emote/emoticon.dart';
 import 'package:PiliPlus/pages/common/publish/common_publish_page.dart';
 import 'package:PiliPlus/pages/dynamics_mention/view.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
@@ -262,17 +261,6 @@ abstract class CommonRichTextPubPageState<T extends CommonRichTextPubPage>
                 width: width,
                 height: height,
               ),
-      );
-    } else if (emote is Emoticon) {
-      onInsertText(
-        '\uFFFC',
-        RichTextType.emoji,
-        rawText: emote.emoji!,
-        emote: Emote(
-          url: emote.url!,
-          width: width!,
-          height: height,
-        ),
       );
     }
   }

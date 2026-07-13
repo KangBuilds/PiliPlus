@@ -656,14 +656,6 @@ abstract final class VideoHttp {
     }
   }
 
-  static Future<void> roomEntryAction({required Object roomId}) {
-    return Request().post(
-      Api.roomEntryAction,
-      queryParameters: {'csrf': Accounts.heartbeat.csrf},
-      data: {'room_id': roomId, 'platform': 'pc'},
-    );
-  }
-
   static Future<void> historyReport({
     required Object aid,
     required Object type,

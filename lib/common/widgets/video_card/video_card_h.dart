@@ -52,13 +52,6 @@ class VideoCardH extends StatelessWidget {
                     return;
                   }
 
-                  if (videoItem.isLive ?? false) {
-                    if (videoItem.roomId case final roomId?) {
-                      PageUtils.toLiveRoom(roomId);
-                    }
-                    return;
-                  }
-
                   if (videoItem.redirectUrl?.isNotEmpty == true &&
                       PageUtils.viewPgcFromUri(videoItem.redirectUrl!)) {
                     return;

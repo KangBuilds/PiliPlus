@@ -14,7 +14,6 @@ class Item {
   bool? isUgcpay;
   bool? isCooperation;
   bool? isPgc;
-  bool? isLivePlayback;
   bool? isPugv;
   bool? isFold;
   bool? isOneself;
@@ -47,7 +46,6 @@ class Item {
     this.isUgcpay,
     this.isCooperation,
     this.isPgc,
-    this.isLivePlayback,
     this.isPugv,
     this.isFold,
     this.isOneself,
@@ -81,7 +79,6 @@ class Item {
     isUgcpay: json['is_ugcpay'] as bool?,
     isCooperation: json['is_cooperation'] as bool?,
     isPgc: json['is_pgc'] as bool?,
-    isLivePlayback: json['is_live_playback'] as bool?,
     isPugv: json['is_pugv'] as bool?,
     isFold: json['is_fold'] as bool?,
     isOneself: json['is_oneself'] as bool?,

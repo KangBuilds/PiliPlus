@@ -20,8 +20,6 @@ import 'package:PiliPlus/models_new/bubble/data.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_mention/data.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_mention/group.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_reaction/data.dart';
-import 'package:PiliPlus/models_new/dynamic/dyn_reserve/data.dart';
-import 'package:PiliPlus/models_new/dynamic/dyn_reserve_info/data.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_topic_feed/topic_card_list.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_topic_top/top_details.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_topic_top/topic_item.dart';
@@ -522,31 +520,6 @@ abstract final class DynamicsHttp {
     }
   }
 
-  static Future<LoadingState<DynReserveData>> dynReserve({
-    required Object? reserveId,
-    required Object? curBtnStatus,
-    required Object dynamicIdStr,
-    required Object? reserveTotal,
-  }) async {
-    final res = await Request().post(
-      Api.dynReserve,
-      queryParameters: {
-        'csrf': Accounts.main.csrf,
-      },
-      data: {
-        'reserve_id': ?reserveId,
-        'cur_btn_status': ?curBtnStatus,
-        'dynamic_id_str': dynamicIdStr,
-        'reserve_total': ?reserveTotal,
-      },
-    );
-    if (res.data['code'] == 0) {
-      return Success(DynReserveData.fromJson(res.data['data']));
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
   static Future<LoadingState<List<TopicItem>?>> dynTopicRcmd({
     int ps = 25,
   }) async {
@@ -628,74 +601,6 @@ abstract final class DynamicsHttp {
     );
     if (res.data['code'] == 0) {
       return Success(res.data['data']?['vote_id']);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<int?>> createReserve({
-    int subType = 0,
-    required String title,
-    required int livePlanStartTime,
-  }) async {
-    final res = await Request().post(
-      Api.createReserve,
-      data: {
-        'type': 2,
-        'sub_type': subType,
-        'from': 1,
-        'title': title,
-        'live_plan_start_time': livePlanStartTime,
-        'csrf': Accounts.main.csrf,
-      },
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['code'] == 0) {
-      return Success(res.data['data']?['sid']);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<int?>> updateReserve({
-    int subType = 0,
-    required String title,
-    required int livePlanStartTime,
-    required int sid,
-  }) async {
-    final res = await Request().post(
-      Api.updateReserve,
-      data: {
-        'type': 2,
-        'sub_type': subType,
-        'from': 1,
-        'title': title,
-        'live_plan_start_time': livePlanStartTime,
-        'id': sid,
-        'csrf': Accounts.main.csrf,
-      },
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['code'] == 0) {
-      return Success(res.data['data']?['sid']);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<ReserveInfoData>> reserveInfo({
-    required dynamic sid,
-  }) async {
-    final res = await Request().get(
-      Api.reserveInfo,
-      queryParameters: {
-        'from': 1,
-        'id': sid,
-        'web_location': 333.1365,
-      },
-    );
-    if (res.data['code'] == 0) {
-      return Success(ReserveInfoData.fromJson(res.data['data']));
     } else {
       return Error(res.data['message']);
     }

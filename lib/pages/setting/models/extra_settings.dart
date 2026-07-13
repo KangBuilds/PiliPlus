@@ -34,7 +34,6 @@ import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/filtering_text.dart';
-import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -333,13 +332,6 @@ List<SettingsModel> get extraSettings => [
     setKey: SettingBoxKey.showDecorate,
     defaultVal: true,
     onChanged: (value) => PendantAvatar.showDecorate = value,
-  ),
-  SwitchModel(
-    title: '显示粉丝勋章',
-    leading: const Icon(MdiIcons.medalOutline),
-    setKey: SettingBoxKey.showMedal,
-    defaultVal: true,
-    onChanged: (value) => GlobalData().showMedal = value,
   ),
   SwitchModel(
     title: '预览 Live Photo',

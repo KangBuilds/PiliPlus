@@ -369,13 +369,12 @@ class AudioController extends GetxController
           animController.reverse();
           playerStatus = PlayerStatus.paused;
         }
-        videoPlayerServiceHandler?.onStatusChange(playerStatus, false, false);
+        videoPlayerServiceHandler?.onStatusChange(playerStatus, false);
       }),
       stream.completed.listen((completed) {
         _videoDetailController?.playedTime = player!.state.duration;
         videoPlayerServiceHandler?.onStatusChange(
           PlayerStatus.completed,
-          false,
           false,
         );
         if (completed) {

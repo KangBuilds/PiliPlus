@@ -237,13 +237,6 @@ class _SavePanelState extends State<SavePanel> {
           uri = 'bilibili://following/detail/${item.idStr}';
           break;
 
-        case 'DYNAMIC_TYPE_LIVE_RCMD':
-          viewType = '观看';
-          itemType = '直播';
-          final roomId = item.modules.moduleDynamic!.major!.liveRcmd!.roomId;
-          uri = 'bilibili://live/$roomId';
-          break;
-
         case 'DYNAMIC_TYPE_UGC_SEASON':
           viewType = '观看';
           itemType = '合集';

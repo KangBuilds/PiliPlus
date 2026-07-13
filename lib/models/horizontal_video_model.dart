@@ -5,9 +5,6 @@ abstract class HorizontalVideoModel extends BaseVideoItemModel {
   bool? isPugv;
   int? seasonId;
 
-  int? roomId;
-  bool? isLive;
-
   Dimension? dimension;
 
   String? badge;

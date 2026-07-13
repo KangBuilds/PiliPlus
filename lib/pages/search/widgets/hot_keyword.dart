@@ -1,4 +1,3 @@
-import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/models_new/search/search_trending/list.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
@@ -68,16 +67,6 @@ class SliverHotKeyword extends StatelessWidget {
                                 memCacheHeight: cacheHeight,
                                 imageUrl: ImageUtils.thumbnailUrl(i.icon!),
                                 placeholder: (_, _) => const SizedBox.shrink(),
-                              ),
-                            )
-                          else if (i.showLiveIcon == true)
-                            Padding(
-                              padding: const .only(left: 4),
-                              child: Image.asset(
-                                Assets.livingRect,
-                                width: 48,
-                                height: 15,
-                                cacheHeight: cacheHeight,
                               ),
                             )
                           else if (i.recommendReason?.isNotEmpty == true)

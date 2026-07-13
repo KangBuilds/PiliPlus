@@ -397,7 +397,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
 
     addObserverMobile(this);
 
-    plPlayerController?.isLive = false;
     if (videoDetailController.plPlayerController.playerStatus.isPlaying &&
         videoDetailController.playerStatus != PlayerStatus.playing) {
       videoDetailController.plPlayerController.pause();

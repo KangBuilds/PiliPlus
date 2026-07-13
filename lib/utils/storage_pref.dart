@@ -15,19 +15,15 @@ import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/models/common/reply/reply_sort_type.dart';
 import 'package:PiliPlus/models/common/sponsor_block/segment_type.dart';
 import 'package:PiliPlus/models/common/sponsor_block/skip_type.dart';
-import 'package:PiliPlus/models/common/super_chat_type.dart';
 import 'package:PiliPlus/models/common/super_resolution_type.dart';
 import 'package:PiliPlus/models/common/theme/theme_type.dart';
 import 'package:PiliPlus/models/common/video/audio_quality.dart';
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
-import 'package:PiliPlus/models/common/video/live_quality.dart';
 import 'package:PiliPlus/models/common/video/subtitle_pref_type.dart';
 import 'package:PiliPlus/models/common/video/video_decode_type.dart';
 import 'package:PiliPlus/models/common/video/video_quality.dart';
 import 'package:PiliPlus/models/user/danmaku_rule.dart';
 import 'package:PiliPlus/models/user/info.dart';
-import 'package:PiliPlus/pages/setting/pages/fullscreen_sc_size.dart'
-    show kFullScreenSCWidth;
 import 'package:PiliPlus/plugin/pl_player/models/audio_output_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_progress_behavior.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
@@ -506,9 +502,6 @@ abstract final class Pref {
   static bool get showDecorate =>
       _setting.get(SettingBoxKey.showDecorate, defaultValue: true);
 
-  static bool get showMedal =>
-      _setting.get(SettingBoxKey.showMedal, defaultValue: true);
-
   static bool get enableLivePhoto =>
       _setting.get(SettingBoxKey.enableLivePhoto, defaultValue: true);
 
@@ -540,9 +533,6 @@ abstract final class Pref {
   static bool get antiGoodsReply =>
       _setting.get(SettingBoxKey.antiGoodsReply, defaultValue: false);
 
-  static bool get expandDynLivePanel =>
-      _setting.get(SettingBoxKey.expandDynLivePanel, defaultValue: false);
-
   static bool get slideDismissReplyPage => _setting.get(
     SettingBoxKey.slideDismissReplyPage,
     defaultValue: Platform.isIOS,
@@ -573,16 +563,6 @@ abstract final class Pref {
 
   static int get retryDelay =>
       _setting.get(SettingBoxKey.retryDelay, defaultValue: 500);
-
-  static int get liveQuality => _setting.get(
-    SettingBoxKey.liveQuality,
-    defaultValue: LiveQuality.origin.code,
-  );
-
-  static int get liveQualityCellular => _setting.get(
-    SettingBoxKey.liveQualityCellular,
-    defaultValue: LiveQuality.superHD.code,
-  );
 
   static int get appFontWeight =>
       _setting.get(SettingBoxKey.appFontWeight, defaultValue: -1);
@@ -715,9 +695,6 @@ abstract final class Pref {
   static bool get enableShowDanmaku =>
       _setting.get(SettingBoxKey.enableShowDanmaku, defaultValue: true);
 
-  static bool get enableShowLiveDanmaku =>
-      _setting.get(SettingBoxKey.enableShowLiveDanmaku, defaultValue: true);
-
   static bool get enableQuickFav =>
       _setting.get(SettingBoxKey.enableQuickFav, defaultValue: false);
 
@@ -828,14 +805,6 @@ abstract final class Pref {
     };
   }
 
-  static Map<String, String> initLiveBuffer() {
-    return {
-      'cache': 'yes',
-      'demuxer-max-bytes': (Pref.bufferSize * 0x200000).toStringAsFixed(0),
-      'demuxer-max-back-bytes': '0',
-    };
-  }
-
   static String get audioOutput => _setting.get(
     SettingBoxKey.audioOutput,
     defaultValue: AudioOutput.defaultValue,
@@ -926,17 +895,6 @@ abstract final class Pref {
   static bool get showMemberShop =>
       _setting.get(SettingBoxKey.showMemberShop, defaultValue: false);
 
-  static SuperChatType get superChatType =>
-      SuperChatType.values[_setting.get(
-        SettingBoxKey.superChatType,
-        defaultValue: SuperChatType.valid.index,
-      )];
-
-  static double get fullScreenSCWidth => _setting.get(
-    SettingBoxKey.fullScreenSCWidth,
-    defaultValue: kFullScreenSCWidth,
-  );
-
   static bool get minimizeOnExit =>
       _setting.get(SettingBoxKey.minimizeOnExit, defaultValue: true);
 
@@ -986,8 +944,6 @@ abstract final class Pref {
 
   static String? get downloadPath => _setting.get(SettingBoxKey.downloadPath);
 
-  static String? get liveCdnUrl => _setting.get(SettingBoxKey.liveCdnUrl);
-
   static bool get showBatteryLevel => _setting.get(
     SettingBoxKey.showBatteryLevel,
     defaultValue: PlatformUtils.isMobile,
@@ -1027,6 +983,4 @@ abstract final class Pref {
 
   static double get maxVolume => // desktop
       _setting.get(SettingBoxKey.maxVolume, defaultValue: 2.0);
-
-  static List? get liveStream => _setting.get(SettingBoxKey.liveStream);
 }

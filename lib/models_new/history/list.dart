@@ -19,7 +19,6 @@ class HistoryItemModel with MultiSelectData {
   int? isFav;
   int? kid;
   String? tagName;
-  int? liveStatus;
 
   HistoryItemModel({
     this.title,
@@ -38,7 +37,6 @@ class HistoryItemModel with MultiSelectData {
     this.isFav,
     this.kid,
     this.tagName,
-    this.liveStatus,
   });
 
   factory HistoryItemModel.fromJson(Map<String, dynamic> json) =>
@@ -61,6 +59,5 @@ class HistoryItemModel with MultiSelectData {
         isFav: json['is_fav'] as int?,
         kid: json['kid'] as int?,
         tagName: json['tag_name'] as String?,
-        liveStatus: json['live_status'] as int?,
       );
 }

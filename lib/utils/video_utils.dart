@@ -1,12 +1,9 @@
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
 import 'package:PiliPlus/models/common/video/video_decode_type.dart';
-import 'package:PiliPlus/models_new/live/live_room_play_info/codec.dart';
-import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 
 abstract final class VideoUtils {
   static CDNService cdnService = Pref.defaultCDNService;
-  static String? liveCdnUrl = Pref.liveCdnUrl;
   static bool disableAudioCDN = Pref.disableAudioCDN;
 
   static String getCdnUrl(
@@ -35,11 +32,6 @@ abstract final class VideoUtils {
       return selected;
     }
     return Uri.parse(selected).replace(host: defaultCDNService.host).toString();
-  }
-
-  static String getLiveCdnUrl(CodecItem e, {int index = 0}) {
-    final urlInfo = e.urlInfo.getOrFirst(index);
-    return (liveCdnUrl ?? urlInfo.host) + e.baseUrl + urlInfo.extra;
   }
 
   static VideoDecodeFormatType selectCodec(

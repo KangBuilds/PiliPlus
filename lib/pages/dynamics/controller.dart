@@ -27,7 +27,6 @@ class DynamicsController
   late bool _isEnd = false;
   Set<UpItem>? _cacheUpList;
   late int hostMid = -1, currentMid = -1;
-  late bool showLiveUp = Pref.expandDynLivePanel;
   late final _showAllUp = Pref.dynamicsShowAllFollowedUp;
 
   final upPanelPosition = Pref.upPanelPosition;

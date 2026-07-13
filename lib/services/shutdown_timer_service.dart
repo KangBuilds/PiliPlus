@@ -138,13 +138,9 @@ class ShutdownTimerService {
   void showScheduleExitDialog(
     BuildContext context, {
     required bool isFullScreen,
-    bool isLive = false,
   }) {
     const Set<int> scheduleTimeMinutes = {0, 15, 30, 45, 60};
     const TextStyle titleStyle = TextStyle(fontSize: 14);
-    if (isLive) {
-      _waitUntilCompleted = false;
-    }
     PageUtils.showVideoBottomSheet(
       context,
       maxWidth: 512,
@@ -214,30 +210,28 @@ class ShutdownTimerService {
                       },
                       title: const Text('自定义', style: titleStyle),
                     ),
-                    if (!isLive) ...[
-                      Builder(
-                        builder: (context) {
-                          void onChanged([_]) {
-                            _waitUntilCompleted = !_waitUntilCompleted;
-                            (context as Element).markNeedsBuild();
-                          }
+                    Builder(
+                      builder: (context) {
+                        void onChanged([_]) {
+                          _waitUntilCompleted = !_waitUntilCompleted;
+                          (context as Element).markNeedsBuild();
+                        }
 
-                          return ListTile(
-                            dense: true,
-                            onTap: onChanged,
-                            title: const Text('额外等待视频播放完毕', style: titleStyle),
-                            trailing: Transform.scale(
-                              alignment: Alignment.centerRight,
-                              scale: 0.8,
-                              child: Switch(
-                                value: _waitUntilCompleted,
-                                onChanged: onChanged,
-                              ),
+                        return ListTile(
+                          dense: true,
+                          onTap: onChanged,
+                          title: const Text('额外等待视频播放完毕', style: titleStyle),
+                          trailing: Transform.scale(
+                            alignment: Alignment.centerRight,
+                            scale: 0.8,
+                            child: Switch(
+                              value: _waitUntilCompleted,
+                              onChanged: onChanged,
                             ),
-                          );
-                        },
-                      ),
-                    ],
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 5),
                     Padding(
                       padding: const .only(left: 18),

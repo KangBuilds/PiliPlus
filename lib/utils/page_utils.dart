@@ -286,29 +286,6 @@ abstract final class PageUtils {
         SmartDialog.showToast('暂未支持的类型，请联系开发者');
         break;
 
-      case 'DYNAMIC_TYPE_LIVE':
-        DynamicLive2Model liveRcmd = item.modules.moduleDynamic!.major!.live!;
-        toLiveRoom(liveRcmd.id);
-        break;
-
-      case 'DYNAMIC_TYPE_LIVE_RCMD':
-        DynamicLiveModel liveRcmd =
-            item.modules.moduleDynamic!.major!.liveRcmd!;
-        toLiveRoom(liveRcmd.roomId);
-        break;
-
-      case 'DYNAMIC_TYPE_SUBSCRIPTION_NEW':
-        LivePlayInfo live = item
-            .modules
-            .moduleDynamic!
-            .major!
-            .subscriptionNew!
-            .liveRcmd!
-            .content!
-            .livePlayInfo!;
-        toLiveRoom(live.roomId);
-        break;
-
       /// 合集查看
       case 'DYNAMIC_TYPE_UGC_SEASON':
         DynamicArchiveModel ugcSeason =
@@ -503,20 +480,6 @@ abstract final class PageUtils {
         settings: RouteSettings(arguments: Get.arguments),
       ),
     );
-  }
-
-  static void toLiveRoom(
-    int? roomId, {
-    bool off = false,
-  }) {
-    if (roomId == null) {
-      return;
-    }
-    if (off) {
-      Get.offNamed('/liveRoom', arguments: roomId);
-    } else {
-      PageUtils.toDupNamed('/liveRoom', arguments: roomId);
-    }
   }
 
   static Future<void>? toVideoPage({

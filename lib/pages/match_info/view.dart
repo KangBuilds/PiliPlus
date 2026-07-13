@@ -15,7 +15,6 @@ import 'package:PiliPlus/pages/video/reply_reply/view.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/widget_ext.dart';
-import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -129,25 +128,7 @@ class _MatchInfoPageState extends CommonDynPageState<MatchInfoPage> {
                             src: 'https://i1.hdslb.com${response.season!.logo}',
                             type: ImageType.emote,
                           ),
-                        if (response.contestStatus == 2)
-                          FilledButton.tonal(
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(6),
-                                ),
-                              ),
-                              visualDensity: VisualDensity.compact,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            onPressed: () =>
-                                PageUtils.toLiveRoom(response.liveRoom),
-                            child: const Text('看直播'),
-                          )
-                        else if (response.contestStatus == 3)
+                        if (response.contestStatus == 3)
                           Text(
                             '${DateFormatUtils.dateFormat(response.stime)}${response.contestStatus == 3 ? ' 已结束' : ''}',
                             style: TextStyle(

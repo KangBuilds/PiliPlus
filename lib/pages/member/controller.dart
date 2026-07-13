@@ -5,11 +5,8 @@ import 'package:PiliPlus/http/member.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/member/tab_type.dart';
-import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models_new/space/space/data.dart';
 import 'package:PiliPlus/models_new/space/space/elec.dart';
-import 'package:PiliPlus/models_new/space/space/live.dart';
-import 'package:PiliPlus/models_new/space/space/reservation_card_list.dart';
 import 'package:PiliPlus/models_new/space/space/setting.dart';
 import 'package:PiliPlus/models_new/space/space/tab2.dart';
 import 'package:PiliPlus/pages/common/common_data_controller.dart';
@@ -33,7 +30,6 @@ class MemberController extends CommonDataController<SpaceData, SpaceData?>
 
   late final account = Accounts.main;
 
-  Live? live;
   int? silence;
 
   int? isFollowed; // 被关注
@@ -51,12 +47,6 @@ class MemberController extends CommonDataController<SpaceData, SpaceData?>
   List<ElecItem>? charges;
   int? chargeCount;
   bool get hasCharge => chargeCount != null && chargeCount! > 0;
-
-  List<Owner>? guards;
-  Object? guardCount;
-  bool get hasGuard => guards?.isNotEmpty ?? false;
-
-  List<ReservationCardItem>? reserves;
 
   final fromViewAid = Get.parameters['from_view_aid'];
 
@@ -81,13 +71,6 @@ class MemberController extends CommonDataController<SpaceData, SpaceData?>
     final elec = data.elec;
     charges = elec?.list;
     chargeCount = elec?.total;
-    // guard
-    final guard = data.guard;
-    guards = guard?.item;
-    guardCount = guard?.count;
-
-    reserves = data.reservationCardList;
-
     if (data.relation == -1) {
       relation.value = 128;
     } else {
@@ -98,7 +81,6 @@ class MemberController extends CommonDataController<SpaceData, SpaceData?>
           : 0;
     }
     tab2 = data.tab2;
-    live = data.live;
     silence = card?.silence;
     if ((data.ugcSeason?.count != null && data.ugcSeason?.count != 0) ||
         data.series?.item?.isNotEmpty == true) {

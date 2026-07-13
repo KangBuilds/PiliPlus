@@ -12,15 +12,12 @@ import 'package:PiliPlus/models_new/space/space/card.dart';
 import 'package:PiliPlus/models_new/space/space/elec.dart';
 import 'package:PiliPlus/models_new/space/space/followings_followed_upper.dart';
 import 'package:PiliPlus/models_new/space/space/images.dart';
-import 'package:PiliPlus/models_new/space/space/live.dart';
 import 'package:PiliPlus/models_new/space/space/pr_info.dart';
 import 'package:PiliPlus/models_new/space/space/top.dart';
 import 'package:PiliPlus/pages/fan/view.dart';
 import 'package:PiliPlus/pages/follow/view.dart';
 import 'package:PiliPlus/pages/follow_type/followed/view.dart';
 import 'package:PiliPlus/pages/member/widget/header_layout_widget.dart';
-import 'package:PiliPlus/pages/member/widget/medal_widget.dart';
-import 'package:PiliPlus/pages/member_guard/view.dart';
 import 'package:PiliPlus/pages/member_upower_rank/view.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
@@ -50,14 +47,10 @@ class UserInfoCard extends StatelessWidget {
     required this.images,
     required this.relation,
     required this.onFollow,
-    this.live,
     this.silence,
     required this.headerControllerBuilder,
-    required this.showLiveMedalWall,
     required this.charges,
     required this.chargeCount,
-    required this.guards,
-    required this.guardCount,
   });
 
   final bool isOwner;
@@ -65,14 +58,10 @@ class UserInfoCard extends StatelessWidget {
   final SpaceCard card;
   final SpaceImages images;
   final VoidCallback onFollow;
-  final Live? live;
   final int? silence;
   final ValueGetter<PageController> headerControllerBuilder;
-  final VoidCallback showLiveMedalWall;
   final List<ElecItem>? charges;
   final Object? chargeCount;
-  final List<Owner>? guards;
-  final Object? guardCount;
 
   @override
   Widget build(BuildContext context) {
@@ -163,34 +152,6 @@ class UserInfoCard extends StatelessWidget {
   }
 
   Widget _buildName(BuildContext context, ColorScheme colorScheme) {
-    Widget? liveMedal;
-    if (card.liveFansWearing?.detailV2 case final detailV2?) {
-      Color? nameColor;
-      Color? backgroundColor;
-      try {
-        nameColor = ColourUtils.parseColor(detailV2.medalColorName!);
-        backgroundColor = ColourUtils.parseColor(detailV2.medalColor!);
-      } catch (e, s) {
-        if (kDebugMode) {
-          Utils.reportError(e, s);
-        }
-      }
-      try {
-        liveMedal = GestureDetector(
-          onTap: showLiveMedalWall,
-          child: MedalWidget(
-            medalName: detailV2.medalName!,
-            level: detailV2.level!,
-            backgroundColor: backgroundColor ?? colorScheme.secondaryContainer,
-            nameColor: nameColor ?? colorScheme.onSecondaryContainer,
-          ),
-        );
-      } catch (e, s) {
-        if (kDebugMode) {
-          Utils.reportError(e, s);
-        }
-      }
-    }
     return Padding(
       padding: const .only(left: 20, right: 20),
       child: Wrap(
@@ -254,7 +215,6 @@ class UserInfoCard extends StatelessWidget {
           //       return const SizedBox.shrink();
           //     },
           //   ),
-          ?liveMedal,
         ],
       ),
     );
@@ -434,7 +394,6 @@ class UserInfoCard extends StatelessWidget {
                       'name': card.name,
                       'face': card.face,
                       'mid': mid,
-                      'isLive': live?.liveStatus == 1,
                     },
                   );
                 }
@@ -511,7 +470,6 @@ class UserInfoCard extends StatelessWidget {
       officialType: card.officialVerify?.type,
       vipStatus: card.vip?.status,
       pendantImage: pendant,
-      roomId: live?.liveStatus == 1 ? live!.roomid : null,
       onTap: () => PageUtils.imageView(
         tag: hashCode.toString(),
         imgList: [SourceModel(url: card.face.http2https)],
@@ -865,18 +823,6 @@ class UserInfoCard extends StatelessWidget {
             mid: card.mid!,
             name: card.name!,
             count: chargeCount,
-          ),
-        ),
-      if (guards?.isNotEmpty ?? false)
-        _buildChargeItem(
-          colorScheme,
-          guards,
-          guardCount,
-          '人加入大航海',
-          () => MemberGuard.toMemberGuard(
-            mid: card.mid!,
-            name: card.name!,
-            count: guardCount,
           ),
         ),
     ];

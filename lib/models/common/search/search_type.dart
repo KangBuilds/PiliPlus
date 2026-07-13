@@ -7,12 +7,6 @@ enum SearchType {
   media_bangumi('番剧'),
   // 影视：media_ft
   media_ft('影视'),
-  // 直播间及主播：live
-  // live,
-  // 直播间：live_room
-  live_room('直播间'),
-  // 主播：live_user
-  // live_user,
   // 话题：topic
   // topic,
   // 用户：bili_user

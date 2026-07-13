@@ -114,7 +114,6 @@ class PlPlayerController with BlockConfigMixin {
   final RxBool controlsLock = false.obs;
 
   final RxBool isFullScreen = false.obs;
-  bool isLive = false;
 
   bool _isVertical = false;
 
@@ -184,9 +183,7 @@ class PlPlayerController with BlockConfigMixin {
 
   /// 弹幕开关
   late final RxBool enableShowDanmaku = Pref.enableShowDanmaku.obs;
-  late final RxBool enableShowLiveDanmaku = Pref.enableShowLiveDanmaku.obs;
-  RxBool get enableShowDanmakuAdaptive =>
-      isLive ? enableShowLiveDanmaku : enableShowDanmaku;
+  RxBool get enableShowDanmakuAdaptive => enableShowDanmaku;
 
   bool get isPipMode => false;
   bool isDesktopPip = false;
@@ -452,15 +449,12 @@ class PlPlayerController with BlockConfigMixin {
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
     }
-
   }
 
   // 获取实例 传参
-  static PlPlayerController getInstance({bool isLive = false}) {
+  static PlPlayerController getInstance() {
     // 如果实例尚未创建，则创建一个新实例
-    return (_instance ??= PlPlayerController._())
-      ..isLive = isLive
-      .._playerCount += 1;
+    return (_instance ??= PlPlayerController._()).._playerCount += 1;
   }
 
   bool _processing = false;
@@ -478,7 +472,6 @@ class PlPlayerController with BlockConfigMixin {
   // 初始化资源
   Future<void> setDataSource(
     DataSource dataSource, {
-    bool isLive = false,
     bool autoplay = true,
     // 初始化播放位置
     Duration? seekTo,
@@ -503,7 +496,6 @@ class PlPlayerController with BlockConfigMixin {
   }) async {
     try {
       _processing = true;
-      this.isLive = isLive;
       _videoType = videoType ?? VideoType.ugc;
       this.width = width;
       this.height = height;
@@ -664,9 +656,6 @@ class PlPlayerController with BlockConfigMixin {
   Map<String, String>? _buffer;
   Map<String, String> get buffer =>
       _buffer ??= Pref.initBuffer(_playbackSpeed.value);
-  Map<String, String>? _liveBuffer;
-  Map<String, String> get liveBuffer => _liveBuffer ??= Pref.initLiveBuffer();
-
   // 配置播放器
   Future<void> _createVideoController(
     DataSource dataSource,
@@ -699,11 +688,7 @@ class PlPlayerController with BlockConfigMixin {
     if (dataSource is FileSource) {
       extras['cache'] = 'no';
     } else {
-      if (isLive) {
-        extras.addAll(liveBuffer);
-      } else {
-        extras.addAll(buffer);
-      }
+      extras.addAll(buffer);
     }
 
     String video = dataSource.videoSource;
@@ -768,12 +753,8 @@ class PlPlayerController with BlockConfigMixin {
   Future<void> _initializePlayer() async {
     if (_instance == null) return;
     // 设置倍速
-    if (isLive) {
-      await setPlaybackSpeed(1.0);
-    } else {
-      if (_videoPlayerController?.state.rate != _playbackSpeed.value) {
-        await setPlaybackSpeed(_playbackSpeed.value);
-      }
+    if (_videoPlayerController?.state.rate != _playbackSpeed.value) {
+      await setPlaybackSpeed(_playbackSpeed.value);
     }
     _initVideoFit();
     // if (_looping) {
@@ -813,7 +794,6 @@ class PlPlayerController with BlockConfigMixin {
         videoPlayerServiceHandler?.onStatusChange(
           playerStatus.value,
           isBuffering.value,
-          isLive,
         );
 
         for (final element in _statusListeners) {
@@ -866,7 +846,6 @@ class PlPlayerController with BlockConfigMixin {
         videoPlayerServiceHandler?.onStatusChange(
           playerStatus.value,
           buffering,
-          isLive,
         );
       }),
       if (kDebugMode)
@@ -880,14 +859,6 @@ class PlPlayerController with BlockConfigMixin {
       stream.error.listen((String event) {
         if (dataSource is FileSource &&
             event.startsWith("Failed to open file")) {
-          return;
-        }
-        if (isLive) {
-          if (event.startsWith('tcp: ffurl_read returned ') ||
-              event.startsWith("Failed to open https://") ||
-              event.startsWith("Can not open external file https://")) {
-            Future.delayed(const Duration(milliseconds: 3000), refreshPlayer);
-          }
           return;
         }
         if (event.startsWith("Failed to open https://") ||
@@ -1139,11 +1110,8 @@ class PlPlayerController with BlockConfigMixin {
     longPressTimer = null;
   }
 
-  /// 设置长按倍速状态 live模式下禁用
+  /// 设置长按倍速状态
   Future<void> setLongPressStatus(bool val) async {
-    if (isLive) {
-      return;
-    }
     if (controlsLock.value) {
       return;
     }
@@ -1171,7 +1139,7 @@ class PlPlayerController with BlockConfigMixin {
 
   // 双击播放、暂停
   Future<void> onDoubleTapCenter() async {
-    if (!isLive && isCompleted) {
+    if (isCompleted) {
       await videoPlayerController!.seek(Duration.zero);
       videoPlayerController!.play();
     } else {
@@ -1350,10 +1318,7 @@ class PlPlayerController with BlockConfigMixin {
     dynamic pgcType,
     VideoType? videoType,
   }) {
-    if (isLive ||
-        !enableHeart ||
-        progress == 0 ||
-        (playerStatus.isPaused && !isManual)) {
+    if (!enableHeart || progress == 0 || (playerStatus.isPaused && !isManual)) {
       return null;
     }
 

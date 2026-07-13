@@ -7,11 +7,8 @@ import 'package:PiliPlus/models_new/space/space/coin_archive.dart';
 import 'package:PiliPlus/models_new/space/space/comic.dart';
 import 'package:PiliPlus/models_new/space/space/elec.dart';
 import 'package:PiliPlus/models_new/space/space/favourite2.dart';
-import 'package:PiliPlus/models_new/space/space/guard.dart';
 import 'package:PiliPlus/models_new/space/space/images.dart';
 import 'package:PiliPlus/models_new/space/space/like_archive.dart';
-import 'package:PiliPlus/models_new/space/space/live.dart';
-import 'package:PiliPlus/models_new/space/space/reservation_card_list.dart';
 import 'package:PiliPlus/models_new/space/space/season.dart';
 import 'package:PiliPlus/models_new/space/space/series.dart';
 import 'package:PiliPlus/models_new/space/space/setting.dart';
@@ -27,7 +24,6 @@ class SpaceData {
   SpaceTab? tab;
   SpaceCard? card;
   SpaceImages? images;
-  Live? live;
   Elec? elec;
   Archive? archive;
   SpaceSeries? series;
@@ -40,11 +36,9 @@ class SpaceData {
   Comic? comic;
   UgcSeason? ugcSeason;
   Cheese? cheese;
-  Guard? guard;
   List<SpaceTab2>? tab2;
   int? relSpecial;
   bool? hasItem;
-  List<ReservationCardItem>? reservationCardList;
 
   SpaceData({
     this.relation,
@@ -54,7 +48,6 @@ class SpaceData {
     this.tab,
     this.card,
     this.images,
-    this.live,
     this.elec,
     this.archive,
     this.series,
@@ -67,10 +60,8 @@ class SpaceData {
     this.comic,
     this.ugcSeason,
     this.cheese,
-    this.guard,
     this.tab2,
     this.relSpecial,
-    this.reservationCardList,
   });
 
   SpaceData.fromJson(Map<String, dynamic> json) {
@@ -89,9 +80,6 @@ class SpaceData {
     images = json['images'] == null
         ? null
         : SpaceImages.fromJson(json['images'] as Map<String, dynamic>);
-    live = json['live'] == null
-        ? null
-        : Live.fromJson(json['live'] as Map<String, dynamic>);
     elec = json['elec'] == null
         ? null
         : Elec.fromJson(json['elec'] as Map<String, dynamic>);
@@ -128,16 +116,10 @@ class SpaceData {
     cheese = json['cheese'] == null
         ? null
         : Cheese.fromJson(json['cheese'] as Map<String, dynamic>);
-    guard = json['guard'] == null
-        ? null
-        : Guard.fromJson(json['guard'] as Map<String, dynamic>);
     tab2 = (json['tab2'] as List<dynamic>?)
         ?.map((e) => SpaceTab2.fromJson(e as Map<String, dynamic>))
         .toList();
     relSpecial = (json['rel_special'] as num?)?.toInt();
-    reservationCardList = (json['reservation_card_list'] as List<dynamic>?)
-        ?.map((e) => ReservationCardItem.fromJson(e))
-        .toList();
     hasItem =
         archive?.item?.isNotEmpty == true ||
         favourite2?.item?.isNotEmpty == true ||

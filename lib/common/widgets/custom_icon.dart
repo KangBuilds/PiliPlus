@@ -15,7 +15,6 @@ abstract final class CustomIcons {
   static const IconData folderDownloadOutline = IconData(0xe806, fontFamily: _kFontFam);
   static const IconData history = IconData(0xe807, fontFamily: _kFontFam);
   static const IconData identifier_circle = IconData(0xe808, fontFamily: _kFontFam);
-  static const IconData live_reserve = IconData(0xe809, fontFamily: _kFontFam);
   static const IconData motion_photos_on = IconData(0xe80a, fontFamily: _kFontFam);
   static const IconData motion_photos_on_outlined = IconData(0xe80b, fontFamily: _kFontFam);
   static const IconData open_in_full_rotate_45 = IconData(0xe80c, fontFamily: _kFontFam);

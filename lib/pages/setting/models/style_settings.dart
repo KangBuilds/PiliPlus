@@ -169,13 +169,6 @@ List<SettingsModel> get styleSettings => [
     defaultVal: false,
     needReboot: true,
   ),
-  const SwitchModel(
-    title: '动态页展开正在直播UP列表',
-    leading: Icon(Icons.live_tv),
-    setKey: SettingBoxKey.expandDynLivePanel,
-    defaultVal: false,
-    needReboot: true,
-  ),
   NormalModel(
     title: '动态未读标记',
     leading: const Icon(Icons.motion_photos_on_outlined),

@@ -198,52 +198,8 @@ class ChatItem extends StatelessWidget {
     }
   }
 
-  Widget msgTypeCommonShareCard_14(dynamic content, Color textColor) {
-    if (content['source'] == '直播') {
-      return GestureDetector(
-        behavior: .opaque,
-        onTap: () {
-          dynamic roomId = content['sourceID'];
-          if (roomId is String) {
-            roomId = int.parse(roomId);
-          }
-          PageUtils.toLiveRoom(roomId);
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            NetworkImgLayer(
-              width: 220,
-              height: 123.75,
-              src: content['cover'],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              content['title'] ?? "",
-              style: TextStyle(
-                letterSpacing: 0.6,
-                height: 1.5,
-                color: textColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 1),
-            Text(
-              '${content['author']} · 直播',
-              style: TextStyle(
-                letterSpacing: 0.6,
-                height: 1.5,
-                color: textColor.withValues(alpha: 0.6),
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return def(textColor);
-    }
-  }
+  Widget msgTypeCommonShareCard_14(dynamic content, Color textColor) =>
+      def(textColor);
 
   Widget msgTypeArticleCard_12(dynamic content, Color textColor) {
     return GestureDetector(

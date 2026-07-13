@@ -231,13 +231,6 @@ class _WebviewPageState extends State<WebviewPage> {
   });
 """,
                 );
-            } else if (url.startsWith('https://live.bilibili.com')) {
-              controller.evaluateJavascript(
-                source: '''
-                  document.styleSheets[0].insertRule('div.open-app-btn.bili-btn-warp {display:none;}', 0);
-                  document.styleSheets[0].insertRule('#app__display-area > div.control-panel {display:none;}', 0);
-                  ''',
-              );
             }
             // _webViewController?.evaluateJavascript(
             //   source: '''

@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:PiliPlus/common/widgets/pendant_avatar.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/article_content_model.dart';
 import 'package:PiliPlus/models/model_avatar.dart';
 import 'package:PiliPlus/models/model_owner.dart';
-import 'package:PiliPlus/models_new/live/live_feed_index/watched_show.dart';
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/parse_bool.dart';
 import 'package:PiliPlus/utils/parse_int.dart';
@@ -504,14 +501,12 @@ class DynamicAddModel {
     this.type,
     this.vote,
     this.ugc,
-    this.reserve,
     this.goods,
   });
 
   String? type;
   Vote? vote;
   Ugc? ugc;
-  Reserve? reserve;
   Good? goods;
   UpowerLottery? upowerLottery;
   AddCommon? common;
@@ -521,9 +516,6 @@ class DynamicAddModel {
     type = json['type'];
     vote = json['vote'] != null ? Vote.fromJson(json['vote']) : null;
     ugc = json['ugc'] != null ? Ugc.fromJson(json['ugc']) : null;
-    reserve = json['reserve'] != null
-        ? Reserve.fromJson(json['reserve'])
-        : null;
     goods = json['goods'] != null ? Good.fromJson(json['goods']) : null;
     upowerLottery = json['upower_lottery'] != null
         ? UpowerLottery.fromJson(json['upower_lottery'])
@@ -715,69 +707,6 @@ class Ugc {
   }
 }
 
-class Reserve {
-  Reserve({
-    this.button,
-    this.desc1,
-    this.desc2,
-    this.desc3,
-    this.reserveTotal,
-    this.rid,
-    this.state,
-    this.title,
-  });
-
-  ReserveBtn? button;
-  Desc? desc1;
-  Desc? desc2;
-  Desc? desc3;
-  int? reserveTotal;
-  int? rid;
-  int? state;
-  String? title;
-
-  Reserve.fromJson(Map<String, dynamic> json) {
-    button = json['button'] == null
-        ? null
-        : ReserveBtn.fromJson(json['button']);
-    desc1 = json['desc1'] == null ? null : Desc.fromJson(json['desc1']);
-    desc2 = json['desc2'] == null ? null : Desc.fromJson(json['desc2']);
-    desc3 = json['desc3'] == null ? null : Desc.fromJson(json['desc3']);
-    reserveTotal = safeToInt(json['reserve_total']);
-    rid = safeToInt(json['rid']);
-    state = safeToInt(json['state']);
-    state = safeToInt(json['state']);
-    title = json['title'];
-  }
-}
-
-class ReserveBtn {
-  ReserveBtn({
-    this.status,
-    this.type,
-    this.checkText,
-    this.uncheckText,
-  });
-
-  int? status;
-  int? type;
-  String? checkText;
-  String? uncheckText;
-  int? disable;
-  String? jumpText;
-  String? jumpUrl;
-
-  ReserveBtn.fromJson(Map<String, dynamic> json) {
-    status = safeToInt(json['status']);
-    type = safeToInt(json['type']);
-    checkText = json['check']?['text'] ?? '已预约';
-    uncheckText = json['uncheck']?['text'] ?? '预约';
-    disable = safeToInt(json['uncheck']?['disable']);
-    jumpText = json['jump_style']?['text'];
-    jumpUrl = json['jump_url'];
-  }
-}
-
 class Desc {
   Desc({
     this.text,
@@ -854,8 +783,6 @@ class DynamicMajorModel {
     this.ugcSeason,
     this.opus,
     this.pgc,
-    this.liveRcmd,
-    this.live,
     this.none,
     this.type,
     this.courses,
@@ -869,8 +796,6 @@ class DynamicMajorModel {
   DynamicArchiveModel? ugcSeason;
   DynamicOpusModel? opus;
   DynamicArchiveModel? pgc;
-  DynamicLiveModel? liveRcmd;
-  DynamicLive2Model? live;
   DynamicNoneModel? none;
   String? type;
   DynamicArchiveModel? courses;
@@ -879,8 +804,6 @@ class DynamicMajorModel {
   Music? music;
   ModuleBlocked? blocked;
   Medialist? medialist;
-
-  SubscriptionNew? subscriptionNew;
 
   DynamicMajorModel.fromJson(Map<String, dynamic> json) {
     archive = json['archive'] != null
@@ -894,12 +817,6 @@ class DynamicMajorModel {
         : null;
     pgc = json['pgc'] != null
         ? DynamicArchiveModel.fromJson(json['pgc'])
-        : null;
-    liveRcmd = json['live_rcmd'] != null
-        ? DynamicLiveModel.fromJson(json['live_rcmd'])
-        : null;
-    live = json['live'] != null
-        ? DynamicLive2Model.fromJson(json['live'])
         : null;
     none = json['none'] != null
         ? DynamicNoneModel.fromJson(json['none'])
@@ -919,9 +836,6 @@ class DynamicMajorModel {
     medialist = json['medialist'] == null
         ? null
         : Medialist.fromJson(json['medialist']);
-    subscriptionNew = json['subscription_new'] == null
-        ? null
-        : SubscriptionNew.fromJson(json['subscription_new']);
   }
 }
 
@@ -955,79 +869,6 @@ class Medialist {
     jumpUrl = json['jump_url'];
     badge = json['badge'] == null ? null : Badge.fromJson(json['badge']);
   }
-}
-
-class SubscriptionNew {
-  LiveRcmd? liveRcmd;
-
-  SubscriptionNew({
-    this.liveRcmd,
-  });
-
-  factory SubscriptionNew.fromJson(Map<String, dynamic> json) =>
-      SubscriptionNew(
-        liveRcmd: json["live_rcmd"] == null
-            ? null
-            : LiveRcmd.fromJson(json["live_rcmd"]),
-      );
-}
-
-class LiveRcmd {
-  LiveRcmdContent? content;
-
-  LiveRcmd({
-    this.content,
-  });
-
-  factory LiveRcmd.fromJson(Map<String, dynamic> json) => LiveRcmd(
-    content: json["content"] == null
-        ? null
-        : LiveRcmdContent.fromJson(jsonDecode(json["content"])),
-  );
-}
-
-class LiveRcmdContent {
-  LivePlayInfo? livePlayInfo;
-
-  LiveRcmdContent({
-    this.livePlayInfo,
-  });
-
-  factory LiveRcmdContent.fromJson(Map<String, dynamic> json) =>
-      LiveRcmdContent(
-        livePlayInfo: json["live_play_info"] == null
-            ? null
-            : LivePlayInfo.fromJson(json["live_play_info"]),
-      );
-}
-
-class LivePlayInfo {
-  int? roomId;
-  int? liveStatus;
-  String? title;
-  String? cover;
-  String? areaName;
-  WatchedShow? watchedShow;
-
-  LivePlayInfo({
-    this.roomId,
-    this.liveStatus,
-    this.title,
-    this.cover,
-    this.areaName,
-    this.watchedShow,
-  });
-
-  factory LivePlayInfo.fromJson(Map<String, dynamic> json) => LivePlayInfo(
-    roomId: safeToInt(json["room_id"]),
-    liveStatus: safeToInt(json["live_status"]),
-    title: json["title"],
-    cover: json["cover"],
-    areaName: json["area_name"],
-    watchedShow: json["watched_show"] == null
-        ? null
-        : WatchedShow.fromJson(json["watched_show"]),
-  );
 }
 
 class DynamicTopicModel {
@@ -1238,58 +1079,6 @@ class OpusPicModel extends PicModel {
     'img_size': size,
     'img_src': url,
   };
-}
-
-class DynamicLiveModel {
-  int? roomId;
-  int? liveStatus;
-  String? cover;
-  String? areaName;
-  String? title;
-  WatchedShow? watchedShow;
-
-  DynamicLiveModel.fromJson(Map<String, dynamic> json) {
-    if (json['content'] != null) {
-      Map<String, dynamic> data = jsonDecode(json['content']);
-      Map livePlayInfo = data['live_play_info'];
-
-      roomId = safeToInt(livePlayInfo['room_id']);
-      liveStatus = safeToInt(livePlayInfo['live_status']);
-      cover = livePlayInfo['cover'];
-      areaName = livePlayInfo['area_name'];
-      title = livePlayInfo['title'];
-      watchedShow = livePlayInfo['watched_show'] == null
-          ? null
-          : WatchedShow.fromJson(livePlayInfo['watched_show']);
-    }
-  }
-}
-
-class DynamicLive2Model {
-  DynamicLive2Model({
-    this.badge,
-    this.cover,
-    this.descFirst,
-    this.id,
-    this.liveState,
-    this.title,
-  });
-
-  Badge? badge;
-  String? cover;
-  String? descFirst;
-  int? id;
-  int? liveState;
-  String? title;
-
-  DynamicLive2Model.fromJson(Map<String, dynamic> json) {
-    badge = json['badge'] == null ? null : Badge.fromJson(json['badge']);
-    cover = json['cover'];
-    descFirst = json['desc_first'];
-    id = safeToInt(json['id']);
-    liveState = safeToInt(json['live_state']);
-    title = json['title'];
-  }
 }
 
 class ModuleTag {

@@ -394,44 +394,7 @@ class OpusContent extends StatelessWidget {
                     ],
                   );
                 case 'LINK_CARD_TYPE_LIVE':
-                  final live = element.linkCard!.card!.live!;
-                  child = Row(
-                    spacing: 10,
-                    children: [
-                      NetworkImgLayer(
-                        width: 104,
-                        height: 65,
-                        src: live.cover,
-                        borderRadius: const .all(.circular(6)),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: .start,
-                          children: [
-                            Text(live.title!),
-                            if (live.descFirst != null)
-                              Text(
-                                live.descFirst!,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: colorScheme.outline,
-                                ),
-                              ),
-                            if (live.descSecond != null)
-                              Text(
-                                live.descSecond!,
-                                maxLines: 2,
-                                overflow: .ellipsis,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: colorScheme.outline,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
+                  child = const SizedBox.shrink();
                 case 'LINK_CARD_TYPE_OPUS':
                   final opus = element.linkCard!.card!.opus!;
                   child = Row(
@@ -612,7 +575,6 @@ class OpusContent extends StatelessWidget {
                             final url = switch (type) {
                               'LINK_CARD_TYPE_UGC' => card.ugc!.jumpUrl,
                               'LINK_CARD_TYPE_COMMON' => card.common!.jumpUrl,
-                              'LINK_CARD_TYPE_LIVE' => card.live!.jumpUrl,
                               'LINK_CARD_TYPE_OPUS' => card.opus!.jumpUrl,
                               'LINK_CARD_TYPE_MUSIC' => card.music!.jumpUrl,
                               _ => null,

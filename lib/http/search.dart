@@ -103,9 +103,6 @@ abstract final class SearchHttp {
             case SearchType.video:
               data = SearchVideoData.fromJson(dataData);
               break;
-            case SearchType.live_room:
-              data = SearchLiveData.fromJson(dataData);
-              break;
             case SearchType.bili_user:
               data = SearchUserData.fromJson(dataData);
               break;

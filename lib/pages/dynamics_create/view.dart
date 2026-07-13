@@ -1,5 +1,3 @@
-import 'dart:math' show max;
-
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/button/toolbar_icon_button.dart';
@@ -15,10 +13,8 @@ import 'package:PiliPlus/models/common/publish_panel_type.dart';
 import 'package:PiliPlus/models/common/reply/reply_option_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart' show PicModel;
 import 'package:PiliPlus/models/dynamics/vote_model.dart';
-import 'package:PiliPlus/models_new/dynamic/dyn_reserve_info/data.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_topic_top/topic_item.dart';
 import 'package:PiliPlus/pages/common/publish/common_rich_text_pub_page.dart';
-import 'package:PiliPlus/pages/dynamics_create_reserve/view.dart';
 import 'package:PiliPlus/pages/dynamics_create_vote/view.dart';
 import 'package:PiliPlus/pages/dynamics_mention/controller.dart';
 import 'package:PiliPlus/pages/dynamics_select_topic/controller.dart';
@@ -27,8 +23,6 @@ import 'package:PiliPlus/pages/emote/controller.dart';
 import 'package:PiliPlus/pages/emote/view.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
-import 'package:PiliPlus/utils/extension/context_ext.dart';
-import 'package:PiliPlus/utils/grid.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart' hide showTimePicker;
@@ -105,7 +99,6 @@ class _CreateDynPanelState extends CommonRichTextPubPageState<CreateDynPanel> {
   late final Rx<ReplyOptionType> _replyOption;
   late final TextEditingController _titleEditCtr;
   late final _publishTime = Rxn<DateTime>();
-  final _reserveCard = Rxn<ReserveInfoData>();
 
   @override
   void initState() {
@@ -248,7 +241,6 @@ class _CreateDynPanelState extends CommonRichTextPubPageState<CreateDynPanel> {
                 child: _buildEditWidget(theme),
               ),
               const SizedBox(height: 16),
-              _buildReserveItem(theme),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -573,7 +565,6 @@ class _CreateDynPanelState extends CommonRichTextPubPageState<CreateDynPanel> {
         atBtn,
         if (!_isEdit) ...[
           voteBtn,
-          moreBtn,
         ],
         // if (kDebugMode)
         //   ToolbarIconButton(
@@ -586,68 +577,7 @@ class _CreateDynPanelState extends CommonRichTextPubPageState<CreateDynPanel> {
   );
 
   @override
-  Widget buildMorePanel(ThemeData theme) {
-    double height = context.isTablet ? 300 : 170;
-    final keyboardHeight = controller.keyboardHeight;
-    if (keyboardHeight != 0) {
-      height = max(height, keyboardHeight);
-    }
-
-    Widget item({
-      required VoidCallback onTap,
-      required Icon icon,
-      required String title,
-    }) {
-      return GestureDetector(
-        onTap: onTap,
-        child: Column(
-          spacing: 5,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.onInverseSurface,
-                  borderRadius: const BorderRadius.all(Radius.circular(6)),
-                ),
-                alignment: Alignment.center,
-                child: icon,
-              ),
-            ),
-            Text(
-              title,
-              maxLines: 1,
-              style: const TextStyle(fontSize: 13),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final color = theme.colorScheme.onSurfaceVariant;
-
-    return SizedBox(
-      height: height,
-      child: GridView(
-        physics: const ClampingScrollPhysics(),
-        padding: const EdgeInsets.only(left: 12, bottom: 12, right: 12),
-        gridDelegate: SliverGridDelegateWithExtentAndRatio(
-          maxCrossAxisExtent: 65,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          mainAxisExtent: 25,
-        ),
-        children: [
-          item(
-            onTap: _onReserve,
-            icon: Icon(CustomIcons.live_reserve, size: 28, color: color),
-            title: '直播预约',
-          ),
-        ],
-      ),
-    );
-  }
+  Widget buildMorePanel(ThemeData theme) => const SizedBox.shrink();
 
   Widget get voteBtn => ToolbarIconButton(
     onPressed: () async {
@@ -766,7 +696,6 @@ class _CreateDynPanelState extends CommonRichTextPubPageState<CreateDynPanel> {
       return;
     }
 
-    final reserveCard = _reserveCard.value;
     final res = await DynamicsHttp.createDynamic(
       mid: Accounts.main.mid,
       rawText: hasRichText ? null : editController.text,
@@ -779,16 +708,6 @@ class _CreateDynPanelState extends CommonRichTextPubPageState<CreateDynPanel> {
       title: _titleEditCtr.text,
       topic: _topic.value,
       extraContent: extraContent,
-      attachCard: reserveCard == null
-          ? null
-          : {
-              "common_card": {
-                "type": 14,
-                "biz_id": reserveCard.id,
-                "reserve_source": 0,
-                "reserve_lottery": 0,
-              },
-            },
     );
     SmartDialog.dismiss();
     if (res case Success(:final response)) {
@@ -822,66 +741,4 @@ class _CreateDynPanelState extends CommonRichTextPubPageState<CreateDynPanel> {
 
   @override
   void onSave() {}
-
-  Widget _buildReserveItem(ThemeData theme) {
-    return Obx(
-      () {
-        final reserveCard = _reserveCard.value;
-        if (reserveCard == null) {
-          return const SizedBox.shrink();
-        }
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            GestureDetector(
-              onTap: _onReserve,
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.all(Radius.circular(8)),
-                  color: theme.colorScheme.onInverseSurface,
-                ),
-                margin: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
-                padding: const EdgeInsets.fromLTRB(12, 12, 30, 12),
-                child: Column(
-                  spacing: 3,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('直播预约: ${reserveCard.title}'),
-                    Text(
-                      '${DateFormatUtils.longFormatD.format(
-                        DateTime.fromMillisecondsSinceEpoch(reserveCard.livePlanStartTime! * 1000),
-                      )} 直播',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              right: 18,
-              top: 2,
-              child: iconButton(
-                size: 30,
-                iconSize: 18,
-                icon: const Icon(Icons.clear),
-                onPressed: () => _reserveCard.value = null,
-                iconColor: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _onReserve() async {
-    final ReserveInfoData? reserveInfo = await Navigator.of(context).push(
-      GetPageRoute(
-        page: () => CreateReservePage(sid: _reserveCard.value?.id),
-      ),
-    );
-    if (reserveInfo != null) {
-      _reserveCard.value = reserveInfo;
-    }
-  }
 }

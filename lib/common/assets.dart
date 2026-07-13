@@ -14,8 +14,6 @@ abstract final class Assets {
 
   static const livingChart = 'assets/images/live.gif';
   static const livingStatic = 'assets/images/live.png';
-  static const livingRect = 'assets/images/live/live.gif';
-  static const livingBackground = 'assets/images/live/default_bg.webp';
 
   static const thunder1 = 'assets/images/paycoins/ic_thunder_1.png';
   static const thunder2 = 'assets/images/paycoins/ic_thunder_2.png';

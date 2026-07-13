@@ -59,7 +59,6 @@ abstract final class RequestUtils {
   // 1：小视频（已弃用）
   // 2：相簿
   // 3：纯文字
-  // 4：直播（此类型不常用，见分享其他内容消息）
   // 5：视频
   // 6：专栏
   // 7：番剧（id 为 season_id）

@@ -92,10 +92,6 @@ class SearchVideoItemModel extends HorizontalVideoModel {
       case 'ketang':
         badge = '课堂';
         isPugv = true;
-      case 'live_room':
-        badge = '直播';
-        isLive = true;
-        roomId = json['roomid'];
       default:
         if (json['is_union_video'] == 1) {
           badge = '合作';
@@ -156,8 +152,6 @@ class SearchUserItemModel {
     this.level,
     this.gender,
     this.isUpUser,
-    this.isLive,
-    this.roomId,
     this.officialVerify,
     this.isSeniorMember,
   });
@@ -175,8 +169,6 @@ class SearchUserItemModel {
   int? level;
   int? gender;
   int? isUpUser;
-  int? isLive;
-  int? roomId;
   BaseOfficialVerify? officialVerify;
   int? isSeniorMember;
 
@@ -194,90 +186,10 @@ class SearchUserItemModel {
     level = json['level'];
     gender = json['gender'];
     isUpUser = json['is_upuser'];
-    isLive = json['is_live'];
-    roomId = json['room_id'];
     officialVerify = json['official_verify'] == null
         ? null
         : BaseOfficialVerify.fromJson(json['official_verify']);
     isSeniorMember = json['is_senior_member'];
-  }
-}
-
-class SearchLiveData extends SearchNumData<SearchLiveItemModel> {
-  SearchLiveData({
-    super.numResults,
-    super.list,
-  });
-
-  SearchLiveData.fromJson(Map<String, dynamic> json) {
-    numResults = (json['numResults'] as num?)?.toInt();
-    list = json['result']
-        ?.map<SearchLiveItemModel>((e) => SearchLiveItemModel.fromJson(e))
-        .toList();
-  }
-}
-
-class SearchLiveItemModel {
-  SearchLiveItemModel({
-    this.rankOffset,
-    this.uid,
-    this.tags,
-    this.liveTime,
-    this.uname,
-    this.uface,
-    this.face,
-    this.userCover,
-    this.type,
-    required this.title,
-    this.cover,
-    this.pic,
-    this.online,
-    this.rankIndex,
-    this.rankScore,
-    this.roomid,
-    this.attentions,
-    this.cateName,
-  });
-
-  int? rankOffset;
-  int? uid;
-  String? tags;
-  String? liveTime;
-  String? uname;
-  String? uface;
-  String? face;
-  String? userCover;
-  String? type;
-  late List<({bool isEm, String text})> title;
-  String? cover;
-  String? pic;
-  int? online;
-  int? rankIndex;
-  int? rankScore;
-  int? roomid;
-  int? attentions;
-  String? cateName;
-  Map? watchedShow;
-
-  SearchLiveItemModel.fromJson(Map<String, dynamic> json) {
-    rankOffset = json['rank_offset'];
-    uid = json['uid'];
-    tags = json['tags'];
-    liveTime = json['live_time'];
-    uname = json['uname'];
-    uface = json['uface'];
-    face = json['uface'];
-    userCover = json['user_cover'];
-    type = json['type'];
-    title = Em.regTitle(json['title']);
-    cover = json['cover'];
-    pic = json['cover'];
-    online = json['online'];
-    rankIndex = json['rank_index'];
-    rankScore = json['rank_score'];
-    roomid = json['roomid'];
-    attentions = json['attentions'];
-    cateName = Em.regCate(json['cate_name']);
   }
 }
 

@@ -97,11 +97,6 @@ class Privacy {
     ],
     list3: [
       SpaceSettingModel(
-        name: '投稿视频列表中展现直播回放',
-        key: 'live_playback',
-        value: json['live_playback'],
-      ),
-      SpaceSettingModel(
         name: '投稿视频列表中展现包月充电专属视频',
         key: 'charge_video',
         value: json['charge_video'],

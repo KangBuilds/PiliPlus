@@ -3,7 +3,6 @@ import 'package:PiliPlus/models_new/space/space/achieve.dart';
 import 'package:PiliPlus/models_new/space/space/followings_followed_upper.dart';
 import 'package:PiliPlus/models_new/space/space/level_info.dart';
 import 'package:PiliPlus/models_new/space/space/likes.dart';
-import 'package:PiliPlus/models_new/space/space/live_fans_wearing.dart';
 import 'package:PiliPlus/models_new/space/space/official_verify.dart';
 import 'package:PiliPlus/models_new/space/space/pr_info.dart';
 import 'package:PiliPlus/models_new/space/space/relation.dart';
@@ -30,7 +29,6 @@ class SpaceCard {
   Likes? likes;
   Achieve? achieve;
   SpaceRelation? relation;
-  LiveFansWearing? liveFansWearing;
   List<SpaceTag>? spaceTag;
   SpacePrInfo? prInfo;
   FollowingsFollowedUpper? followingsFollowedUpper;
@@ -56,7 +54,6 @@ class SpaceCard {
     this.likes,
     this.achieve,
     this.relation,
-    this.liveFansWearing,
     this.spaceTag,
     this.prInfo,
     this.followingsFollowedUpper,
@@ -99,11 +96,6 @@ class SpaceCard {
     relation: json['relation'] == null
         ? null
         : SpaceRelation.fromJson(json['relation'] as Map<String, dynamic>),
-    liveFansWearing: json['live_fans_wearing'] == null
-        ? null
-        : LiveFansWearing.fromJson(
-            json['live_fans_wearing'] as Map<String, dynamic>,
-          ),
     spaceTag: (json['space_tag'] as List<dynamic>?)
         ?.where((e) => const ['location', 'real_name'].contains(e['type']))
         .map((e) => SpaceTag.fromJson(e as Map<String, dynamic>))

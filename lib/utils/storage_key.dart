@@ -22,8 +22,6 @@ abstract final class SettingBoxKey {
       enableAutoEnter = 'enableAutoEnter',
       enableAutoExit = 'enableAutoExit',
       enableOnlineTotal = 'enableOnlineTotal',
-      superChatType = 'superChatType',
-      fullScreenSCWidth = 'fullScreenSCWidth',
       keyboardControl = 'keyboardControl',
       pauseOnMinimize = 'pauseOnMinimize',
       pgcSkipType = 'pgcSkipType',
@@ -101,7 +99,6 @@ abstract final class SettingBoxKey {
       mainTabBarView = 'mainTabBarView',
       searchSuggestion = 'searchSuggestion',
       showDecorate = 'showDynDecorate',
-      showMedal = 'showMedal',
       enableLivePhoto = 'enableLivePhoto',
       showSeekPreview = 'showSeekPreview',
       showDmChart = 'showDmChart',
@@ -112,7 +109,6 @@ abstract final class SettingBoxKey {
       isPureBlackTheme = 'isPureBlackTheme',
       antiGoodsDyn = 'antiGoodsDyn',
       antiGoodsReply = 'antiGoodsReply',
-      expandDynLivePanel = 'expandDynLivePanel',
       springDescription = 'springDescription',
       enableHttp2 = 'enableHttp2',
       slideDismissReplyPage = 'slideDismissReplyPage',
@@ -124,8 +120,6 @@ abstract final class SettingBoxKey {
       enableSlideFS = 'enableSlideFS',
       retryCount = 'retryCount',
       retryDelay = 'retryDelay',
-      liveQuality = 'liveQuality',
-      liveQualityCellular = 'liveQualityCellular',
       appFontWeight = 'appFontWeight',
       fastForBackwardDuration = 'fastForBackwardDuration',
       recordSearchHistory = 'recordSearchHistory',
@@ -152,8 +146,7 @@ abstract final class SettingBoxKey {
       touchSlopH = 'touchSlopH',
       floatingNavBar = 'floatingNavBar',
       removeSafeArea = 'removeSafeArea',
-      angleDegrees = 'angleDegrees',
-      liveStream = 'liveStream';
+      angleDegrees = 'angleDegrees';
 
   static const String minimizeOnExit = 'minimizeOnExit',
       windowSize = 'windowSize',
@@ -189,7 +182,6 @@ abstract final class SettingBoxKey {
       blockTrack = 'blockTrack';
 
   static const String enableShowDanmaku = 'enableShowDanmaku',
-      enableShowLiveDanmaku = 'enableShowLiveDanmaku',
       pipNoDanmaku = 'pipNoDanmaku',
       showVipDanmaku = 'showVipDanmaku',
       mergeDanmaku = 'mergeDanmaku',
@@ -226,14 +218,13 @@ abstract final class SettingBoxKey {
       hideTopBar = 'hideSearchBar',
       hideBottomBar = 'hideTabBar',
       barHideType = 'barHideType',
-      tabBarSort = 'tabBarSort',
+      tabBarSort = 'tabBarSortV2',
       dynamicBadgeMode = 'dynamicBadgeMode',
       msgBadgeMode = 'msgBadgeMode',
       msgUnReadTypeV2 = 'msgUnReadTypeV2',
       navBarSort = 'navBarSort',
       tempPlayerConf = 'tempPlayerConf',
       reduceLuxColor = 'reduceLuxColor',
-      liveCdnUrl = 'liveCdnUrl',
       saveReply = 'saveReply';
 }
 

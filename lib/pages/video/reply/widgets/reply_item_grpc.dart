@@ -22,7 +22,6 @@ import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/vote.dart';
-import 'package:PiliPlus/pages/member/widget/medal_widget.dart';
 import 'package:PiliPlus/pages/save_panel/view.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/reply/widgets/zan_grpc.dart';
@@ -30,14 +29,12 @@ import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/bili_utils.dart';
 import 'package:PiliPlus/utils/color_utils.dart';
-import 'package:PiliPlus/utils/danmaku_utils.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
-import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -195,22 +192,6 @@ class ReplyItemGrpc extends StatelessWidget {
                           size: PBadgeSize.small,
                           isStack: false,
                           fontSize: 9,
-                        )
-                      else if (GlobalData().showMedal &&
-                          member.hasFansMedalLevel())
-                        MedalWidget(
-                          medalName: member.fansMedalName,
-                          level: member.fansMedalLevel.toInt(),
-                          backgroundColor: DmUtils.decimalToColor(
-                            member.fansMedalColor.toInt(),
-                          ),
-                          nameColor: DmUtils.decimalToColor(
-                            member.fansMedalColorName.toInt(),
-                          ),
-                          padding: const .symmetric(
-                            horizontal: 6,
-                            vertical: 1.5,
-                          ),
                         ),
                     ],
                   ),

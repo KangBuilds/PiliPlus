@@ -12,7 +12,6 @@ import 'package:PiliPlus/common/widgets/marquee.dart';
 import 'package:PiliPlus/http/danmaku.dart';
 import 'package:PiliPlus/http/danmaku_block.dart';
 import 'package:PiliPlus/http/init.dart';
-import 'package:PiliPlus/http/live.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/super_resolution_type.dart';
@@ -272,50 +271,6 @@ class HeaderControl extends StatefulWidget {
             cid: ctr.cid!,
             id: extra.id,
             content: reasonType == 0 ? reasonDesc : null,
-          );
-        },
-      );
-    } else {
-      return SmartDialog.showToast('请先登录');
-    }
-  }
-
-  static Future<void> reportLiveDanmaku(
-    BuildContext context, {
-    required int roomId,
-    required String msg,
-    required LiveDanmaku extra,
-  }) {
-    if (Accounts.main.isLogin) {
-      return autoWrapReportDialog(
-        context,
-        ban: false,
-        ReportOptions.liveDanmakuReport,
-        (reasonType, reasonDesc, banUid) {
-          // if (banUid) {
-          //   final filter = ctr.filters;
-          //   if (filter.dmUid.add(extra.mid)) {
-          //     filter.count++;
-          //     GStorage.localCache.put(
-          //       LocalCacheKey.danmakuFilterRules,
-          //       filter,
-          //     );
-          //   }
-          //   DanmakuFilterHttp.danmakuFilterAdd(
-          //     filter: extra.mid,
-          //     type: 2,
-          //   );
-          // }
-          return LiveHttp.liveDmReport(
-            roomId: roomId,
-            mid: extra.mid,
-            msg: msg,
-            reason: ReportOptions.liveDanmakuReport['']![reasonType]!,
-            reasonId: reasonType,
-            dmType: extra.dmType,
-            idStr: extra.id,
-            ts: extra.ts,
-            sign: extra.ct,
           );
         },
       );

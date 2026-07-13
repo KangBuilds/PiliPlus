@@ -15,7 +15,6 @@ import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
@@ -62,12 +61,6 @@ class HistoryItem extends StatelessWidget {
                       'type': 'read',
                     },
                   );
-                } else if (business == 'live') {
-                  if (item.liveStatus == 1) {
-                    PageUtils.toLiveRoom(item.history.oid);
-                  } else {
-                    SmartDialog.showToast('直播未开播');
-                  }
                 } else if (business == 'pgc') {
                   PageUtils.viewPgc(epId: item.history.epid);
                 } else if (business == 'cheese') {
@@ -155,9 +148,7 @@ class HistoryItem extends StatelessWidget {
                                 text: item.badge,
                                 top: 6.0,
                                 right: 6.0,
-                                type: business == 'live' && item.liveStatus != 1
-                                    ? PBadgeType.gray
-                                    : PBadgeType.primary,
+                                type: PBadgeType.primary,
                               ),
                             if (hasDuration &&
                                 item.progress != null &&
@@ -228,7 +219,6 @@ class HistoryItem extends StatelessWidget {
                   if (business != 'pgc' &&
                       item.badge != '番剧' &&
                       item.tagName?.contains('动画') != true &&
-                      business != 'live' &&
                       business?.contains('article') != true)
                     PopupMenuItem(
                       onTap: () =>

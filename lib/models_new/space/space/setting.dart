@@ -10,7 +10,6 @@ class SpaceSetting {
   int? bbq;
   int? dressUp;
   int? disableFollowing;
-  int? livePlayback;
   int? closeSpaceMedal;
   int? onlyShowWearing;
   int? disableShowSchool;
@@ -31,7 +30,6 @@ class SpaceSetting {
     this.bbq,
     this.dressUp,
     this.disableFollowing,
-    this.livePlayback,
     this.closeSpaceMedal,
     this.onlyShowWearing,
     this.disableShowSchool,
@@ -53,7 +51,6 @@ class SpaceSetting {
     bbq: json['bbq'] as int?,
     dressUp: json['dress_up'] as int?,
     disableFollowing: json['disable_following'] as int?,
-    livePlayback: json['live_playback'] as int?,
     closeSpaceMedal: json['close_space_medal'] as int?,
     onlyShowWearing: json['only_show_wearing'] as int?,
     disableShowSchool: json['disable_show_school'] as int?,

@@ -1,5 +1,4 @@
 import 'package:PiliPlus/models/model_avatar.dart';
-import 'package:PiliPlus/models_new/live/live_feed_index/watched_show.dart';
 
 class MemberInfoModel {
   MemberInfoModel({
@@ -13,7 +12,6 @@ class MemberInfoModel {
     this.topPhoto,
     this.official,
     this.vip,
-    this.liveRoom,
     this.isSeniorMember,
   });
 
@@ -27,7 +25,6 @@ class MemberInfoModel {
   String? topPhoto;
   BaseOfficialVerify? official;
   Vip? vip;
-  LiveRoom? liveRoom;
   int? isSeniorMember;
 
   MemberInfoModel.fromJson(Map<String, dynamic> json) {
@@ -43,44 +40,6 @@ class MemberInfoModel {
         ? null
         : BaseOfficialVerify.fromJson(json['official']);
     vip = Vip.fromJson(json['vip']);
-    liveRoom = json['live_room'] != null
-        ? LiveRoom.fromJson(json['live_room'])
-        : null;
     isSeniorMember = json['is_senior_member'];
-  }
-}
-
-class LiveRoom {
-  LiveRoom({
-    this.roomStatus,
-    this.liveStatus,
-    this.url,
-    this.title,
-    this.cover,
-    this.roomId,
-    this.roundStatus,
-    this.watchedShow,
-  });
-
-  int? roomStatus;
-  int? liveStatus;
-  String? url;
-  String? title;
-  String? cover;
-  int? roomId;
-  int? roundStatus;
-  WatchedShow? watchedShow;
-
-  LiveRoom.fromJson(Map<String, dynamic> json) {
-    roomStatus = json['roomStatus'];
-    liveStatus = json['liveStatus'];
-    url = json['url'];
-    title = json['title'];
-    cover = json['cover'];
-    roomId = json['roomid'];
-    roundStatus = json['roundStatus'];
-    watchedShow = json['watched_show'] == null
-        ? null
-        : WatchedShow.fromJson(json['watched_show']);
   }
 }

@@ -22,31 +22,3 @@ class VideoDanmaku extends DanmakuExtra {
     this.isLike = false,
   });
 }
-
-class LiveDanmaku extends DanmakuExtra {
-  @override
-  final Object id;
-  @override
-  final Object mid;
-
-  final int dmType;
-
-  final Object ts;
-  final Object ct;
-
-  const LiveDanmaku({
-    required this.id,
-    required this.mid,
-    required this.dmType,
-    required this.ts,
-    required this.ct,
-  });
-
-  Map<String, dynamic> toJson() => <String, dynamic>{
-    'id': id,
-    'mid': mid,
-    'dm_type': dmType,
-    'ts': ts,
-    'ct': ct,
-  };
-}

@@ -241,18 +241,6 @@ abstract final class ReportOptions {
     },
   };
 
-  static Map<String, Map<int, String>> get liveDanmakuReport => const {
-    '': {
-      1: '违法违规',
-      2: '低俗色情',
-      3: '垃圾广告',
-      4: '辱骂引战',
-      5: '政治敏感',
-      6: '青少年不良信息',
-      7: '其他', // avoid show form
-    },
-  };
-
   static Map<String, Map<int, String>> get imMsgReport => const {
     '': {
       1: '色情低俗',

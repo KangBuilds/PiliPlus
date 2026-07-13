@@ -14,12 +14,8 @@
 //   blockMsg,
 //   // 公告信息
 //   publicMsg,
-//   // 直播活动
-//   liveActivity,
 //   // 活动稿件
 //   activityFile,
-//   // 直播公告
-//   livePublic,
 //   // 相簿
 //   album,
 //   // 专栏

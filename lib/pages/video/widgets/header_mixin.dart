@@ -55,7 +55,7 @@ mixin HeaderMixin<T extends StatefulWidget> on State<T> {
   }
 
   /// 弹幕功能
-  void showSetDanmaku({bool isLive = false}) {
+  void showSetDanmaku() {
     // 屏蔽类型
     const blockTypesList = [
       (value: 2, label: '滚动'),
@@ -180,49 +180,47 @@ mixin HeaderMixin<T extends StatefulWidget> on State<T> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  if (!isLive) ...[
-                    Row(
-                      mainAxisAlignment: .spaceBetween,
-                      children: [
-                        Text('智能云屏蔽 ${DanmakuOptions.danmakuWeight} 级'),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          onPressed: () => Get
-                            ..back()
-                            ..toNamed(
-                              '/danmakuBlock',
-                              arguments: plPlayerController,
-                            ),
-                          child: Text(
-                            "屏蔽管理(${plPlayerController.filters.count})",
-                          ),
+                  Row(
+                    mainAxisAlignment: .spaceBetween,
+                    children: [
+                      Text('智能云屏蔽 ${DanmakuOptions.danmakuWeight} 级'),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 0,
-                        bottom: 6,
-                        left: 10,
-                        right: 10,
-                      ),
-                      child: SliderTheme(
-                        data: sliderTheme,
-                        child: Slider(
-                          min: 0,
-                          max: 11,
-                          value: DanmakuOptions.danmakuWeight.toDouble(),
-                          divisions: 11,
-                          label: DanmakuOptions.danmakuWeight.toString(),
-                          onChanged: updateDanmakuWeight,
+                        onPressed: () => Get
+                          ..back()
+                          ..toNamed(
+                            '/danmakuBlock',
+                            arguments: plPlayerController,
+                          ),
+                        child: Text(
+                          "屏蔽管理(${plPlayerController.filters.count})",
                         ),
                       ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      top: 0,
+                      bottom: 6,
+                      left: 10,
+                      right: 10,
                     ),
-                  ],
+                    child: SliderTheme(
+                      data: sliderTheme,
+                      child: Slider(
+                        min: 0,
+                        max: 11,
+                        value: DanmakuOptions.danmakuWeight.toDouble(),
+                        divisions: 11,
+                        label: DanmakuOptions.danmakuWeight.toString(),
+                        onChanged: updateDanmakuWeight,
+                      ),
+                    ),
+                  ),
                   const Text('按类型屏蔽'),
                   SingleChildScrollView(
                     scrollDirection: .horizontal,
