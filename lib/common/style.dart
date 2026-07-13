@@ -3,7 +3,7 @@ import 'package:flutter/material.dart'
 
 abstract final class Style {
   static const cardSpace = 8.0;
-  static const safeSpace = 12.0;
+  static const safeSpace = 8.0;
   static const mdRadius = BorderRadius.all(imgRadius);
   static const imgRadius = Radius.circular(10);
   static const aspectRatio = 16 / 10;
