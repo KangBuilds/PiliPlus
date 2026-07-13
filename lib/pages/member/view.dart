@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:PiliPlus/common/style.dart';
@@ -32,11 +31,8 @@ import 'package:PiliPlus/pages/member_pgc/view.dart';
 import 'package:PiliPlus/pages/member_shop/view.dart';
 import 'package:PiliPlus/pages/member_video_web/archive/view.dart';
 import 'package:PiliPlus/pages/member_video_web/season_series/view.dart';
-import 'package:PiliPlus/utils/android/android_helper.dart';
-import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
-import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -691,30 +687,8 @@ class _MemberPageState extends State<MemberPage> {
   }
 
   void _createShortcut() {
-    if (Platform.isIOS) {
-      PageUtils.launchURL(
-        'https://www.bilibili.com/blackboard/disablelink/go-to-up-space.html?mid=$_mid',
-      );
-    } else if (Platform.isAndroid) {
-      _createShortcutAndroid();
-    }
-  }
-
-  Future<void> _createShortcutAndroid() async {
-    try {
-      SmartDialog.showLoading();
-      final file = (await CacheManager.manager.getSingleFile(
-        '${_userController.userAvatar!}@200w_200h.webp'.http2https,
-      ));
-      SmartDialog.dismiss();
-      PiliAndroidHelper.createShortcut(
-        _userController.mid.toString(),
-        'bilibili://space/${_userController.mid}',
-        _userController.username!,
-        file.path,
-      );
-    } catch (e) {
-      SmartDialog.showToast(e.toString());
-    }
+    PageUtils.launchURL(
+      'https://www.bilibili.com/blackboard/disablelink/go-to-up-space.html?mid=$_mid',
+    );
   }
 }

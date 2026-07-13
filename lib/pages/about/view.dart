@@ -13,7 +13,6 @@ import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/services/logger.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
-import 'package:PiliPlus/utils/android/android_helper.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/device_utils.dart';
@@ -27,7 +26,6 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart' hide ListTile;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key, this.showAppBar = true});
@@ -177,13 +175,6 @@ Commit Hash: ${BuildConfig.commitHash}''',
             title: const Text('Source Code'),
             subtitle: Text(Constants.sourceCodeUrl, style: subTitleStyle),
           ),
-          if (Platform.isAndroid)
-            ListTile(
-              onTap: PiliAndroidHelper.openLinkVerifySettings,
-              leading: const Icon(MdiIcons.linkBoxOutline),
-              title: const Text('打开受支持的链接'),
-              trailing: Icon(Icons.arrow_forward, size: 16, color: outline),
-            ),
           ListTile(
             onTap: () =>
                 PageUtils.launchURL('${Constants.sourceCodeUrl}/issues'),

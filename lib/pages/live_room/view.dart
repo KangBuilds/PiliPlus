@@ -35,7 +35,6 @@ import 'package:PiliPlus/plugin/pl_player/utils/danmaku_options.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/view/view.dart';
 import 'package:PiliPlus/services/service_locator.dart';
-import 'package:PiliPlus/utils/android/bindings.g.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
@@ -56,7 +55,6 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart' hide PageView;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
 
 const baseWhite = Color(0xFFEEEEEE);
 
@@ -175,9 +173,6 @@ class _LiveRoomPageState extends State<LiveRoomPage>
   void dispose() {
     removeObserverMobile(this);
     videoPlayerServiceHandler?.onVideoDetailDispose(heroTag);
-    if (Platform.isAndroid && !plPlayerController.setSystemBrightness) {
-      ScreenBrightnessPlatform.instance.resetApplicationScreenBrightness();
-    }
     PlPlayerController.setPlayCallBack(null);
     plPlayerController
       ..removeStatusLister(playerListener)
@@ -216,17 +211,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
   @override
   Widget build(BuildContext context) {
     Widget child;
-    if (Platform.isAndroid && AndroidHelper.isPipMode) {
-      child = videoPlayerPanel(
-        isFullScreen,
-        width: maxWidth,
-        height: maxHeight,
-        isPipMode: true,
-        needDm: !plPlayerController.pipNoDanmaku,
-      );
-    } else {
-      child = childWhenDisabled;
-    }
+    child = childWhenDisabled;
     if (plPlayerController.keyboardControl) {
       child = PlayerFocus(
         plPlayerController: plPlayerController,

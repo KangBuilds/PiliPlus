@@ -2,12 +2,6 @@ param(
     [string]$platform = ""
 )
 
-# TODO: remove
-# https://github.com/flutter/flutter/issues/182281
-$NewOverScrollIndicator = "362b1de29974ffc1ed6faa826e1df870d7bec75f";
-
-$BottomSheetAndroidPatch = "lib/scripts/bottom_sheet_android.patch"
-
 # https://github.com/bggRGjQaUbCoE/PiliPlus/issues/1906
 $BottomSheetIOSFlutterPatch = "lib/scripts/bottom_sheet_ios_flutter.patch"
 $BottomSheetIOSPiliPlusPatch = "lib/scripts/bottom_sheet_ios_piliplus.patch"
@@ -69,22 +63,10 @@ $patches = @($ModalBarrierPatch, $TextSelectionPatch, $MouseCursorPatch,
             $PopupMenuPatch, $FABPatch, $SelectableRegionPatch, $SelectableRegionSelectionPatch)
 
 switch ($platform.ToLower()) {
-    "android" {
-        $reverts += $NewOverScrollIndicator
-        $patches += $BottomSheetAndroidPatch
-        $patches += $ScrollViewPatch
-        $patches += $NavigatorPatch
-    }
     "ios" {
         $patches += $ScrollViewPatch
         $patches += $BottomSheetIOSFlutterPatch
         $patches += $NavigatorPatch
-    }
-    "linux" {
-    }
-    "macos" {
-    }
-    "windows" {
     }
     default {}
 }

@@ -17,7 +17,6 @@ import 'package:PiliPlus/pages/common/dyn/common_dyn_page.dart';
 import 'package:PiliPlus/pages/music/controller.dart';
 import 'package:PiliPlus/pages/music/video/view.dart';
 import 'package:PiliPlus/utils/accounts.dart';
-import 'package:PiliPlus/utils/android/android_helper.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
@@ -689,13 +688,6 @@ class _MusicDetailPageState extends CommonDynPageState<MusicDetailPage> {
   }
 
   void _searchMusic(MusicDetail item) {
-    if (!Platform.isAndroid ||
-        !PiliAndroidHelper.openMusic(
-          item.musicTitle!,
-          item.originArtist ?? item.originArtistList,
-          item.album,
-        )) {
-      Utils.copyText(item.musicTitle!);
-    }
+    Utils.copyText(item.musicTitle!);
   }
 }

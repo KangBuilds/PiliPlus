@@ -42,7 +42,6 @@ import 'package:PiliPlus/services/shutdown_timer_service.dart'
     show shutdownTimerService;
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
-import 'package:PiliPlus/utils/android/bindings.g.dart';
 import 'package:PiliPlus/utils/connectivity_utils.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
@@ -1962,30 +1961,6 @@ class HeaderControlState extends State<HeaderControl>
                   ),
                 ),
               ),
-              if (Platform.isAndroid ||
-                  (PlatformUtils.isDesktop && !isFullScreen))
-                SizedBox(
-                  width: btnWidth,
-                  height: btnHeight,
-                  child: IconButton(
-                    tooltip: '画中画',
-                    style: btnStyle,
-                    onPressed: () {
-                      if (PlatformUtils.isDesktop) {
-                        plPlayerController.toggleDesktopPip();
-                        return;
-                      }
-                      if (AndroidHelper.isPipAvailable) {
-                        plPlayerController.enterPip();
-                      }
-                    },
-                    icon: const Icon(
-                      Icons.picture_in_picture_outlined,
-                      size: 19,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
               SizedBox(
                 width: btnWidth,
                 height: btnHeight,

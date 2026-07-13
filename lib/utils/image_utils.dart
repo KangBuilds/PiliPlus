@@ -6,11 +6,8 @@ import 'dart:typed_data' show Uint8List;
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
-import 'package:PiliPlus/utils/device_utils.dart';
 import 'package:PiliPlus/utils/extension/file_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
-import 'package:PiliPlus/utils/global_data.dart';
-import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/permission_handler.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/share_utils.dart';
@@ -26,9 +23,7 @@ import 'package:share_plus/share_plus.dart';
 
 abstract final class ImageUtils {
   static bool silentDownImg = Pref.silentDownImg;
-  static final _albumPath = Platform.isAndroid
-      ? 'Pictures/${Constants.appName}'
-      : Constants.appName;
+  static final _albumPath = Constants.appName;
 
   // 图片分享
   static Future<void> onShareImg(String url) async {
@@ -78,13 +73,6 @@ abstract final class ImageUtils {
   }
 
   static FutureOr<bool> checkPermissionDependOnSdkInt() {
-    if (Platform.isAndroid) {
-      if (DeviceUtils.sdkInt < 29) {
-        return requestPer();
-      } else {
-        return true;
-      }
-    }
     return requestPer();
   }
 

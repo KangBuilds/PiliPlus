@@ -50,7 +50,6 @@ import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/forward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/mpv_convert_webp.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
-import 'package:PiliPlus/utils/android/bindings.g.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/connectivity_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
@@ -81,7 +80,6 @@ import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
-import 'package:window_manager/window_manager.dart';
 
 part 'widgets.dart';
 
@@ -944,14 +942,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     colorScheme = ColorScheme.of(context);
   }
 
-  @override
-  void didUpdateWidget(covariant PLVideoPlayer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (Platform.isAndroid && AndroidHelper.isPipMode) {
-      plPlayerController.controls = false;
-    }
-  }
-
   void _onPanStart(ScaleStartDetails details) {
     _gestureType = null;
     _initialFocalPoint = details.localFocalPoint;
@@ -1597,13 +1587,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                     controller: _animationController,
                     isFullScreen: isFullScreen,
                     removeSafeArea: plPlayerController.removeSafeArea,
-                    child: plPlayerController.isDesktopPip
-                        ? GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onPanStart: (_) => windowManager.startDragging(),
-                            child: widget.headerControl,
-                          )
-                        : widget.headerControl,
+                    child: widget.headerControl,
                   ),
                   AppBarAni(
                     isTop: false,
@@ -1860,8 +1844,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                             size: 20,
                             color: Colors.white,
                           ),
-                          onLongPress:
-                              (Platform.isAndroid || kDebugMode) && !isLive
+                          onLongPress: kDebugMode && !isLive
                               ? screenshotWebp
                               : null,
                           onTap: plPlayerController.takeScreenshot,

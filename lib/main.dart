@@ -2,11 +2,9 @@ import 'dart:io';
 
 import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/common/constants.dart';
-import 'package:PiliPlus/common/widgets/back_detector.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
 import 'package:PiliPlus/common/widgets/route_aware_mixin.dart';
 import 'package:PiliPlus/common/widgets/scale_app.dart';
-import 'package:PiliPlus/common/widgets/scroll_behavior.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
@@ -16,13 +14,9 @@ import 'package:PiliPlus/services/download/download_service.dart';
 import 'package:PiliPlus/services/logger.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
-import 'package:PiliPlus/utils/calc_window_position.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/json_file_handler.dart';
-import 'package:PiliPlus/utils/max_screen_size.dart';
-import 'package:PiliPlus/utils/path_utils.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -30,55 +24,18 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
-import 'package:collection/collection.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
-import 'package:window_manager/window_manager.dart' hide calcWindowPosition;
-
-WebViewEnvironment? webViewEnvironment;
 
 EdgeInsets? tmpPadding;
-
-Future<void> _initDownPath() async {
-  if (PlatformUtils.isDesktop) {
-    final customDownPath = Pref.downloadPath;
-    if (customDownPath != null && customDownPath.isNotEmpty) {
-      try {
-        final dir = Directory(customDownPath);
-        if (!dir.existsSync()) {
-          await dir.create(recursive: true);
-        }
-        downloadPath = customDownPath;
-      } catch (e) {
-        downloadPath = defDownloadPath;
-        await GStorage.setting.delete(SettingBoxKey.downloadPath);
-        if (kDebugMode) {
-          debugPrint('download path error: $e');
-        }
-      }
-    } else {
-      downloadPath = defDownloadPath;
-    }
-  } else if (Platform.isAndroid) {
-    final externalStorageDirPath = (await getExternalStorageDirectory())?.path;
-    downloadPath = externalStorageDirPath != null
-        ? path.join(externalStorageDirPath, PathUtils.downloadDir)
-        : defDownloadPath;
-  } else {
-    downloadPath = defDownloadPath;
-  }
-}
 
 Future<void> _initTmpPath() async {
   tmpDirPath = (await getTemporaryDirectory()).path;
@@ -100,8 +57,8 @@ void main() async {
     exit(0);
   }
   ScaledWidgetsFlutterBinding.instance.scaleFactor = Pref.uiScale;
+  downloadPath = defDownloadPath;
   await Future.wait([
-    _initDownPath(),
     _initTmpPath(),
     CacheManager.ensureInitialized(),
   ]);
@@ -110,23 +67,10 @@ void main() async {
     ..lazyPut(DownloadService.new);
   HttpOverrides.global = _CustomHttpOverrides();
 
-  if (PlatformUtils.isMobile) {
-    if (Platform.isAndroid) MaxScreenSize.init();
-    await Future.wait([
-      if (Pref.horizontalScreen) ?fullMode() else ?portraitUpMode(),
-      setupServiceLocator(),
-    ]);
-  } else if (Platform.isWindows) {
-    if (await WebViewEnvironment.getAvailableVersion() != null) {
-      webViewEnvironment = await WebViewEnvironment.create(
-        settings: WebViewEnvironmentSettings(
-          userDataFolder: path.join(appSupportDirPath, 'flutter_inappwebview'),
-        ),
-      );
-    }
-  } else if (Platform.isMacOS) {
-    await setupServiceLocator();
-  }
+  await Future.wait([
+    if (Pref.horizontalScreen) ?fullMode() else ?portraitUpMode(),
+    setupServiceLocator(),
+  ]);
 
   Request();
   Request.setCookie();
@@ -134,53 +78,16 @@ void main() async {
 
   SmartDialog.config.toast = SmartConfigToast(displayType: .onlyRefresh);
 
-  if (PlatformUtils.isMobile) {
-    SystemChrome.setEnabledSystemUIMode(.edgeToEdge);
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarDividerColor: Colors.transparent,
-        statusBarColor: Colors.transparent,
-        systemNavigationBarContrastEnforced: false,
-      ),
-    );
-    if (Platform.isAndroid) {
-      FlutterDisplayMode.supported.then((mode) {
-        final String? storageDisplay = GStorage.setting.get(
-          SettingBoxKey.displayMode,
-        );
-        DisplayMode? displayMode;
-        if (storageDisplay != null) {
-          displayMode = mode.firstWhereOrNull(
-            (e) => e.toString() == storageDisplay,
-          );
-        }
-        FlutterDisplayMode.setPreferredMode(displayMode ?? DisplayMode.auto);
-      });
-    } else {
-      ScreenBrightnessPlatform.instance.setAutoReset(false);
-    }
-  } else if (PlatformUtils.isDesktop) {
-    await windowManager.ensureInitialized();
-
-    final windowOptions = WindowOptions(
-      minimumSize: const Size(400, 720),
-      skipTaskbar: false,
-      titleBarStyle: Pref.showWindowTitleBar
-          ? TitleBarStyle.normal
-          : TitleBarStyle.hidden,
-      title: Constants.appName,
-    );
-    windowManager.waitUntilReadyToShow(windowOptions, () async {
-      final windowSize = Pref.windowSize;
-      await windowManager.setBounds(
-        await calcWindowPosition(windowSize) & windowSize,
-      );
-      if (Pref.isWindowMaximized) await windowManager.maximize();
-      await windowManager.show();
-      await windowManager.focus();
-    });
-  }
+  SystemChrome.setEnabledSystemUIMode(.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      statusBarColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+    ),
+  );
+  ScreenBrightnessPlatform.instance.setAutoReset(false);
 
   if (Pref.dynamicColor) {
     await MyApp.initPlatformState();
@@ -214,26 +121,6 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   static ColorScheme? _light, _dark;
-
-  static void _onBack() {
-    if (SmartDialog.checkExist()) {
-      SmartDialog.dismiss();
-      return;
-    }
-
-    final route = Get.routing.route;
-    if (route is GetPageRoute) {
-      if (route.popDisposition == .doNotPop) {
-        route.onPopInvokedWithResult(false, null);
-        return;
-      }
-    }
-
-    final navigator = Get.key.currentState;
-    if (navigator?.canPop() ?? false) {
-      navigator!.pop();
-    }
-  }
 
   static (ThemeData, ThemeData) getAllTheme() {
     final dynamicColor = _light != null && _dark != null && Pref.dynamicColor;
@@ -287,9 +174,6 @@ class MyApp extends StatelessWidget {
         routeObserver,
         FlutterSmartDialog.observer,
       ],
-      scrollBehavior: PlatformUtils.isDesktop
-          ? const CustomScrollBehavior(desktopDragDevices)
-          : null,
     );
   }
 
@@ -317,12 +201,6 @@ class MyApp extends StatelessWidget {
           viewPadding: tmpPadding,
         ),
         child: child!,
-      );
-    }
-    if (PlatformUtils.isDesktop) {
-      return BackDetector(
-        onBack: _onBack,
-        child: child,
       );
     }
     return child;

@@ -371,12 +371,6 @@ List<SettingsModel> get styleSettings => [
     defaultVal: false,
     onChanged: (value) => Get.find<MainController>().directExitOnBack = value,
   ),
-  if (Platform.isAndroid)
-    NormalModel(
-      onTap: (context, setState) => Get.toNamed('/displayModeSetting'),
-      title: '屏幕帧率',
-      leading: const Icon(Icons.autofps_select_outlined),
-    ),
 ];
 
 void _showQualityDialog({

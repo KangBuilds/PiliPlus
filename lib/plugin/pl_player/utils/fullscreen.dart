@@ -1,7 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Platform;
-
-import 'package:PiliPlus/utils/device_utils.dart';
 import 'package:flutter/services.dart'
     show SystemChrome, MethodChannel, SystemUiOverlay, DeviceOrientation;
 
@@ -79,7 +76,7 @@ Future<void>? showSystemBar() {
   }
   _showSystemBar = true;
   return SystemChrome.setEnabledSystemUIMode(
-    Platform.isAndroid && DeviceUtils.sdkInt < 29 ? .manual : .edgeToEdge,
+    .edgeToEdge,
     overlays: SystemUiOverlay.values,
   );
 }

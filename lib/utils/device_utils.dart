@@ -1,10 +1,6 @@
-import 'package:PiliPlus/utils/android/bindings.g.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:flutter/widgets.dart' show WidgetsBinding, Size;
 
 abstract final class DeviceUtils {
-  static final int sdkInt = AndroidHelper.sdkInt();
-
   static bool get isTablet {
     return size.shortestSide >= 600;
   }
@@ -14,9 +10,5 @@ abstract final class DeviceUtils {
     return view.physicalSize / view.devicePixelRatio;
   }
 
-  static String get platformName => PlatformUtils.isDesktop
-      ? 'desktop'
-      : isTablet
-      ? 'pad'
-      : 'phone';
+  static String get platformName => isTablet ? 'pad' : 'phone';
 }
