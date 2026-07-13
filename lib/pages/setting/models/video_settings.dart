@@ -68,16 +68,9 @@ List<SettingsModel> get videoSettings => [
     getSubtitle: () => '当前使用：${Pref.liveCdnUrl ?? "默认"}',
     onTap: _showLiveCDNDialog,
   ),
-  const SwitchModel(
-    title: 'CDN 测速',
-    leading: Icon(Icons.speed),
-    subtitle: '测速通过模拟加载视频实现，注意流量消耗，结果仅供参考',
-    setKey: SettingBoxKey.cdnSpeedTest,
-    defaultVal: true,
-  ),
   SwitchModel(
     title: '音频不跟随 CDN 设置',
-    subtitle: '直接采用备用 URL，可解决部分视频无声',
+    subtitle: '音频使用自动分配 URL，可解决部分视频无声',
     leading: const Icon(MdiIcons.musicNotePlus),
     setKey: SettingBoxKey.disableAudioCDN,
     defaultVal: false,
@@ -179,7 +172,11 @@ Future<void> _showCDNDialog(BuildContext context, VoidCallback setState) async {
   );
   if (res != null) {
     VideoUtils.cdnService = res;
-    await GStorage.setting.put(SettingBoxKey.CDNService, res.name);
+    if (res.host case final host?) {
+      await GStorage.setting.put(SettingBoxKey.CDNService, host);
+    } else {
+      await GStorage.setting.delete(SettingBoxKey.CDNService);
+    }
     setState();
   }
 }

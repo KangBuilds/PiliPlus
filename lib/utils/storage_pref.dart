@@ -289,10 +289,10 @@ abstract final class Pref {
   );
 
   static CDNService get defaultCDNService {
-    if (_setting.get(SettingBoxKey.CDNService) case final String cdnName) {
-      return CDNService.values.byName(cdnName);
-    }
-    return CDNService.backupUrl;
+    final value = _setting.get(SettingBoxKey.CDNService);
+    return CDNService.saved(
+      value is String && value.contains('.') ? value : null,
+    );
   }
 
   static String get banWordForRecommend =>
@@ -457,9 +457,6 @@ abstract final class Pref {
 
   static bool get continuePlayingPart =>
       _setting.get(SettingBoxKey.continuePlayingPart, defaultValue: true);
-
-  static bool get cdnSpeedTest =>
-      _setting.get(SettingBoxKey.cdnSpeedTest, defaultValue: true);
 
   static bool get autoUpdate =>
       _setting.get(SettingBoxKey.autoUpdate, defaultValue: true);

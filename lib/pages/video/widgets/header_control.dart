@@ -508,13 +508,15 @@ class HeaderControlState extends State<HeaderControl>
                       Get.back();
                       final result = await showDialog<CDNService>(
                         context: context,
-                        builder: (context) => CdnSelectDialog(
-                          sample: videoInfo.dash?.video?.firstOrNull,
-                        ),
+                        builder: (context) => const CdnSelectDialog(),
                       );
                       if (result != null) {
                         VideoUtils.cdnService = result;
-                        setting.put(SettingBoxKey.CDNService, result.name);
+                        if (result.host case final host?) {
+                          setting.put(SettingBoxKey.CDNService, host);
+                        } else {
+                          setting.delete(SettingBoxKey.CDNService);
+                        }
                         SmartDialog.showToast('已设置为 ${result.desc}，正在重载视频');
                         videoDetailCtr.queryVideoUrl(fromReset: true);
                       }
