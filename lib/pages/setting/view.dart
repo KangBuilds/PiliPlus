@@ -68,7 +68,7 @@ class _SettingPageState extends State<SettingPage> {
     ),
     _SettingsModel(
       type: SettingType.extraSetting,
-      subtitle: '震动、搜索、收藏、ai、评论、动态、代理、更新检查等',
+      subtitle: '震动、搜索、收藏、ai、评论、动态、代理等',
       icon: Icon(Icons.extension_outlined),
     ),
     _SettingsModel(
