@@ -134,7 +134,6 @@ class MemberController extends CommonDataController<SpaceData, SpaceData?>
         items: [SpaceTab2Item(title: '视频', param: 'video')],
       ),
       SpaceTab2(title: '收藏', param: 'favorite'),
-      SpaceTab2(title: '追番', param: 'bangumi'),
     ];
     tabs = tab2!.map((item) => Tab(text: item.title)).toList();
     tabController?.dispose();

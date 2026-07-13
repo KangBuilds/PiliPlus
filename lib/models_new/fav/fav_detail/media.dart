@@ -1,6 +1,5 @@
 import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models_new/fav/fav_detail/cnt_info.dart';
-import 'package:PiliPlus/models_new/fav/fav_detail/ogv.dart';
 import 'package:PiliPlus/models_new/fav/fav_detail/ugc.dart';
 import 'package:PiliPlus/pages/common/multi_select/base.dart';
 
@@ -16,7 +15,6 @@ class FavDetailItemModel with MultiSelectData {
   CntInfo? cntInfo;
   int? favTime;
   String? bvid;
-  Ogv? ogv;
   Ugc? ugc;
 
   FavDetailItemModel({
@@ -31,7 +29,6 @@ class FavDetailItemModel with MultiSelectData {
     this.cntInfo,
     this.favTime,
     this.bvid,
-    this.ogv,
     this.ugc,
   });
 
@@ -52,7 +49,6 @@ class FavDetailItemModel with MultiSelectData {
             : CntInfo.fromJson(json['cnt_info'] as Map<String, dynamic>),
         favTime: json['fav_time'] as int?,
         bvid: json['bvid'] ?? json['bv_id'],
-        ogv: json['ogv'] == null ? null : Ogv.fromJson(json['ogv']),
         ugc: json['ugc'] == null
             ? null
             : Ugc.fromJson(json['ugc'] as Map<String, dynamic>),

@@ -1,5 +1,4 @@
 import 'package:PiliPlus/models/model_owner.dart';
-import 'package:PiliPlus/models_new/later/bangumi.dart';
 import 'package:PiliPlus/models_new/later/rights.dart';
 import 'package:PiliPlus/models_new/later/stat.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
@@ -9,19 +8,14 @@ class LaterItemModel with MultiSelectData {
   int? aid;
   String? pic;
   String? title;
-  String? subtitle;
   int? pubdate;
   int? duration;
-  String? redirectUrl;
   Rights? rights;
   Owner? owner;
   Stat? stat;
-  Bangumi? bangumi;
   int? cid;
   int? progress;
   String? bvid;
-  bool? isPgc;
-  String? pgcLabel;
   bool? isPugv;
   bool? isCharging;
   Dimension? dimension;
@@ -30,19 +24,14 @@ class LaterItemModel with MultiSelectData {
     this.aid,
     this.pic,
     this.title,
-    this.subtitle,
     this.pubdate,
     this.duration,
-    this.redirectUrl,
     this.rights,
     this.owner,
     this.stat,
-    this.bangumi,
     this.cid,
     this.progress,
     this.bvid,
-    this.isPgc,
-    this.pgcLabel,
     this.isPugv,
     this.isCharging,
     this.dimension,
@@ -54,7 +43,6 @@ class LaterItemModel with MultiSelectData {
     title: json['title'] as String?,
     pubdate: json['pubdate'] as int?,
     duration: json['duration'] as int?,
-    redirectUrl: json['redirect_url'] as String?,
     rights: json['rights'] == null
         ? null
         : Rights.fromJson(json['rights'] as Map<String, dynamic>),
@@ -64,20 +52,9 @@ class LaterItemModel with MultiSelectData {
     stat: json['stat'] == null
         ? null
         : Stat.fromJson(json['stat'] as Map<String, dynamic>),
-    bangumi: json['bangumi'] == null
-        ? null
-        : Bangumi.fromJson(json['bangumi'] as Map<String, dynamic>),
-    subtitle: json['bangumi'] == null
-        ? null
-        : (json['title'] as String).replaceFirst(
-            '${json['bangumi']['season']['title']} ',
-            '',
-          ),
     cid: json['cid'] as int?,
     progress: json['progress'] as int?,
     bvid: json['bvid'] as String?,
-    isPgc: json['is_pgc'] as bool?,
-    pgcLabel: json['pgc_label'] == '' ? null : json['pgc_label'],
     isPugv: json['is_pugv'] as bool?,
     isCharging: json['charging_pay']?['level'] != null,
     dimension: json['dimension'] == null

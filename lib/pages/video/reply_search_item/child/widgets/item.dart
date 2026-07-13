@@ -25,23 +25,18 @@ class ReplySearchItem extends StatelessWidget {
   Widget build(BuildContext context) {
     String title = '';
     String cover = '';
-    String? upNickname;
-    String? category;
+    String upNickname = '';
     int? duration;
     switch (type) {
       case ReplySearchType.video:
-        if (item.video.type == SearchItemVideoSubType.UGC) {
-          final ugc = item.video.ugc;
-          title = ugc.title;
-          cover = ugc.cover;
-          upNickname = ugc.upNickname;
-          duration = ugc.duration.toInt();
-        } else {
-          final pgc = item.video.pgc;
-          title = pgc.title;
-          cover = pgc.cover;
-          category = pgc.category;
+        if (item.video.type != SearchItemVideoSubType.UGC) {
+          return const SizedBox.shrink();
         }
+        final ugc = item.video.ugc;
+        title = ugc.title;
+        cover = ugc.cover;
+        upNickname = ugc.upNickname;
+        duration = ugc.duration.toInt();
       case ReplySearchType.article:
         final article = item.article;
         title = article.title;
@@ -77,12 +72,6 @@ class ReplySearchItem extends StatelessWidget {
                           width: boxConstraints.maxWidth,
                           height: boxConstraints.maxHeight,
                         ),
-                        if (category != null)
-                          PBadge(
-                            right: 6,
-                            top: 6,
-                            text: category,
-                          ),
                         if (duration != null)
                           PBadge(
                             right: 6,
@@ -108,7 +97,7 @@ class ReplySearchItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (upNickname != null)
+                    if (upNickname.isNotEmpty)
                       Text(
                         'UP: $upNickname',
                         style: TextStyle(

@@ -1,5 +1,3 @@
-import 'package:PiliPlus/models/common/sponsor_block/segment_type.dart';
-
 class SegmentItemModel {
   String? cid;
   String category;
@@ -33,21 +31,4 @@ class SegmentItemModel {
             : (json["videoDuration"] as num) * 1000,
         votes: json["votes"],
       );
-
-  factory SegmentItemModel.fromPgcJson(
-    Map<String, dynamic> json,
-    num? videoDuration,
-  ) => SegmentItemModel(
-    category: switch (json['clipType']) {
-      'CLIP_TYPE_OP' => SegmentType.intro.name,
-      'CLIP_TYPE_ED' => SegmentType.outro.name,
-      _ => SegmentType.sponsor.name,
-    },
-    segment: [
-      ((json['start'] as num) * 1000).round(),
-      ((json['end'] as num) * 1000).round(),
-    ],
-    uuid: '',
-    videoDuration: videoDuration,
-  );
 }

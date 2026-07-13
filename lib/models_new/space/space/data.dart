@@ -9,7 +9,6 @@ import 'package:PiliPlus/models_new/space/space/elec.dart';
 import 'package:PiliPlus/models_new/space/space/favourite2.dart';
 import 'package:PiliPlus/models_new/space/space/images.dart';
 import 'package:PiliPlus/models_new/space/space/like_archive.dart';
-import 'package:PiliPlus/models_new/space/space/season.dart';
 import 'package:PiliPlus/models_new/space/space/series.dart';
 import 'package:PiliPlus/models_new/space/space/setting.dart';
 import 'package:PiliPlus/models_new/space/space/tab.dart';
@@ -28,7 +27,6 @@ class SpaceData {
   Archive? archive;
   SpaceSeries? series;
   Article? article;
-  SpaceSeason? season;
   CoinArchive? coinArchive;
   LikeArchive? likeArchive;
   Audios? audios;
@@ -52,7 +50,6 @@ class SpaceData {
     this.archive,
     this.series,
     this.article,
-    this.season,
     this.coinArchive,
     this.likeArchive,
     this.audios,
@@ -92,9 +89,6 @@ class SpaceData {
     article = json['article'] == null
         ? null
         : Article.fromJson(json['article'] as Map<String, dynamic>);
-    season = json['season'] == null
-        ? null
-        : SpaceSeason.fromJson(json['season'] as Map<String, dynamic>);
     coinArchive = json['coin_archive'] == null
         ? null
         : CoinArchive.fromJson(json['coin_archive'] as Map<String, dynamic>);
@@ -127,7 +121,6 @@ class SpaceData {
         likeArchive?.item?.isNotEmpty == true ||
         article?.item?.isNotEmpty == true ||
         audios?.item?.isNotEmpty == true ||
-        comic?.item?.isNotEmpty == true ||
-        season?.item?.isNotEmpty == true;
+        comic?.item?.isNotEmpty == true;
   }
 }

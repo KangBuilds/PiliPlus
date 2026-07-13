@@ -1,7 +1,7 @@
 enum EpisodeType {
   part('分P'),
   season('合集'),
-  pgc('剧集'),
+  pugv('课程'),
   ;
 
   final String title;

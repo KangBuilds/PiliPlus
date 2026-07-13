@@ -8,7 +8,6 @@ import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
 import 'package:PiliPlus/models_new/space/space_archive/item.dart';
-import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension/dimension_ext.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
@@ -48,13 +47,9 @@ class VideoCardHMemberVideo extends StatelessWidget {
             onTap:
                 onTap ??
                 () {
-                  final isPgc = videoItem.isPgc == true;
                   final isPugv = videoItem.isPugv == true;
-                  if ((isPgc || isPugv) && videoItem.uri?.isNotEmpty == true) {
-                    if (PageUtils.viewPgcFromUri(
-                      videoItem.uri!,
-                      isPgc: isPgc,
-                    )) {
+                  if (isPugv && videoItem.uri?.isNotEmpty == true) {
+                    if (PageUtils.viewPugvFromUri(videoItem.uri!)) {
                       return;
                     }
                   }
@@ -232,9 +227,7 @@ class VideoCardHMemberVideo extends StatelessWidget {
             ),
           ),
           Text(
-            videoItem.season != null
-                ? DateFormatUtils.dateFormat(videoItem.season!.mtime)
-                : videoItem.publishTimeText ?? '',
+            videoItem.publishTimeText ?? '',
             maxLines: 1,
             style: TextStyle(
               fontSize: 12,

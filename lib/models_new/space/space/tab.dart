@@ -4,7 +4,6 @@ class SpaceTab {
   bool? clip;
   bool? album;
   bool? favorite;
-  bool? bangumi;
   bool? coin;
   bool? like;
   bool? community;
@@ -30,7 +29,6 @@ class SpaceTab {
     this.clip,
     this.album,
     this.favorite,
-    this.bangumi,
     this.coin,
     this.like,
     this.community,
@@ -56,7 +54,6 @@ class SpaceTab {
     clip = json['clip'] as bool?;
     album = json['album'] as bool?;
     favorite = json['favorite'] as bool?;
-    bangumi = json['bangumi'] as bool?;
     coin = json['coin'] as bool?;
     like = json['like'] as bool?;
     community = json['community'] as bool?;

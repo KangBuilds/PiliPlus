@@ -86,7 +86,7 @@ class BottomControl extends StatelessWidget {
                         onSeek: onSeek,
                       ),
                     ),
-                    if (controller.enableBlock &&
+                    if (controller.enableSponsorBlock &&
                         videoDetailController.segmentProgressList.isNotEmpty)
                       Positioned(
                         left: 0,

@@ -17,7 +17,6 @@ import 'package:PiliPlus/pages/member_contribute/view.dart';
 import 'package:PiliPlus/pages/member_dynamics/view.dart';
 import 'package:PiliPlus/pages/member_favorite/view.dart';
 import 'package:PiliPlus/pages/member_home/view.dart';
-import 'package:PiliPlus/pages/member_pgc/view.dart';
 import 'package:PiliPlus/pages/member_shop/view.dart';
 import 'package:PiliPlus/pages/member_video_web/archive/view.dart';
 import 'package:PiliPlus/pages/member_video_web/season_series/view.dart';
@@ -378,10 +377,6 @@ class _MemberPageState extends State<MemberPage> {
             initialIndex: _userController.contributeInitialIndex.value,
             mid: _mid,
           ),
-        ),
-        'bangumi' => MemberBangumi(
-          heroTag: _heroTag,
-          mid: _mid,
         ),
         'favorite' => MemberFavorite(
           heroTag: _heroTag,

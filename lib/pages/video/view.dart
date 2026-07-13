@@ -14,11 +14,9 @@ import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/common/widgets/sliver/video_header.dart';
 import 'package:PiliPlus/common/widgets/svg/play_icon.dart';
 import 'package:PiliPlus/models/common/episode_panel_type.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/result.dart';
 import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
 import 'package:PiliPlus/models_new/video/video_detail/page.dart';
 import 'package:PiliPlus/models_new/video/video_detail/ugc_season.dart';
-import 'package:PiliPlus/models_new/video/video_tag/data.dart';
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/danmaku/view.dart';
 import 'package:PiliPlus/pages/episode_panel/view.dart';
@@ -26,9 +24,8 @@ import 'package:PiliPlus/pages/video/ai_conclusion/view.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/local/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/local/view.dart';
-import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
-import 'package:PiliPlus/pages/video/introduction/pgc/view.dart';
-import 'package:PiliPlus/pages/video/introduction/pgc/widgets/intro_detail.dart';
+import 'package:PiliPlus/pages/video/introduction/pugv/controller.dart';
+import 'package:PiliPlus/pages/video/introduction/pugv/view.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/view.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/page.dart';
@@ -91,9 +88,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       ? localIntroController
       : videoDetailController.isUgc
       ? ugcIntroController
-      : pgcIntroController;
+      : pugvIntroController;
   late final UgcIntroController ugcIntroController;
-  late final PgcIntroController pgcIntroController;
+  late final PugvIntroController pugvIntroController;
   late final LocalIntroController localIntroController;
 
   bool get autoExitFullscreen =>
@@ -156,7 +153,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     } else if (videoDetailController.isUgc) {
       ugcIntroController = Get.put(UgcIntroController(), tag: heroTag);
     } else {
-      pgcIntroController = Get.put(PgcIntroController(), tag: heroTag);
+      pugvIntroController = Get.put(PugvIntroController(), tag: heroTag);
     }
 
     videoSourceInit();
@@ -334,7 +331,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
           ..cancelTimer()
           ..videoDetail.close();
       } else {
-        pgcIntroController.cancelTimer();
+        pugvIntroController.cancelTimer();
       }
     }
 
@@ -1488,7 +1485,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         }),
         manualPlayerWidget,
 
-        if (videoDetailController.plPlayerController.enableBlock ||
+        if (videoDetailController.plPlayerController.enableSponsorBlock ||
             videoDetailController.continuePlayingPart)
           Positioned(
             left: 16,
@@ -1681,14 +1678,12 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
               RelatedVideoPanel(key: videoRelatedKey, heroTag: heroTag),
             ],
           ] else
-            PgcIntroPage(
+            PugvIntroPage(
               key: videoIntroKey,
               heroTag: heroTag,
               cid: videoDetailController.cid.value,
               showEpisodes: showEpisodes,
-              showIntroDetail: showIntroDetail,
               maxWidth: width ?? maxWidth,
-              isLandscape: !isPortrait,
             ),
           SliverToBoxAdapter(
             child: SizedBox(
@@ -1793,7 +1788,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                     isReversed: videoDetail.isPageReversed,
                     onChangeEpisode: videoDetailController.isUgc
                         ? ugcIntroController.onChangeEpisode
-                        : pgcIntroController.onChangeEpisode,
+                        : pugvIntroController.onChangeEpisode,
                     showTitle: false,
                     isSupportReverse: videoDetailController.isUgc,
                     onReverse: () => onReversePlay(isSeason: false),
@@ -1844,7 +1839,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       .isReversed,
                   onChangeEpisode: videoDetailController.isUgc
                       ? ugcIntroController.onChangeEpisode
-                      : pgcIntroController.onChangeEpisode,
+                      : pugvIntroController.onChangeEpisode,
                   showTitle: false,
                   isSupportReverse: videoDetailController.isUgc,
                   onReverse: () => onReversePlay(isSeason: true),
@@ -1873,20 +1868,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     );
   }
 
-  void showIntroDetail(
-    PgcInfoModel videoDetail,
-    List<VideoTagItem>? videoTags,
-  ) {
-    videoDetailController.childKey.currentState?.showBottomSheet(
-      backgroundColor: Colors.transparent,
-      constraints: const BoxConstraints(),
-      (context) => PgcIntroPanel(
-        item: videoDetail,
-        videoTags: videoTags,
-      ),
-    );
-  }
-
   void showEpisodes([
     int? index,
     UgcSeason? season,
@@ -1910,7 +1891,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
           ? EpisodeType.season
           : episodes is List<Part>
           ? EpisodeType.part
-          : EpisodeType.pgc,
+          : EpisodeType.pugv,
       cover: videoDetailController.cover.value,
       enableSlide: enableSlide,
       initialTabIndex: index ?? 0,
@@ -1932,7 +1913,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       isSupportReverse: videoDetailController.isUgc,
       onChangeEpisode: videoDetailController.isUgc
           ? ugcIntroController.onChangeEpisode
-          : pgcIntroController.onChangeEpisode,
+          : pugvIntroController.onChangeEpisode,
       onClose: Get.back,
       onReverse: () {
         Get.back();

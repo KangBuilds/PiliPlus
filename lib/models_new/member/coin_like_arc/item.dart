@@ -6,7 +6,6 @@ class CoinLikeArcItem {
   int? duration;
   bool? isSteins;
   bool? isCooperation;
-  bool? isPgc;
   int? play;
   int? danmaku;
   int? ctime;
@@ -19,7 +18,6 @@ class CoinLikeArcItem {
     this.duration,
     this.isSteins,
     this.isCooperation,
-    this.isPgc,
     this.play,
     this.danmaku,
     this.ctime,
@@ -34,7 +32,6 @@ class CoinLikeArcItem {
         duration: json['duration'] as int?,
         isSteins: json['is_steins'] as bool?,
         isCooperation: json['is_cooperation'] as bool?,
-        isPgc: json['is_pgc'] as bool?,
         play: json['play'] as int?,
         danmaku: json['danmaku'] as int?,
         ctime: json['ctime'] as int?,

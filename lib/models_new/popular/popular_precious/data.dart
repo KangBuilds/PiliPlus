@@ -10,7 +10,8 @@ class PopularPreciousData {
       PopularPreciousData(
         mediaId: json['media_id'] as int?,
         list: (json['list'] as List<dynamic>?)
-            ?.map((e) => HotVideoItemModel.fromJson(e as Map<String, dynamic>))
+            ?.where((e) => e['redirect_url']?.isNotEmpty != true)
+            .map((e) => HotVideoItemModel.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
 }

@@ -53,14 +53,6 @@ class VideoCardHLater extends StatelessWidget {
                   PageUtils.viewPugv(seasonId: videoItem.aid);
                   return;
                 }
-                if (videoItem.isPgc ?? false) {
-                  if (videoItem.bangumi?.epId != null) {
-                    PageUtils.viewPgc(epId: videoItem.bangumi!.epId);
-                  } else if (videoItem.redirectUrl?.isNotEmpty == true) {
-                    PageUtils.viewPgcFromUri(videoItem.redirectUrl!);
-                  }
-                  return;
-                }
                 try {
                   final cid =
                       videoItem.cid ??
@@ -109,12 +101,6 @@ class VideoCardHLater extends StatelessWidget {
                         else if (videoItem.rights?.isCooperation == 1)
                           const PBadge(
                             text: '合作',
-                            top: 6.0,
-                            right: 6.0,
-                          )
-                        else if (videoItem.pgcLabel != null)
-                          PBadge(
-                            text: videoItem.pgcLabel,
                             top: 6.0,
                             right: 6.0,
                           )
@@ -176,7 +162,6 @@ class VideoCardHLater extends StatelessWidget {
   }
 
   Widget content(BuildContext context, ThemeData theme) {
-    final isPgc = videoItem.isPgc == true && videoItem.bangumi != null;
     Widget stat = StatWidget(
       type: StatType.play,
       value: videoItem.stat?.view,
@@ -187,67 +172,41 @@ class VideoCardHLater extends StatelessWidget {
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: isPgc
-                ? [
-                    Text(
-                      videoItem.bangumi!.season!.title!,
-                      style: TextStyle(
-                        fontSize: theme.textTheme.bodyMedium!.fontSize,
-                        height: 1.42,
-                        letterSpacing: 0.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      videoItem.subtitle!,
-                      textAlign: TextAlign.start,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: theme.colorScheme.outline,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    stat,
-                  ]
-                : [
-                    Expanded(
-                      child: Text(
-                        videoItem.title!,
-                        style: TextStyle(
-                          fontSize: theme.textTheme.bodyMedium!.fontSize,
-                          height: 1.42,
-                          letterSpacing: 0.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      videoItem.owner!.name!,
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1,
-                        color: theme.colorScheme.outline,
-                        overflow: TextOverflow.clip,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      spacing: 8,
-                      children: [
-                        stat,
-                        StatWidget(
-                          type: StatType.danmaku,
-                          value: videoItem.stat?.danmaku,
-                        ),
-                      ],
-                    ),
-                  ],
+            children: [
+              Expanded(
+                child: Text(
+                  videoItem.title!,
+                  style: TextStyle(
+                    fontSize: theme.textTheme.bodyMedium!.fontSize,
+                    height: 1.42,
+                    letterSpacing: 0.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                videoItem.owner!.name!,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1,
+                  color: theme.colorScheme.outline,
+                  overflow: TextOverflow.clip,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Row(
+                spacing: 8,
+                children: [
+                  stat,
+                  StatWidget(
+                    type: StatType.danmaku,
+                    value: videoItem.stat?.danmaku,
+                  ),
+                ],
+              ),
+            ],
           ),
           Positioned(
             right: 0,

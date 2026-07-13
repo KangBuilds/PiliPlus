@@ -7,11 +7,10 @@ import 'package:PiliPlus/grpc/im.dart';
 import 'package:PiliPlus/http/dynamics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/search.dart';
-import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/image_preview_type.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/episode.dart';
+import 'package:PiliPlus/models_new/pugv/season_info/episode.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/common/publish/publish_route.dart';
@@ -27,10 +26,8 @@ import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
-import 'package:PiliPlus/utils/url_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
@@ -228,30 +225,6 @@ abstract final class PageUtils {
     switch (item.type) {
       case 'DYNAMIC_TYPE_AV':
         final archive = item.modules.moduleDynamic!.major!.archive!;
-        // pgc
-        if (archive.type == 2) {
-          // jumpUrl
-          if (archive.jumpUrl case final jumpUrl?) {
-            if (viewPgcFromUri(jumpUrl)) {
-              return;
-            }
-          }
-          // redirectUrl from intro
-          final res = await VideoHttp.videoIntro(bvid: archive.bvid!);
-          if (res.dataOrNull?.redirectUrl case final redirectUrl?) {
-            if (viewPgcFromUri(redirectUrl)) {
-              return;
-            }
-          }
-          // redirectUrl from jumpUrl
-          if (await UrlUtils.parseRedirectUrl(archive.jumpUrl.http2https, false)
-              case final redirectUrl?) {
-            if (viewPgcFromUri(redirectUrl)) {
-              return;
-            }
-          }
-        }
-
         try {
           String bvid = archive.bvid!;
           String cover = archive.cover!;
@@ -281,11 +254,6 @@ abstract final class PageUtils {
         );
         break;
 
-      case 'DYNAMIC_TYPE_PGC':
-        // if (kDebugMode) debugPrint('番剧');
-        SmartDialog.showToast('暂未支持的类型，请联系开发者');
-        break;
-
       /// 合集查看
       case 'DYNAMIC_TYPE_UGC_SEASON':
         DynamicArchiveModel ugcSeason =
@@ -303,15 +271,6 @@ abstract final class PageUtils {
             cover: cover,
             dimension: res!.dimension,
           );
-        }
-        break;
-
-      /// 番剧查看
-      case 'DYNAMIC_TYPE_PGC_UNION':
-        // if (kDebugMode) debugPrint('DYNAMIC_TYPE_PGC_UNION 番剧');
-        DynamicArchiveModel pgc = item.modules.moduleDynamic!.major!.pgc!;
-        if (pgc.epid != null) {
-          viewPgc(epId: pgc.epid);
         }
         break;
 
@@ -489,7 +448,6 @@ abstract final class PageUtils {
     required int cid,
     int? seasonId,
     int? epId,
-    int? pgcType,
     String? cover,
     String? title,
     int? progress, // milliseconds
@@ -504,7 +462,6 @@ abstract final class PageUtils {
       'cid': cid,
       'seasonId': ?seasonId,
       'epId': ?epId,
-      'pgcType': ?pgcType,
       'cover': ?cover,
       'title': ?title,
       'progress': ?progress,
@@ -528,33 +485,22 @@ abstract final class PageUtils {
     }
   }
 
-  static final _pgcRegex = RegExp(r'(ep|ss)(\d+)');
-  static bool viewPgcFromUri(
+  static final _seasonRegex = RegExp(r'(ep|ss)(\d+)');
+  static bool viewPugvFromUri(
     String uri, {
-    bool isPgc = true,
-    int? progress, // milliseconds
     int? aid,
     bool off = false,
   }) {
-    RegExpMatch? match = _pgcRegex.firstMatch(uri);
+    final match = _seasonRegex.firstMatch(uri);
     if (match != null) {
-      bool isSeason = match.group(1) == 'ss';
-      String id = match.group(2)!;
-      if (isPgc) {
-        viewPgc(
-          seasonId: isSeason ? id : null,
-          epId: isSeason ? null : id,
-          progress: progress,
-          off: off,
-        );
-      } else {
-        viewPugv(
-          seasonId: isSeason ? id : null,
-          epId: isSeason ? null : id,
-          aid: aid,
-          off: off,
-        );
-      }
+      final isSeason = match.group(1) == 'ss';
+      final id = match.group(2)!;
+      viewPugv(
+        seasonId: isSeason ? id : null,
+        epId: isSeason ? null : id,
+        aid: aid,
+        off: off,
+      );
       return true;
     }
     return false;
@@ -563,117 +509,16 @@ abstract final class PageUtils {
   static EpisodeItem findEpisode(
     List<EpisodeItem> episodes, {
     dynamic epId,
-    bool isPgc = true,
   }) {
     // epId episode -> progress episode -> first episode
     EpisodeItem? episode;
     if (epId != null) {
       epId = epId.toString();
       episode = episodes.firstWhereOrNull(
-        (item) => (isPgc ? item.epId : item.id).toString() == epId,
+        (item) => item.id.toString() == epId,
       );
     }
     return episode ?? episodes.first;
-  }
-
-  static Future<void> viewPgc({
-    dynamic seasonId,
-    dynamic epId,
-    int? progress, // milliseconds
-    bool off = false,
-  }) async {
-    try {
-      SmartDialog.showLoading(msg: '资源获取中');
-      final res = await SearchHttp.pgcInfo(seasonId: seasonId, epId: epId);
-      SmartDialog.dismiss();
-      if (res case Success(:final response)) {
-        final episodes = response.episodes;
-        final hasEpisode = episodes != null && episodes.isNotEmpty;
-
-        EpisodeItem? episode;
-
-        void viewSection(EpisodeItem episode) {
-          toVideoPage(
-            videoType: VideoType.ugc,
-            bvid: episode.bvid!,
-            cid: episode.cid!,
-            seasonId: response.seasonId,
-            epId: episode.epId,
-            cover: episode.cover,
-            progress: progress,
-            extraArguments: {
-              'pgcApi': true,
-              'pgcItem': response,
-            },
-            off: off,
-          );
-        }
-
-        if (epId != null) {
-          epId = epId.toString();
-          if (hasEpisode) {
-            episode = episodes.firstWhereOrNull(
-              (item) => item.epId.toString() == epId,
-            );
-          }
-
-          // find section
-          if (episode == null) {
-            final sections = response.section;
-            if (sections != null && sections.isNotEmpty) {
-              for (final section in sections) {
-                final episodes = section.episodes;
-                if (episodes != null && episodes.isNotEmpty) {
-                  for (final episode in episodes) {
-                    if (episode.epId.toString() == epId) {
-                      // view as ugc
-                      viewSection(episode);
-                      return;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        if (hasEpisode) {
-          episode ??= findEpisode(
-            episodes,
-            epId: response.userStatus?.progress?.lastEpId,
-          );
-          toVideoPage(
-            videoType: VideoType.pgc,
-            bvid: episode.bvid!,
-            cid: episode.cid!,
-            seasonId: response.seasonId,
-            epId: episode.epId,
-            pgcType: response.type,
-            cover: episode.cover,
-            progress: progress,
-            extraArguments: {
-              'pgcItem': response,
-            },
-            off: off,
-          );
-          return;
-        } else {
-          episode ??= response.section?.firstOrNull?.episodes?.firstOrNull;
-          if (episode != null) {
-            viewSection(episode);
-            return;
-          }
-        }
-
-        SmartDialog.showToast('资源加载失败');
-      } else {
-        res.toast();
-      }
-    } catch (e) {
-      SmartDialog.dismiss();
-      SmartDialog.showToast('$e');
-      if (kDebugMode) debugPrint('$e');
-    }
   }
 
   static Future<void> viewPugv({
@@ -696,7 +541,6 @@ abstract final class PageUtils {
           episode ??= findEpisode(
             episodes,
             epId: epId ?? response.userStatus?.progress?.lastEpId,
-            isPgc: false,
           );
           toVideoPage(
             videoType: VideoType.pugv,
@@ -706,7 +550,7 @@ abstract final class PageUtils {
             epId: episode.id,
             cover: episode.cover,
             extraArguments: {
-              'pgcItem': response,
+              'seasonItem': response,
             },
             off: off,
           );

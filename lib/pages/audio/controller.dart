@@ -63,7 +63,6 @@ class AudioController extends GetxController
   late int itemType;
   Int64? extraId;
   late final PlaylistSource from;
-  @override
   late final bool isUgc = itemType == 1;
 
   final audioItem = Rxn<DetailItem>();

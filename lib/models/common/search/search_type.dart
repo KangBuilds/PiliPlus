@@ -3,10 +3,6 @@ enum SearchType {
   // all('综合'),
   // 视频：video
   video('视频'),
-  // 番剧：media_bangumi,
-  media_bangumi('番剧'),
-  // 影视：media_ft
-  media_ft('影视'),
   // 话题：topic
   // topic,
   // 用户：bili_user

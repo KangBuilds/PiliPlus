@@ -24,7 +24,6 @@ enum VideoDurationType {
 enum VideoZoneType {
   all('全部'),
   douga('动画', tids: 1),
-  anime('番剧', tids: 13),
   guochuang('国创', tids: 167),
   music('音乐', tids: 3),
   dance('舞蹈', tids: 129),

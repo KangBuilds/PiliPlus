@@ -88,14 +88,6 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     queryVideoTags();
     final res = await VideoHttp.videoIntro(bvid: bvid);
     if (res case Success(:final response)) {
-      if (response.redirectUrl != null &&
-          videoDetailCtr.epId == null &&
-          videoDetailCtr.seasonId == null) {
-        if (!isClosed) {
-          PageUtils.viewPgcFromUri(response.redirectUrl!, off: true);
-        }
-        return;
-      }
       videoPlayerServiceHandler?.onVideoDetailChange(
         response,
         cid.value,
@@ -450,7 +442,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     }
   }
 
-  // 修改分P或番剧分集
+  // 修改分P
   Future<bool> onChangeEpisode(
     BaseEpisodeItem episode, {
     bool isStein = false,

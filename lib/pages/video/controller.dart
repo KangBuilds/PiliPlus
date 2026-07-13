@@ -26,7 +26,7 @@ import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/video/play/url.dart';
 import 'package:PiliPlus/models_new/download/bili_download_entry_info.dart';
 import 'package:PiliPlus/models_new/media_list/media_list.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/result.dart';
+import 'package:PiliPlus/models_new/pugv/season_info/result.dart';
 import 'package:PiliPlus/models_new/video/video_detail/data.dart';
 import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
 import 'package:PiliPlus/models_new/video/video_detail/page.dart';
@@ -38,7 +38,7 @@ import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/search/widgets/search_text.dart';
 import 'package:PiliPlus/pages/sponsor_block/block_mixin.dart';
 import 'package:PiliPlus/pages/video/download_panel/view.dart';
-import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
+import 'package:PiliPlus/pages/video/introduction/pugv/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/pages/video/medialist/view.dart';
 import 'package:PiliPlus/pages/video/note/view.dart';
@@ -84,15 +84,12 @@ class VideoDetailController extends GetxController
   late final RxInt cid;
   int? epId;
   int? seasonId;
-  int? pgcType;
   late final String heroTag;
   late final RxString cover;
 
   // 视频类型 默认投稿视频
   late final VideoType videoType;
-  @override
   late final isUgc = videoType == VideoType.ugc;
-  VideoType? _actualVideoType;
 
   // 页面来源 稍后再看 收藏夹
   late bool isPlayAll;
@@ -147,11 +144,7 @@ class VideoDetailController extends GetxController
   // 预设的解码格式
   late List<VideoDecodeFormatType> preferCodecs = Pref.preferCodecs;
 
-  bool get showReply => isFileSource
-      ? false
-      : isUgc
-      ? plPlayerController.showVideoReply
-      : plPlayerController.showBangumiReply;
+  bool get showReply => !isFileSource && plPlayerController.showVideoReply;
 
   bool get showRelatedVideo =>
       isFileSource ? false : plPlayerController.showRelatedVideo;
@@ -351,20 +344,11 @@ class VideoDetailController extends GetxController
     super.onInit();
     args = Get.arguments;
     videoType = args['videoType'];
-    if (videoType == VideoType.pgc) {
-      if (!isLoginVideo) {
-        _actualVideoType = VideoType.ugc;
-      }
-    } else if (args['pgcApi'] == true) {
-      _actualVideoType = VideoType.pgc;
-    }
-
     bvid = args['bvid'];
     aid = args['aid'];
     cid = RxInt(args['cid']);
     epId = args['epId'];
     seasonId = args['seasonId'];
-    pgcType = args['pgcType'];
     heroTag = args['heroTag'];
     cover = RxString(args['cover'] ?? '');
     isVertical = RxBool(args['isVertical'] ?? false);
@@ -743,7 +727,6 @@ class VideoDetailController extends GetxController
       autoplay: autoplay ?? _autoPlay.value,
       epid: isUgc ? null : epId,
       seasonId: isUgc ? null : seasonId,
-      pgcType: isUgc ? null : pgcType,
       videoType: videoType,
       onInit: () {
         videoState.value = true;
@@ -758,7 +741,7 @@ class VideoDetailController extends GetxController
     if (isClosed) return;
 
     if (!isFileSource) {
-      if (plPlayerController.enableBlock) {
+      if (plPlayerController.enableSponsorBlock) {
         initSkip();
       }
 
@@ -803,7 +786,7 @@ class VideoDetailController extends GetxController
       return;
     }
     isQuerying = true;
-    if (plPlayerController.enableSponsorBlock && isBlock && !fromReset) {
+    if (plPlayerController.enableSponsorBlock && !fromReset) {
       querySponsorBlock(bvid: bvid, cid: cid.value);
     }
     if (plPlayerController.cacheVideoQa == null) {
@@ -823,7 +806,7 @@ class VideoDetailController extends GetxController
       epid: epId,
       seasonId: seasonId,
       tryLook: plPlayerController.tryLook,
-      videoType: _actualVideoType ?? videoType,
+      videoType: videoType,
       language: currLang.value,
       voiceBalance: plPlayerController.enableAudioNormalization,
     );
@@ -842,13 +825,6 @@ class VideoDetailController extends GetxController
           defaultST = Duration(milliseconds: progress);
         } else {
           defaultST = Duration(milliseconds: data.lastPlayTime);
-        }
-      }
-
-      if (!isUgc && !fromReset && plPlayerController.enablePgcSkip) {
-        if (data.clipInfoList case final clipInfoList?) {
-          resetBlock();
-          handleSBData(clipInfoList);
         }
       }
 
@@ -1211,7 +1187,6 @@ class VideoDetailController extends GetxController
           cid: cid.value,
           epid: isUgc ? null : epId,
           seasonId: isUgc ? null : seasonId,
-          pgcType: isUgc ? null : pgcType,
           videoType: videoType,
         );
       } catch (_) {}
@@ -1270,7 +1245,7 @@ class VideoDetailController extends GetxController
       }
 
       // sponsor block
-      if (blockConfig.enableBlock) {
+      if (blockConfig.enableSponsorBlock) {
         resetBlock();
       }
 
@@ -1348,7 +1323,7 @@ class VideoDetailController extends GetxController
   @pragma('vm:notify-debugger-on-exception')
   bool onSkipSegment() {
     try {
-      if (plPlayerController.enableBlock) {
+      if (plPlayerController.enableSponsorBlock) {
         if (listData.lastOrNull case final SegmentModel item) {
           onSkip(item, isSeek: false);
           onRemoveItem(listData.indexOf(item), item);
@@ -1396,7 +1371,7 @@ class VideoDetailController extends GetxController
     VideoDetailData? videoDetail;
     List<ugc.BaseEpisodeItem>? episodes;
     UgcIntroController? ugcIntroController;
-    PgcInfoModel? pgcItem;
+    SeasonInfoModel? seasonItem;
     if (isUgc) {
       try {
         ugcIntroController = Get.find<UgcIntroController>(tag: heroTag);
@@ -1418,11 +1393,11 @@ class VideoDetailController extends GetxController
       }
     } else {
       try {
-        pgcItem = Get.find<PgcIntroController>(tag: heroTag).pgcItem;
-        episodes = pgcItem.episodes;
+        seasonItem = Get.find<PugvIntroController>(tag: heroTag).seasonItem;
+        episodes = seasonItem.episodes;
       } catch (e, s) {
         if (kDebugMode) {
-          debugPrint('download pgc: $e\n\n$s');
+          debugPrint('download pugv: $e\n\n$s');
         }
       }
     }
@@ -1462,7 +1437,7 @@ class VideoDetailController extends GetxController
             builder: (context, scrollController) => DownloadPanel(
               index: index,
               videoDetail: videoDetail,
-              pgcItem: pgcItem,
+              seasonItem: seasonItem,
               episodes: episodes!,
               scrollController: scrollController,
               videoDetailController: this,
@@ -1555,7 +1530,7 @@ class VideoDetailController extends GetxController
             tag: heroTag,
           ).videoDetail.value.title;
         } else {
-          title = Get.find<PgcIntroController>(
+          title = Get.find<PugvIntroController>(
             tag: heroTag,
           ).videoDetail.value.title;
         }

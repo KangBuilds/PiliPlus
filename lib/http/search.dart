@@ -7,7 +7,7 @@ import 'package:PiliPlus/models/common/search/search_type.dart';
 import 'package:PiliPlus/models/search/result.dart';
 import 'package:PiliPlus/models/search/suggest.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_topic_pub_search/data.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/result.dart';
+import 'package:PiliPlus/models_new/pugv/season_info/result.dart';
 import 'package:PiliPlus/models_new/search/search_rcmd/data.dart';
 import 'package:PiliPlus/models_new/search/search_trending/data.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
@@ -105,9 +105,6 @@ abstract final class SearchHttp {
               break;
             case SearchType.bili_user:
               data = SearchUserData.fromJson(dataData);
-              break;
-            case SearchType.media_bangumi || SearchType.media_ft:
-              data = SearchPgcData.fromJson(dataData);
               break;
             case SearchType.article:
               data = SearchArticleData.fromJson(dataData);
@@ -207,25 +204,7 @@ abstract final class SearchHttp {
     }
   }
 
-  static Future<LoadingState<PgcInfoModel>> pgcInfo({
-    dynamic seasonId,
-    dynamic epId,
-  }) async {
-    final res = await Request().get(
-      Api.pgcInfo,
-      queryParameters: {
-        'season_id': ?seasonId,
-        'ep_id': ?epId,
-      },
-    );
-    if (res.data['code'] == 0) {
-      return Success(PgcInfoModel.fromJson(res.data['result']));
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<PgcInfoModel>> pugvInfo({
+  static Future<LoadingState<SeasonInfoModel>> pugvInfo({
     dynamic seasonId,
     dynamic epId,
   }) async {
@@ -237,7 +216,7 @@ abstract final class SearchHttp {
       },
     );
     if (res.data['code'] == 0) {
-      return Success(PgcInfoModel.fromJson(res.data['data']));
+      return Success(SeasonInfoModel.fromJson(res.data['data']));
     } else {
       return Error(res.data['message']);
     }

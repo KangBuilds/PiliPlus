@@ -319,18 +319,9 @@ class _DownloadPageState extends State<DownloadPage> with GridMixin {
                     isBold: false,
                     type: PBadgeType.gray,
                   ),
-                  if (pageInfo.seasonType case final pgcType?)
-                    PBadge(
-                      text: switch (pgcType) {
-                        -1 => '课程',
-                        1 => '番剧',
-                        2 => '电影',
-                        3 => '纪录片',
-                        4 => '国创',
-                        5 => '电视剧',
-                        7 => '综艺',
-                        _ => null,
-                      },
+                  if (pageInfo.seasonType == -1)
+                    const PBadge(
+                      text: '课程',
                       right: 6.0,
                       top: 6.0,
                     ),

@@ -2,9 +2,7 @@ import 'dart:math' show max, min;
 
 import 'package:PiliPlus/models/common/video/audio_quality.dart';
 import 'package:PiliPlus/models/common/video/video_quality.dart';
-import 'package:PiliPlus/models_new/sponsor_block/segment_item.dart';
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
 
 class PlayUrlModel {
   PlayUrlModel({
@@ -56,7 +54,6 @@ class PlayUrlModel {
   int? lastPlayCid;
   String? curLanguage;
   Language? language;
-  List<SegmentItemModel>? clipInfoList;
 
   PlayUrlModel.fromJson(Map<String, dynamic> json) {
     from = json['from'];
@@ -85,29 +82,6 @@ class PlayUrlModel {
     language = json['language'] == null
         ? null
         : Language.fromJson(json['language']);
-    // debug
-    // final clipInfoList = [
-    //   {
-    //     "start": 0,
-    //     "end": 150,
-    //     "clipType": "CLIP_TYPE_OP",
-    //   },
-    //   {
-    //     "start": timeLength! ~/ 1000 - 150,
-    //     "end": timeLength! ~/ 1000,
-    //     "clipType": "CLIP_TYPE_ED",
-    //   },
-    // ];
-    try {
-      final List? clipInfoList = json['clip_info_list'];
-      if (clipInfoList != null && clipInfoList.isNotEmpty) {
-        this.clipInfoList = clipInfoList
-            .map((e) => SegmentItemModel.fromPgcJson(e, timeLength))
-            .toList();
-      }
-    } catch (_) {
-      if (kDebugMode) rethrow;
-    }
   }
 }
 

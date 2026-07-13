@@ -27,7 +27,8 @@ class SpaceArchiveData {
               ),
         count: json['count'] as int?,
         item: (json['item'] as List<dynamic>?)
-            ?.map((e) => SpaceArchiveItem.fromJson(e as Map<String, dynamic>))
+            ?.where((e) => e['is_pgc'] != true)
+            .map((e) => SpaceArchiveItem.fromJson(e as Map<String, dynamic>))
             .toList(),
         hasNext: json['has_next'] as bool?,
         hasPrev: json['has_prev'] as bool?,

@@ -33,13 +33,6 @@ class MemberCoinLikeItem extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       child: InkWell(
         onTap: () async {
-          if (item.isPgc == true) {
-            if (item.uri?.isNotEmpty == true) {
-              PageUtils.viewPgcFromUri(item.uri!);
-            }
-            return;
-          }
-
           if (item.param != null) {
             final res = await SearchHttp.ab2cWithDimension(aid: item.param);
             final cid = res?.cid;

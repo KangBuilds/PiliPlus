@@ -61,13 +61,10 @@ class HistoryItem extends StatelessWidget {
                       'type': 'read',
                     },
                   );
-                } else if (business == 'pgc') {
-                  PageUtils.viewPgc(epId: item.history.epid);
                 } else if (business == 'cheese') {
                   if (item.uri?.isNotEmpty == true) {
-                    PageUtils.viewPgcFromUri(
+                    PageUtils.viewPugvFromUri(
                       item.uri!,
-                      isPgc: false,
                       aid: item.history.oid,
                     );
                   }
@@ -216,10 +213,7 @@ class HistoryItem extends StatelessWidget {
                         ],
                       ),
                     ),
-                  if (business != 'pgc' &&
-                      item.badge != '番剧' &&
-                      item.tagName?.contains('动画') != true &&
-                      business?.contains('article') != true)
+                  if (business?.contains('article') != true)
                     PopupMenuItem(
                       onTap: () =>
                           UserHttp.toViewLater(bvid: item.history.bvid),
@@ -268,17 +262,6 @@ class HistoryItem extends StatelessWidget {
             maxLines: item.videos! > 1 ? 1 : 2,
             overflow: TextOverflow.ellipsis,
           ),
-          if (item.history.business == 'pgc' &&
-              item.showTitle?.isNotEmpty == true)
-            Text(
-              item.showTitle!,
-              style: TextStyle(
-                fontSize: 13,
-                color: theme.colorScheme.outline,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
           const Spacer(),
           if (item.authorName?.isNotEmpty == true)
             Text(

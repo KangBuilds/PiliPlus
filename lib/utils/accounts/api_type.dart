@@ -20,7 +20,6 @@ abstract final class ApiType {
       // Api.searchHistory,
       // Api.historyStatus,
       // progress
-      Api.pgcInfo,
       Api.pugvInfo,
 
       Api.ab2c,
@@ -42,7 +41,6 @@ abstract final class ApiType {
       // Api.spaceChargingArchive,
       // Api.spaceSeason,
       // Api.spaceSeries,
-      // Api.spaceBangumi,
       // Api.spaceOpus,
       // Api.spaceFav,
       // Api.seasonSeries,
@@ -65,9 +63,6 @@ abstract final class ApiType {
       Api.searchTrending,
       Api.searchRecommend,
       Api.getRankApi,
-      Api.pgcRank,
-      Api.pgcSeasonRank,
-      Api.pgcIndexResult,
       Api.popularSeriesOne,
       Api.popularSeriesList,
       Api.popularPrecious,
@@ -79,7 +74,6 @@ abstract final class ApiType {
     // progress
     AccountType.video: {
       Api.ugcUrl,
-      Api.pgcUrl,
       Api.pugvUrl,
       Api.tvPlayUrl,
       Api.videoshot,

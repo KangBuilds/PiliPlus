@@ -517,11 +517,6 @@ class ChatItem extends StatelessWidget {
         onTap = () => PageUtils.pushDynFromId(id: content['id']);
         break;
 
-      // pgc
-      case 16:
-        onTap = () => PageUtils.viewPgc(epId: content['id']);
-        break;
-
       default:
         onTap = () => SmartDialog.showToast(
           'unsupported source type: ${content['source']}',

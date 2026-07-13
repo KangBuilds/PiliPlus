@@ -37,14 +37,11 @@ class HotVideoItemModel extends HorizontalVideoModel with MultiSelectData {
         : Dimension.fromJson(json['dimension']);
     firstFrame = json["first_frame"];
     pubLocation = json["pub_location"];
-    redirectUrl = json['redirect_url'];
     progress = json['progress'];
     if (json['charging_pay']?['level'] != null) {
       badge = '充电专属';
     } else if (json['rights']?['is_cooperation'] == 1) {
       badge = '合作';
-    } else {
-      badge = json['pgc_label'];
     }
   }
 }

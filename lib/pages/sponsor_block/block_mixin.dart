@@ -20,10 +20,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:media_kit/media_kit.dart';
 
 mixin BlockConfigMixin {
-  late final pgcSkipType = Pref.pgcSkipType;
-  late final enablePgcSkip = pgcSkipType != SkipType.disable;
   late final enableSponsorBlock = Pref.enableSponsorBlock;
-  late final enableBlock = enableSponsorBlock || enablePgcSkip;
   late final blockColor = Pref.blockColor;
   late final blockLimit = Pref.blockLimit;
   late final blockSettings = Pref.blockSettings;
@@ -54,9 +51,6 @@ mixin BlockMixin on GetxController {
   bool get preInitPlayer;
   int get currPosInMilliseconds;
   bool get isFullScreen => false;
-
-  bool get isUgc;
-  late final isBlock = isUgc || !blockConfig.enablePgcSkip;
 
   Future<void> querySponsorBlock({
     required String bvid,
@@ -132,7 +126,7 @@ mixin BlockMixin on GetxController {
                 (item) {
                   final segmentModel = SegmentModel.fromItemModel(
                     item,
-                    isBlock ? blockConfig : null,
+                    blockConfig,
                   );
                   if (segmentModel.segment == const (0, 0)) {
                     videoLabel?.value +=
@@ -246,7 +240,7 @@ mixin BlockMixin on GetxController {
     if (autoPlay && Pref.blockToast) {
       _showBlockToast('已跳过${item.segmentType.shortTitle}片段');
     }
-    if (isBlock && Pref.blockTrack) {
+    if (Pref.blockTrack) {
       SponsorBlock.viewedVideoSponsorTime(item.uuid);
     }
   }
@@ -382,9 +376,7 @@ mixin BlockMixin on GetxController {
               (item) => ListTile(
                 onTap: () {
                   Get.back();
-                  if (isBlock) {
-                    _showVoteDialog(item);
-                  }
+                  _showVoteDialog(item);
                 },
                 dense: true,
                 title: Text.rich(
@@ -505,7 +497,7 @@ mixin BlockMixin on GetxController {
   @override
   void onClose() {
     _stopSkipTimer();
-    if (blockConfig.enableBlock) {
+    if (blockConfig.enableSponsorBlock) {
       resetBlock();
     }
     super.onClose();

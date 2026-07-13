@@ -162,7 +162,7 @@ class LaterController extends MultiSelectController<LaterData, LaterItemModel>
       if (response == null || response.isEmpty) return;
 
       for (LaterItemModel item in response) {
-        if (item.cid == null || item.pgcLabel?.isNotEmpty == true) {
+        if (item.cid == null) {
           continue;
         } else {
           PageUtils.toVideoPage(

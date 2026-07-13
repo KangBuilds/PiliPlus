@@ -29,7 +29,7 @@ import 'package:PiliPlus/pages/setting/widgets/popup_item.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/local/controller.dart';
-import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
+import 'package:PiliPlus/pages/video/introduction/pugv/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/action_item.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
@@ -291,13 +291,13 @@ class HeaderControlState extends State<HeaderControl>
 
   String get heroTag => widget.heroTag;
   late final UgcIntroController ugcIntroController;
-  late final PgcIntroController pgcIntroController;
+  late final PugvIntroController pugvIntroController;
   late final LocalIntroController localIntroController;
   late CommonIntroController introController = isFileSource
       ? localIntroController
       : videoDetailCtr.isUgc
       ? ugcIntroController
-      : pgcIntroController;
+      : pugvIntroController;
 
   @override
   bool get isPortrait => widget.isPortrait;
@@ -314,7 +314,7 @@ class HeaderControlState extends State<HeaderControl>
     } else if (videoDetailCtr.isUgc) {
       introController = Get.find<UgcIntroController>(tag: heroTag);
     } else {
-      introController = Get.find<PgcIntroController>(tag: heroTag);
+      introController = Get.find<PugvIntroController>(tag: heroTag);
     }
   }
 

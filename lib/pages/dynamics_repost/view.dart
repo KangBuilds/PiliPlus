@@ -64,14 +64,12 @@ class _RepostPanelState extends CommonRichTextPubPageState<RepostPanel> {
     _pic =
         widget.pic ??
         major?.archive?.cover ??
-        major?.pgc?.cover ??
         major?.opus?.pics?.firstOrNull?.url;
 
     _text =
         widget.title ??
         major?.opus?.summary?.text ??
         major?.archive?.title ??
-        major?.pgc?.title ??
         moduleDynamic?.desc?.text ??
         '';
 

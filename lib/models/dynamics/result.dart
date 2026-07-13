@@ -29,7 +29,6 @@ class DynamicsDataModel {
     final title = switch (major?.type) {
       'MAJOR_TYPE_ARCHIVE' => major?.archive?.title,
       'MAJOR_TYPE_UGC_SEASON' => major?.ugcSeason?.title,
-      'MAJOR_TYPE_PGC' => major?.pgc?.title,
       'MAJOR_TYPE_COURSES' => major?.courses?.title,
       _ => null,
     };
@@ -56,8 +55,16 @@ class DynamicsDataModel {
       items = <DynamicItemModel>[];
       late final filterBan =
           type != DynamicsTabType.up && tempBannedList?.isNotEmpty == true;
+      const unsupportedTypes = {
+        'DYNAMIC_TYPE_PGC',
+        'DYNAMIC_TYPE_PGC_UNION',
+      };
       for (final e in list) {
         DynamicItemModel item = DynamicItemModel.fromJson(e);
+        if (unsupportedTypes.contains(item.type) ||
+            unsupportedTypes.contains(item.orig?.type)) {
+          continue;
+        }
         if (antiGoodsDyn &&
             (item.orig?.modules.moduleDynamic?.additional?.type ==
                     'ADDITIONAL_TYPE_GOODS' ||
@@ -782,7 +789,6 @@ class DynamicMajorModel {
     this.archive,
     this.ugcSeason,
     this.opus,
-    this.pgc,
     this.none,
     this.type,
     this.courses,
@@ -795,7 +801,6 @@ class DynamicMajorModel {
   DynamicArchiveModel? archive;
   DynamicArchiveModel? ugcSeason;
   DynamicOpusModel? opus;
-  DynamicArchiveModel? pgc;
   DynamicNoneModel? none;
   String? type;
   DynamicArchiveModel? courses;
@@ -814,9 +819,6 @@ class DynamicMajorModel {
         : null;
     opus = json['opus'] != null
         ? DynamicOpusModel.fromJson(json['opus'])
-        : null;
-    pgc = json['pgc'] != null
-        ? DynamicArchiveModel.fromJson(json['pgc'])
         : null;
     none = json['none'] != null
         ? DynamicNoneModel.fromJson(json['none'])

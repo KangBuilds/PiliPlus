@@ -2,7 +2,6 @@ import 'package:PiliPlus/models/common/sponsor_block/segment_type.dart';
 import 'package:PiliPlus/models/common/sponsor_block/skip_type.dart';
 import 'package:PiliPlus/models_new/sponsor_block/segment_item.dart';
 import 'package:PiliPlus/pages/sponsor_block/block_mixin.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
 
 class SegmentModel implements Comparable<SegmentModel> {
   SegmentModel({
@@ -19,20 +18,16 @@ class SegmentModel implements Comparable<SegmentModel> {
 
   factory SegmentModel.fromItemModel(
     SegmentItemModel model,
-    BlockConfigMixin? config,
+    BlockConfigMixin config,
   ) {
     final segmentType = SegmentType.values.byName(model.category);
     final segment = (model.segment[0], model.segment[1]);
     SkipType skipType;
-    if (config != null) {
-      skipType = config.blockSettings[segmentType.index].second;
-      if (skipType != SkipType.showOnly) {
-        if (segment.isEq || segment.length < config.blockLimit) {
-          skipType = SkipType.showOnly;
-        }
+    skipType = config.blockSettings[segmentType.index].second;
+    if (skipType != SkipType.showOnly) {
+      if (segment.isEq || segment.length < config.blockLimit) {
+        skipType = SkipType.showOnly;
       }
-    } else {
-      skipType = Pref.pgcSkipType;
     }
 
     return SegmentModel(

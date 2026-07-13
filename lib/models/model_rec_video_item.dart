@@ -8,7 +8,6 @@ abstract class BaseRcmdVideoItemModel extends BaseVideoItemModel {
 
   // app推荐专属
   int? param;
-  String? pgcBadge;
 }
 
 class RcmdVideoItemModel extends BaseRcmdVideoItemModel {

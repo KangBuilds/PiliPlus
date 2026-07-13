@@ -163,12 +163,6 @@ class DynamicPanel extends StatelessWidget {
           bvid = ugcSeason.bvid;
         }
         break;
-      case 'DYNAMIC_TYPE_PGC' || 'DYNAMIC_TYPE_PGC_UNION':
-        if (major?.pgc case final pgc?) {
-          title = pgc.title;
-          cover = pgc.cover;
-        }
-        break;
       case 'DYNAMIC_TYPE_COURSES_SEASON':
         if (major?.courses case final courses?) {
           title = courses.title;

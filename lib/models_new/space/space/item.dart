@@ -13,7 +13,6 @@ class Item {
   bool? isSteins;
   bool? isUgcpay;
   bool? isCooperation;
-  bool? isPgc;
   bool? isPugv;
   bool? isFold;
   bool? isOneself;
@@ -45,7 +44,6 @@ class Item {
     this.isSteins,
     this.isUgcpay,
     this.isCooperation,
-    this.isPgc,
     this.isPugv,
     this.isFold,
     this.isOneself,
@@ -78,7 +76,6 @@ class Item {
     isSteins: json['is_steins'] as bool?,
     isUgcpay: json['is_ugcpay'] as bool?,
     isCooperation: json['is_cooperation'] as bool?,
-    isPgc: json['is_pgc'] as bool?,
     isPugv: json['is_pugv'] as bool?,
     isFold: json['is_fold'] as bool?,
     isOneself: json['is_oneself'] as bool?,

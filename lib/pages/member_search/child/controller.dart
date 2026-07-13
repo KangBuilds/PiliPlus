@@ -36,7 +36,9 @@ class MemberSearchChildController extends CommonListController {
       case MemberSearchType.archive:
         SearchArchiveReply data = response;
         controller.counts[searchType.index] = data.total.toInt();
-        return data.archives;
+        return data.archives
+            .where((item) => item.isPugv || !item.archive.hasRedirectUrl())
+            .toList();
       case MemberSearchType.dynamic:
         DynamicsDataModel data = response;
         offset = data.offset;

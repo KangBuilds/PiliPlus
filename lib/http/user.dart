@@ -366,7 +366,7 @@ abstract final class UserHttp {
         'type': type,
         'biz_id': bizId,
         'oid': ?oid,
-        'otype': ?otype, // ugc:2 // pgc: 24
+        'otype': ?otype,
         'ps': ps,
         'direction': direction,
         'desc': desc,

@@ -14,7 +14,6 @@ import 'package:PiliPlus/pages/audio/view.dart';
 import 'package:PiliPlus/pages/fav_detail/controller.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
-import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -75,12 +74,6 @@ class FavVideoCardH extends StatelessWidget {
                       from: PlaylistSource.AUDIO_CARD,
                     );
                     break;
-                  case 24:
-                    PageUtils.viewPgc(
-                      seasonId: item.ogv!.seasonId,
-                      epId: item.id,
-                    );
-                    break;
                   default:
                     ctr!.onViewFav(item, index);
                     break;
@@ -122,14 +115,6 @@ class FavVideoCardH extends StatelessWidget {
                             top: 6.0,
                             right: 6.0,
                             type: PBadgeType.gray,
-                          )
-                        else
-                          PBadge(
-                            text: item.ogv?.typeName,
-                            top: 6.0,
-                            right: 6.0,
-                            bottom: null,
-                            left: null,
                           ),
                         if (!isSort)
                           Positioned.fill(
@@ -170,16 +155,6 @@ class FavVideoCardH extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (item.type == 24 && item.intro?.isNotEmpty == true)
-                Text(
-                  item.intro!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.outline,
-                  ),
-                ),
               const Spacer(),
               Text(
                 '${DateFormatUtils.dateFormat(item.favTime)} ${item.upper?.name}',

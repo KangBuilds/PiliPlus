@@ -9,7 +9,8 @@ class CoinArchive {
   factory CoinArchive.fromJson(Map<String, dynamic> json) => CoinArchive(
     count: json['count'] as int?,
     item: (json['item'] as List<dynamic>?)
-        ?.map((e) => SpaceArchiveItem.fromJson(e))
+        ?.where((e) => e['is_pgc'] != true)
+        .map((e) => SpaceArchiveItem.fromJson(e))
         .toList(),
   );
 }

@@ -61,13 +61,10 @@ abstract final class RequestUtils {
   // 3：纯文字
   // 5：视频
   // 6：专栏
-  // 7：番剧（id 为 season_id）
   // 8：音乐
   // 9：国产动画（id 为 AV 号）
   // 10：图片
   // 11：动态
-  // 16：番剧（id 为 epid）
-  // 17：番剧
   // https://github.com/SocialSisterYi/bilibili-API-collect/tree/master/docs/message/private_msg_content.md
   static Future<bool> pmShare({
     required int receiverId,

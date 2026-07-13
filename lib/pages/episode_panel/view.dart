@@ -16,7 +16,7 @@ import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/episode_panel_type.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/episode.dart' as pgc;
+import 'package:PiliPlus/models_new/pugv/season_info/episode.dart' as pugv;
 import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
 import 'package:PiliPlus/models_new/video/video_detail/page.dart';
 import 'package:PiliPlus/pages/common/slide/common_slide_page.dart';
@@ -60,7 +60,7 @@ class EpisodePanel extends CommonSlidePage {
     this.onReverse,
     required this.onChangeEpisode,
     this.onClose,
-  }) : assert(type == EpisodeType.pgc || ugcIntroController != null);
+  }) : assert(type == EpisodeType.pugv || ugcIntroController != null);
 
   final UgcIntroController? ugcIntroController;
   final String heroTag;
@@ -403,16 +403,12 @@ class _EpisodePanelState extends State<EpisodePanel>
           isCharging = true;
         }
         break;
-      case pgc.EpisodeItem item:
+      case pugv.EpisodeItem item:
         bvid = item.bvid;
         title = item.showTitle ?? item.title!;
         cover = item.cover;
-        if (item.from == 'pugv') {
-          duration = item.duration;
-          view = item.play;
-        } else {
-          duration = item.duration == null ? null : item.duration! ~/ 1000;
-        }
+        duration = item.duration;
+        view = item.play;
         pubdate = item.pubTime;
         cacheWidth = item.dimension?.cacheWidth;
         break;

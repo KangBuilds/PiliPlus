@@ -23,8 +23,6 @@ Widget videoSeasonWidget(
   DynamicArchiveModel? video = switch (item.type) {
     'DYNAMIC_TYPE_AV' => item.modules.moduleDynamic?.major?.archive,
     'DYNAMIC_TYPE_UGC_SEASON' => item.modules.moduleDynamic?.major?.ugcSeason,
-    'DYNAMIC_TYPE_PGC' ||
-    'DYNAMIC_TYPE_PGC_UNION' => item.modules.moduleDynamic?.major?.pgc,
     'DYNAMIC_TYPE_COURSES_SEASON' => item.modules.moduleDynamic?.major?.courses,
     _ => null,
   };

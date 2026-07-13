@@ -10,7 +10,7 @@ import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/dynamic_panel.dart';
 import 'package:PiliPlus/pages/music/controller.dart';
-import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
+import 'package:PiliPlus/pages/video/introduction/pugv/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/pages/video/reply/widgets/reply_item_grpc.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
@@ -99,25 +99,25 @@ class _SavePanelState extends State<SavePanel> {
         try {
           final heroTag = Get.arguments['heroTag'];
           final videoType = Get.arguments['videoType'];
-          if (videoType == VideoType.pgc || videoType == VideoType.pugv) {
-            final ctr = Get.find<PgcIntroController>(tag: heroTag);
-            final pgcItem = ctr.pgcItem;
+          if (videoType == VideoType.pugv) {
+            final ctr = Get.find<PugvIntroController>(tag: heroTag);
+            final seasonItem = ctr.seasonItem;
             final cid = ctr.cid.value;
-            final episode = pgcItem.episodes!.firstWhere(
+            final episode = seasonItem.episodes!.firstWhere(
               (e) => e.cid == cid,
             );
             cover = episode.cover;
             title =
                 episode.shareCopy ??
-                '${pgcItem.title} ${episode.showTitle ?? episode.longTitle ?? ''}';
+                '${seasonItem.title} ${episode.showTitle ?? episode.longTitle ?? ''}';
             pubdate = episode.pubTime;
-            uname = pgcItem.upInfo?.uname;
+            uname = seasonItem.upInfo?.uname;
 
             final oid = reply.oid;
             final type = reply.type.toInt();
             final anchor = hasRoot ? 'anchor=${reply.id}&' : '';
             uri =
-                'bilibili://comment/detail/$type/$oid/$rootId/?${anchor}enterUri=bilibili://pgc/season/ep/${ctr.epId}';
+                'bilibili://comment/detail/$type/$oid/$rootId/?${anchor}enterUri=bilibili://cheese/season/${ctr.seasonId}';
           } else {
             final ctr = Get.find<UgcIntroController>(tag: heroTag);
             final videoDetail = ctr.videoDetail.value;
@@ -242,15 +242,6 @@ class _SavePanelState extends State<SavePanel> {
           itemType = '合集';
           final aid = item.modules.moduleDynamic!.major!.ugcSeason!.aid;
           uri = 'bilibili://video/$aid';
-          break;
-
-        case 'DYNAMIC_TYPE_PGC':
-        case 'DYNAMIC_TYPE_PGC_UNION':
-          viewType = '观看';
-          itemType =
-              item.modules.moduleDynamic?.major?.pgc?.badge?.text ?? '番剧';
-          final epid = item.modules.moduleDynamic!.major!.pgc!.epid;
-          uri = 'bilibili://pgc/season/ep/$epid';
           break;
 
         // https://www.bilibili.com/medialist/detail/ml12345678

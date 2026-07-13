@@ -3,7 +3,7 @@ import 'dart:io' show File;
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/grpc/bilibili/app/listener/v1.pb.dart' show DetailItem;
 import 'package:PiliPlus/models_new/download/bili_download_entry_info.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/episode.dart';
+import 'package:PiliPlus/models_new/pugv/season_info/episode.dart';
 import 'package:PiliPlus/models_new/video/video_detail/data.dart';
 import 'package:PiliPlus/models_new/video/video_detail/page.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
@@ -184,9 +184,7 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
           id: id,
           title: data.showTitle ?? data.longTitle ?? data.title ?? '',
           artist: artist,
-          duration: data.from == 'pugv'
-              ? Duration(seconds: data.duration ?? 0)
-              : Duration(milliseconds: data.duration ?? 0),
+          duration: Duration(seconds: data.duration ?? 0),
           artUri: getUri(data.cover),
         );
       case Part():

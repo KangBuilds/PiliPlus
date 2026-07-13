@@ -3,7 +3,6 @@ class SpaceSetting {
   int? favVideo;
   int? coinsVideo;
   int? likesVideo;
-  int? bangumi;
   int? playedGame;
   int? groups;
   int? comic;
@@ -23,7 +22,6 @@ class SpaceSetting {
     this.favVideo,
     this.coinsVideo,
     this.likesVideo,
-    this.bangumi,
     this.playedGame,
     this.groups,
     this.comic,
@@ -44,7 +42,6 @@ class SpaceSetting {
     favVideo: json['fav_video'] as int?,
     coinsVideo: json['coins_video'] as int?,
     likesVideo: json['likes_video'] as int?,
-    bangumi: json['bangumi'] as int?,
     playedGame: json['played_game'] as int?,
     groups: json['groups'] as int?,
     comic: json['comic'] as int?,

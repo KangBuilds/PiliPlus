@@ -34,7 +34,6 @@ abstract final class DownloadHttp {
       tryLook: !isLogin && Pref.p1080,
       videoType: switch (ep?.from) {
         'pugv' => VideoType.pugv,
-        != null when isLogin => VideoType.pgc,
         _ => VideoType.ugc,
       },
     );

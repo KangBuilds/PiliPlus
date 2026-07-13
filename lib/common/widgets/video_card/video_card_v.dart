@@ -33,9 +33,6 @@ class VideoCardV extends StatelessWidget {
 
   Future<void> onPushDetail() async {
     switch (videoItem.goto) {
-      case 'bangumi':
-        PageUtils.viewPgc(epId: videoItem.param!);
-        break;
       case 'av':
         var bvid = videoItem.bvid ?? IdUtils.av2bv(videoItem.aid!);
         var cid = videoItem.cid;
@@ -172,14 +169,6 @@ class VideoCardV extends StatelessWidget {
             Row(
               spacing: 2,
               children: [
-                if (videoItem.goto == 'bangumi')
-                  PBadge(
-                    text: videoItem.pgcBadge,
-                    isStack: false,
-                    size: .small,
-                    type: .line_primary,
-                    fontSize: 9,
-                  ),
                 if (videoItem.rcmdReason != null)
                   PBadge(
                     text: videoItem.rcmdReason,

@@ -31,12 +31,7 @@ class _RankPageState extends State<RankPage>
             physics: const NeverScrollableScrollPhysics(),
             controller: _rankController.tabController,
             children: RankType.values
-                .map(
-                  (item) => ZonePage(
-                    rid: item.rid,
-                    seasonType: item.seasonType,
-                  ),
-                )
+                .map((item) => ZonePage(rid: item.rid))
                 .toList(),
           ),
         ),

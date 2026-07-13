@@ -16,8 +16,6 @@ import 'package:PiliPlus/models/common/audio_normalization.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/common/member/tab_type.dart';
 import 'package:PiliPlus/models/common/reply/reply_sort_type.dart';
-import 'package:PiliPlus/models/common/sponsor_block/skip_type.dart';
-import 'package:PiliPlus/models/common/super_resolution_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart'
     show DynamicsDataModel, ItemModulesModel;
 import 'package:PiliPlus/pages/common/slide/common_slide_page.dart';
@@ -83,15 +81,6 @@ List<SettingsModel> get extraSettings => [
       onTap: (context) => Get.toNamed('/sponsorBlock'),
     ),
   ),
-  PopupModel<SkipType>(
-    title: '番剧片头/片尾跳过类型',
-    leading: const Icon(MdiIcons.debugStepOver),
-    value: () => Pref.pgcSkipType,
-    items: SkipType.values,
-    onSelected: (value, setState) => GStorage.setting
-        .put(SettingBoxKey.pgcSkipType, value.index)
-        .whenComplete(setState),
-  ),
   SplitModel(
     normalModel: const NormalModel.split(
       title: '检查未读动态',
@@ -121,12 +110,6 @@ List<SettingsModel> get extraSettings => [
     title: '显示视频评论',
     leading: Icon(MdiIcons.commentTextOutline),
     setKey: SettingBoxKey.showVideoReply,
-    defaultVal: true,
-  ),
-  const SwitchModel(
-    title: '显示番剧评论',
-    leading: Icon(MdiIcons.commentTextOutline),
-    setKey: SettingBoxKey.showBangumiReply,
     defaultVal: true,
   ),
   const SwitchModel(
@@ -293,13 +276,6 @@ List<SettingsModel> get extraSettings => [
       },
       onTap: audioNormalization,
     ),
-  NormalModel(
-    title: '超分辨率',
-    leading: const Icon(Icons.stay_current_landscape_outlined),
-    getSubtitle: () =>
-        '当前:「${Pref.superResolutionType.label}」\n默认设置对番剧生效, 其他视频默认关闭\n超分辨率需要启用硬件解码, 若启用硬件解码后仍然不生效, 尝试切换硬件解码器为 auto-copy',
-    onTap: _showSuperResolutionDialog,
-  ),
   const SwitchModel(
     title: '提前初始化播放器',
     subtitle: '相对减少手动播放加载时间',
@@ -423,13 +399,6 @@ List<SettingsModel> get extraSettings => [
     leading: Icon(MdiIcons.dragVariant),
     setKey: SettingBoxKey.enableDragSubtitle,
     defaultVal: false,
-  ),
-  const SwitchModel(
-    title: '展示追番时间表',
-    leading: Icon(MdiIcons.chartTimelineVariantShimmer),
-    setKey: SettingBoxKey.showPgcTimeline,
-    defaultVal: true,
-    needReboot: true,
   ),
   SwitchModel(
     title: '静默下载图片',
@@ -961,27 +930,6 @@ void _visitor(Element context) {
     context.markNeedsBuild();
   } else {
     context.visitChildren(_visitor);
-  }
-}
-
-Future<void> _showSuperResolutionDialog(
-  BuildContext context,
-  VoidCallback setState,
-) async {
-  final res = await showDialog<SuperResolutionType>(
-    context: context,
-    builder: (context) => SelectDialog<SuperResolutionType>(
-      title: '超分辨率',
-      value: Pref.superResolutionType,
-      values: SuperResolutionType.values.map((e) => (e, e.label)).toList(),
-    ),
-  );
-  if (res != null) {
-    await GStorage.setting.put(
-      SettingBoxKey.superResolutionType,
-      res.index,
-    );
-    setState();
   }
 }
 

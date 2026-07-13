@@ -5,7 +5,6 @@ enum ContributeType {
   charging(Api.spaceChargingArchive),
   season(Api.spaceSeason),
   series(Api.spaceSeries),
-  bangumi(Api.spaceBangumi),
   comic(Api.spaceComic),
   ;
 

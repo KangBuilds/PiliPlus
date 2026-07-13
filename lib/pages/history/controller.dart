@@ -54,7 +54,10 @@ class HistoryController
   @override
   List<HistoryItemModel>? getDataList(HistoryData response) {
     return response.list
-        ?.where((item) => item.history.business != 'live')
+        ?.where(
+          (item) =>
+              item.history.business != 'live' && item.history.business != 'pgc',
+        )
         .toList();
   }
 
@@ -67,7 +70,9 @@ class HistoryController
 
     if (isRefresh && type == null) {
       if (tabs.isEmpty && data.tab?.isNotEmpty == true) {
-        tabs.value = data.tab!.where((tab) => tab.type != 'live').toList();
+        tabs.value = data.tab!
+            .where((tab) => tab.type != 'live' && tab.type != 'pgc')
+            .toList();
         tabController = TabController(
           length: tabs.length + 1,
           vsync: this,

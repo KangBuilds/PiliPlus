@@ -7,7 +7,6 @@ import 'package:PiliPlus/models_new/video/video_detail/rights.dart';
 import 'package:PiliPlus/models_new/video/video_detail/staff.dart';
 import 'package:PiliPlus/models_new/video/video_detail/stat.dart';
 import 'package:PiliPlus/models_new/video/video_detail/ugc_season.dart';
-import 'package:PiliPlus/utils/parse_string.dart';
 
 class VideoDetailData {
   String? bvid;
@@ -32,7 +31,6 @@ class VideoDetailData {
   List<Part>? pages;
   UgcSeason? ugcSeason;
   List<Staff>? staff;
-  String? redirectUrl;
   bool isPageReversed = false;
 
   VideoDetailData({
@@ -58,7 +56,6 @@ class VideoDetailData {
     this.pages,
     this.ugcSeason,
     this.staff,
-    this.redirectUrl,
   });
 
   factory VideoDetailData.fromJson(Map<String, dynamic> json) =>
@@ -103,6 +100,5 @@ class VideoDetailData {
         staff: (json["staff"] as List?)
             ?.map((item) => Staff.fromJson(item))
             .toList(),
-        redirectUrl: nonNullOrEmptyString(json['redirect_url']),
       );
 }

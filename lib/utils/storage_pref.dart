@@ -15,7 +15,6 @@ import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/models/common/reply/reply_sort_type.dart';
 import 'package:PiliPlus/models/common/sponsor_block/segment_type.dart';
 import 'package:PiliPlus/models/common/sponsor_block/skip_type.dart';
-import 'package:PiliPlus/models/common/super_resolution_type.dart';
 import 'package:PiliPlus/models/common/theme/theme_type.dart';
 import 'package:PiliPlus/models/common/video/audio_quality.dart';
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
@@ -394,9 +393,6 @@ abstract final class Pref {
   static bool get showVideoReply =>
       _setting.get(SettingBoxKey.showVideoReply, defaultValue: true);
 
-  static bool get showBangumiReply =>
-      _setting.get(SettingBoxKey.showBangumiReply, defaultValue: true);
-
   static bool get alwaysExpandIntroPanel =>
       _setting.get(SettingBoxKey.alwaysExpandIntroPanel, defaultValue: false);
 
@@ -480,15 +476,6 @@ abstract final class Pref {
 
   static String get fallbackNormalization =>
       _setting.get(SettingBoxKey.fallbackNormalization, defaultValue: '0');
-
-  static SuperResolutionType get superResolutionType {
-    SuperResolutionType? superResolutionType;
-    final index = _setting.get(SettingBoxKey.superResolutionType);
-    if (index != null) {
-      superResolutionType = SuperResolutionType.values.elementAtOrNull(index);
-    }
-    return superResolutionType ?? SuperResolutionType.disable;
-  }
 
   static bool get preInitPlayer =>
       _setting.get(SettingBoxKey.preInitPlayer, defaultValue: false);
@@ -587,9 +574,6 @@ abstract final class Pref {
 
   static String get webdavDirectory =>
       _setting.get(SettingBoxKey.webdavDirectory, defaultValue: '/');
-
-  static bool get showPgcTimeline =>
-      _setting.get(SettingBoxKey.showPgcTimeline, defaultValue: true);
 
   static num get maxCacheSize =>
       _setting.get(SettingBoxKey.maxCacheSize) ?? 1 << 30;
@@ -921,10 +905,6 @@ abstract final class Pref {
 
   static double get desktopVolume =>
       _setting.get(SettingBoxKey.desktopVolume, defaultValue: 1.0);
-
-  static SkipType get pgcSkipType =>
-      SkipType.values[_setting.get(SettingBoxKey.pgcSkipType) ??
-          SkipType.skipOnce.index];
 
   static PlayRepeat get audioPlayMode =>
       PlayRepeat.values[_setting.get(SettingBoxKey.audioPlayMode) ??

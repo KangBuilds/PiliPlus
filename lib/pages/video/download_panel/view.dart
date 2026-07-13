@@ -7,8 +7,8 @@ import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
 import 'package:PiliPlus/models/common/video/video_quality.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/episode.dart' as pgc;
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/result.dart';
+import 'package:PiliPlus/models_new/pugv/season_info/episode.dart' as pugv;
+import 'package:PiliPlus/models_new/pugv/season_info/result.dart';
 import 'package:PiliPlus/models_new/video/video_detail/data.dart';
 import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
 import 'package:PiliPlus/models_new/video/video_detail/page.dart';
@@ -37,7 +37,7 @@ class DownloadPanel extends StatefulWidget {
   const DownloadPanel({
     super.key,
     required this.index,
-    this.pgcItem,
+    this.seasonItem,
     this.videoDetail,
     required this.episodes,
     required this.scrollController,
@@ -48,7 +48,7 @@ class DownloadPanel extends StatefulWidget {
   });
 
   final int index;
-  final PgcInfoModel? pgcItem;
+  final SeasonInfoModel? seasonItem;
   final VideoDetailData? videoDetail;
   final List<ugc.BaseEpisodeItem> episodes;
   final ScrollController scrollController;
@@ -302,10 +302,10 @@ class _DownloadPanelState extends State<DownloadPanel> {
             _quality,
           );
           break;
-        case pgc.EpisodeItem episode:
-          _downloadService.downloadBangumi(
+        case pugv.EpisodeItem episode:
+          _downloadService.downloadPugv(
             index,
-            widget.pgcItem!,
+            widget.seasonItem!,
             episode,
             _quality,
           );
@@ -364,16 +364,12 @@ class _DownloadPanelState extends State<DownloadPanel> {
           isCharging = true;
         }
         break;
-      case pgc.EpisodeItem item:
+      case pugv.EpisodeItem item:
         cid = item.cid;
         title = item.showTitle ?? item.title!;
         cover = item.cover;
-        if (item.from == 'pugv') {
-          duration = item.duration;
-          view = item.play;
-        } else {
-          duration = item.duration == null ? null : item.duration! ~/ 1000;
-        }
+        duration = item.duration;
+        view = item.play;
         pubdate = item.pubTime;
         cacheWidth = item.dimension?.cacheWidth;
         break;

@@ -8,7 +8,6 @@ import 'package:PiliPlus/models_new/fav/fav_detail/data.dart';
 import 'package:PiliPlus/models_new/fav/fav_folder/data.dart';
 import 'package:PiliPlus/models_new/fav/fav_folder/list.dart';
 import 'package:PiliPlus/models_new/fav/fav_note/list.dart';
-import 'package:PiliPlus/models_new/fav/fav_pgc/data.dart';
 import 'package:PiliPlus/models_new/fav/fav_topic/data.dart';
 import 'package:PiliPlus/models_new/space/space_cheese/data.dart';
 import 'package:PiliPlus/models_new/space/space_fav/data.dart';
@@ -367,28 +366,6 @@ abstract final class FavHttp {
     );
     if (res.data['code'] == 0) {
       return const Success(null);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<FavPgcData>> favPgc({
-    required int type,
-    required int pn,
-    int? followStatus,
-    Object? mid,
-  }) async {
-    final res = await Request().get(
-      Api.favPgc,
-      queryParameters: {
-        'vmid': mid ?? Accounts.main.mid,
-        'type': type,
-        'follow_status': ?followStatus,
-        'pn': pn,
-      },
-    );
-    if (res.data['code'] == 0) {
-      return Success(FavPgcData.fromJson(res.data['data']));
     } else {
       return Error(res.data['message']);
     }

@@ -3,7 +3,6 @@ import 'package:PiliPlus/common/widgets/view_safe_area.dart';
 import 'package:PiliPlus/models/common/search/search_type.dart';
 import 'package:PiliPlus/pages/search/controller.dart';
 import 'package:PiliPlus/pages/search_panel/article/view.dart';
-import 'package:PiliPlus/pages/search_panel/pgc/view.dart';
 import 'package:PiliPlus/pages/search_panel/user/view.dart';
 import 'package:PiliPlus/pages/search_panel/video/view.dart';
 import 'package:PiliPlus/pages/search_result/controller.dart';
@@ -160,12 +159,6 @@ class _SearchResultPageState extends State<SearchResultPage>
                         //   keyword: _searchResultController.keyword,
                         // ),
                         SearchType.video => SearchVideoPanel(
-                          tag: _tag,
-                          searchType: item,
-                          keyword: _searchResultController.keyword,
-                        ),
-                        SearchType.media_bangumi ||
-                        SearchType.media_ft => SearchPgcPanel(
                           tag: _tag,
                           searchType: item,
                           keyword: _searchResultController.keyword,

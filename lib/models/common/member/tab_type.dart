@@ -6,7 +6,6 @@ enum MemberTabType {
   dynamic('动态'),
   contribute('投稿'),
   favorite('收藏'),
-  bangumi('番剧'),
   cheese('课堂'),
   shop('小店'),
   ;

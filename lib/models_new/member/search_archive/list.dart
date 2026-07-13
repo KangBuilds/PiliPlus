@@ -7,7 +7,13 @@ class SearchArchiveList {
 
   SearchArchiveList.fromJson(Map<String, dynamic> json) {
     vlist = (json['vlist'] as List<dynamic>?)
-        ?.map((e) => VListItemModel.fromJson(e as Map<String, dynamic>))
+        ?.where(
+          (e) =>
+              e['is_lesson_video'] == 1 ||
+              e['jump_url'] == null ||
+              e['jump_url'] == '',
+        )
+        .map((e) => VListItemModel.fromJson(e as Map<String, dynamic>))
         .toList();
     tags = (json['slist'] as List<dynamic>?)
         ?.map((e) => ListTag.fromJson(e as Map<String, dynamic>))

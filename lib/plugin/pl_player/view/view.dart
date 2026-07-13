@@ -29,7 +29,7 @@ import 'package:PiliPlus/models_new/video/video_detail/ugc_season.dart';
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/danmaku/danmaku_model.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
-import 'package:PiliPlus/pages/video/introduction/pgc/controller.dart';
+import 'package:PiliPlus/pages/video/introduction/pugv/controller.dart';
 import 'package:PiliPlus/pages/video/post_panel/popup_menu_text.dart';
 import 'package:PiliPlus/pages/video/post_panel/view.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart';
@@ -390,9 +390,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final videoDetail = introController.videoDetail.value;
     final isSeason = videoDetail.ugcSeason != null;
     final isPart = videoDetail.pages != null && videoDetail.pages!.length > 1;
-    final isPgc = !videoDetailController.isUgc;
+    final isPugv = !videoDetailController.isUgc;
     final isPlayAll = videoDetailController.isPlayAll;
-    final anySeason = isSeason || isPart || isPgc || isPlayAll;
+    final anySeason = isSeason || isPart || isPugv || isPlayAll;
     final isFullScreen = this.isFullScreen;
     final double widgetWidth = isLandscape && isFullScreen ? 42 : 35;
 
@@ -562,7 +562,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
             // TODO
             return;
           }
-          // part -> playAll -> season(pgc)
+          // part -> playAll -> season/course
           if (isPlayAll && !isPart) {
             widget.showEpisodes?.call();
             return;
@@ -585,9 +585,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
             }
           } else if (isPart) {
             episodes = videoDetail.pages!;
-          } else if (isPgc) {
+          } else if (isPugv) {
             episodes =
-                (introController as PgcIntroController).pgcItem.episodes!;
+                (introController as PugvIntroController).seasonItem.episodes!;
           }
           widget.showEpisodes?.call(
             index,
@@ -899,7 +899,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
     final List<BottomControlType> userSpecifyItemRight = [
       if (isNotFileSource && plPlayerController.showDmChart) .dmChart,
-      if (plPlayerController.isAnim) .superResolution,
       if (isNotFileSource && plPlayerController.showViewPoints) .viewPoints,
       if (isNotFileSource && anySeason) .episode,
       if (flag) .fit,
@@ -1702,7 +1701,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         thumbRadius: 2.5,
                       ),
                     ),
-                    if (plPlayerController.enableBlock &&
+                    if (plPlayerController.enableSponsorBlock &&
                         videoDetailController.segmentProgressList.isNotEmpty)
                       Positioned(
                         left: 0,

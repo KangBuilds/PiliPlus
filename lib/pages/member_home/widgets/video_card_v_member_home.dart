@@ -25,18 +25,7 @@ class VideoCardVMemberHome extends StatelessWidget {
   Future<void> onPushDetail() async {
     String? goto = videoItem.goto;
     switch (goto) {
-      case 'bangumi':
-        PageUtils.viewPgc(epId: videoItem.param);
-        break;
-
       case 'av':
-        if (videoItem.isPgc == true) {
-          if (videoItem.uri?.isNotEmpty == true) {
-            PageUtils.viewPgcFromUri(videoItem.uri!);
-          }
-          return;
-        }
-
         String? aid = videoItem.param;
         String? bvid = videoItem.bvid;
         if (aid == null && bvid == null) {

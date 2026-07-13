@@ -70,10 +70,6 @@ Widget forwardPanel(
         cover = major?.ugcSeason?.cover;
         bvid = major?.ugcSeason?.bvid;
         break;
-      case 'DYNAMIC_TYPE_PGC' || 'DYNAMIC_TYPE_PGC_UNION':
-        title = major?.pgc?.title;
-        cover = major?.pgc?.cover;
-        break;
       default:
         return;
     }

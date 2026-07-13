@@ -101,10 +101,6 @@ Widget module(
           onTap: () {
             try {
               String url = common.jumpUrl!;
-              if (url.contains('bangumi/play') &&
-                  PageUtils.viewPgcFromUri(url)) {
-                return;
-              }
               PageUtils.handleWebview(url, inApp: true);
             } catch (_) {}
           },

@@ -10,7 +10,8 @@ class CoinLikeArcData {
       CoinLikeArcData(
         count: json['count'] as int?,
         item: (json['item'] as List<dynamic>?)
-            ?.map((e) => CoinLikeArcItem.fromJson(e as Map<String, dynamic>))
+            ?.where((e) => e['is_pgc'] != true)
+            .map((e) => CoinLikeArcItem.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
 }

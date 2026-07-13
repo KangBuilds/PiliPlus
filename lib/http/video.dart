@@ -13,13 +13,10 @@ import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/home/rcmd/result.dart';
 import 'package:PiliPlus/models/model_hot_video_item.dart';
 import 'package:PiliPlus/models/model_rec_video_item.dart';
-import 'package:PiliPlus/models/pgc_lcf.dart';
 import 'package:PiliPlus/models/video/play/url.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_rank/pgc_rank_item_model.dart';
 import 'package:PiliPlus/models_new/popular/popular_precious/data.dart';
 import 'package:PiliPlus/models_new/popular/popular_series_list/list.dart';
 import 'package:PiliPlus/models_new/popular/popular_series_one/data.dart';
-import 'package:PiliPlus/models_new/triple/pgc_triple.dart';
 import 'package:PiliPlus/models_new/triple/ugc_triple.dart';
 import 'package:PiliPlus/models_new/video/video_ai_conclusion/data.dart';
 import 'package:PiliPlus/models_new/video/video_detail/data.dart';
@@ -143,7 +140,8 @@ abstract final class VideoHttp {
       List<RcmdVideoItemAppModel> list = <RcmdVideoItemAppModel>[];
       for (final i in res.data['data']['items']) {
         // 屏蔽推广和拉黑用户
-        if (i['card_goto'] != 'ad_av' &&
+        if (i['goto'] != 'bangumi' &&
+            i['card_goto'] != 'ad_av' &&
             i['card_goto'] != 'ad_web_s' &&
             i['ad_info'] == null &&
             (i['args'] != null &&
@@ -177,7 +175,8 @@ abstract final class VideoHttp {
     if (res.data['code'] == 0) {
       List<HotVideoItemModel> list = <HotVideoItemModel>[];
       for (final i in res.data['data']['list']) {
-        if (!GlobalData().blackMids.contains(i['owner']['mid']) &&
+        if (i['redirect_url']?.isNotEmpty != true &&
+            !GlobalData().blackMids.contains(i['owner']['mid']) &&
             !RecommendFilter.filterTitle(i['title']) &&
             !RecommendFilter.filterLikeRatio(
               i['stat']['like'],
@@ -246,12 +245,6 @@ abstract final class VideoHttp {
           case .ugc:
             data = PlayUrlModel.fromJson(res.data['data']);
 
-          case .pgc:
-            final result = res.data['result'];
-            data = PlayUrlModel.fromJson(result['video_info'])
-              ..lastPlayTime =
-                  result['play_view_business_info']?['user_status']?['watch_progress']?['current_watch_progress'];
-
           case .pugv:
             final result = res.data['data'];
             data = PlayUrlModel.fromJson(result)
@@ -259,17 +252,6 @@ abstract final class VideoHttp {
                   result['play_view_business_info']?['user_status']?['watch_progress']?['current_watch_progress'];
         }
         return Success(data);
-      } else if (epid != null && videoType == .ugc) {
-        return await videoUrl(
-          avid: avid,
-          bvid: bvid,
-          cid: cid,
-          qn: qn,
-          epid: epid,
-          seasonId: seasonId,
-          tryLook: tryLook,
-          videoType: .pgc,
-        );
       }
       return Error(_parseVideoErr(res.data['code'], res.data['message']));
     } catch (e, s) {
@@ -324,28 +306,13 @@ abstract final class VideoHttp {
       queryParameters: {'bvid': bvid},
     );
     if (res.data['code'] == 0) {
-      final items = (res.data['data'] as List?)?.map(
-        (i) => HotVideoItemModel.fromJson(i),
-      );
+      final items = (res.data['data'] as List?)
+          ?.where((i) => i['redirect_url']?.isNotEmpty != true)
+          .map((i) => HotVideoItemModel.fromJson(i));
       final list = RecommendFilter.applyFilterToRelatedVideos
           ? items?.where((i) => !RecommendFilter.filterAll(i)).toList()
           : items?.toList();
       return Success(list);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  // 获取点赞/投币/收藏状态 pgc
-  static Future<LoadingState<PgcLCF>> pgcLikeCoinFav({
-    required Object epId,
-  }) async {
-    final res = await Request().get(
-      Api.pgcLikeCoinFav,
-      queryParameters: {'ep_id': epId},
-    );
-    if (res.data['code'] == 0) {
-      return Success(PgcLCF.fromJson(res.data['data']));
     } else {
       return Error(res.data['message']);
     }
@@ -370,31 +337,6 @@ abstract final class VideoHttp {
     );
     if (res.data['code'] == 0) {
       return const Success(null);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  // 一键三连 pgc
-  static Future<LoadingState<PgcTriple>> pgcTriple({
-    required Object epId,
-    Object? seasonId,
-  }) async {
-    final res = await Request().post(
-      Api.pgcTriple,
-      data: {'ep_id': epId, 'csrf': Accounts.main.csrf},
-      options: Options(
-        contentType: Headers.formUrlEncodedContentType,
-        headers: {
-          'origin': 'https://www.bilibili.com',
-          'referer':
-              'https://www.bilibili.com/bangumi/play/${seasonId == null ? "ep$epId" : "ss$seasonId"}',
-          'user-agent': BrowserUa.pc,
-        },
-      ),
-    );
-    if (res.data['code'] == 0) {
-      return Success(PgcTriple.fromJson(res.data['data']));
     } else {
       return Error(res.data['message']);
     }
@@ -712,54 +654,6 @@ abstract final class VideoHttp {
     );
   }
 
-  // 添加追番
-  static Future<LoadingState<String>> pgcAdd({int? seasonId}) async {
-    final res = await Request().post(
-      Api.pgcAdd,
-      data: {'season_id': seasonId, 'csrf': Accounts.main.csrf},
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['code'] == 0) {
-      return Success(res.data['result']['toast']);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  // 取消追番
-  static Future<LoadingState<String>> pgcDel({int? seasonId}) async {
-    final res = await Request().post(
-      Api.pgcDel,
-      data: {'season_id': seasonId, 'csrf': Accounts.main.csrf},
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['code'] == 0) {
-      return Success(res.data['result']['toast']);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<String>> pgcUpdate({
-    required String seasonId,
-    required int status,
-  }) async {
-    final res = await Request().post(
-      Api.pgcUpdate,
-      data: {
-        'season_id': seasonId,
-        'status': status,
-        'csrf': Accounts.main.csrf,
-      },
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['code'] == 0) {
-      return Success(res.data['result']['toast']);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
   // 查看视频同时在看人数
   static Future<LoadingState<String>> onlineTotal({
     int? aid,
@@ -846,7 +740,8 @@ abstract final class VideoHttp {
   }
 
   static bool _canAddRank(Map i) {
-    if (!GlobalData().blackMids.contains(i['owner']['mid']) &&
+    if (i['redirect_url']?.isNotEmpty != true &&
+        !GlobalData().blackMids.contains(i['owner']['mid']) &&
         !RecommendFilter.filterTitle(i['title']) &&
         !RecommendFilter.filterLikeRatio(
           i['stat']['like'],
@@ -886,52 +781,6 @@ abstract final class VideoHttp {
         }
       }
       return Success(list);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  // pgc 排行
-  static Future<LoadingState<List<PgcRankItemModel>?>> pgcRankList({
-    int day = 3,
-    required int seasonType,
-  }) async {
-    final res = await Request().get(
-      Api.pgcRank,
-      queryParameters: await WbiSign.makSign({
-        'day': day,
-        'season_type': seasonType,
-      }),
-    );
-    if (res.data['code'] == 0) {
-      return Success(
-        (res.data['result']?['list'] as List?)
-            ?.map((e) => PgcRankItemModel.fromJson(e))
-            .toList(),
-      );
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  // pgc season 排行
-  static Future<LoadingState<List<PgcRankItemModel>?>> pgcSeasonRankList({
-    int day = 3,
-    required int seasonType,
-  }) async {
-    final res = await Request().get(
-      Api.pgcSeasonRank,
-      queryParameters: await WbiSign.makSign({
-        'day': day,
-        'season_type': seasonType,
-      }),
-    );
-    if (res.data['code'] == 0) {
-      return Success(
-        (res.data['data']?['list'] as List?)
-            ?.map((e) => PgcRankItemModel.fromJson(e))
-            .toList(),
-      );
     } else {
       return Error(res.data['message']);
     }
@@ -1016,8 +865,8 @@ abstract final class VideoHttp {
 
   static Future<LoadingState<PlayUrlModel>> tvPlayUrl({
     required int cid,
-    required int objectId, // aid, epid
-    required int playurlType, // ugc 1, pgc 2
+    required int objectId,
+    required int playurlType,
     int? qn,
   }) async {
     final accessKey = Accounts.get(AccountType.video).accessKey;

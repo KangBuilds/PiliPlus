@@ -70,35 +70,29 @@ class BiliDownloadEntryInfo with MultiSelectData {
         size: 18,
       ),
       itemBuilder: (_) => [
-        PopupMenuItem(
-          height: 38,
-          child: const Text('查看详情页', style: TextStyle(fontSize: 13)),
-          onTap: () {
-            if (ep case final ep?) {
-              if (ep.from == VideoType.pugv.name) {
+        if (ep == null || ep!.from == VideoType.pugv.name)
+          PopupMenuItem(
+            height: 38,
+            child: const Text('查看详情页', style: TextStyle(fontSize: 13)),
+            onTap: () {
+              if (ep case final ep?) {
                 PageUtils.viewPugv(
                   seasonId: seasonId,
                   epId: ep.episodeId,
                 );
-              } else {
-                PageUtils.viewPgc(
-                  seasonId: seasonId,
-                  epId: ep.episodeId,
-                );
+                return;
               }
-              return;
-            }
-            PageUtils.toVideoPage(
-              aid: avid,
-              bvid: bvid,
-              cid: cid,
-              epId: ep?.episodeId,
-              title: title,
-              cover: cover,
-              isVertical: pageData?.isVertical ?? false,
-            );
-          },
-        ),
+              PageUtils.toVideoPage(
+                aid: avid,
+                bvid: bvid,
+                cid: cid,
+                epId: ep?.episodeId,
+                title: title,
+                cover: cover,
+                isVertical: pageData?.isVertical ?? false,
+              );
+            },
+          ),
         if (PlatformUtils.isDesktop)
           PopupMenuItem(
             height: 38,

@@ -11,8 +11,6 @@ abstract class HorizontalVideoModel extends BaseVideoItemModel {
 
   num? progress;
 
-  String? redirectUrl;
-
   // search
   List<({bool isEm, String text})>? titleList;
 }

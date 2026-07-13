@@ -13,7 +13,7 @@ class RankController extends GetxController
 
   ZoneController get controller {
     final item = RankType.values[tabController.index];
-    return Get.find<ZoneController>(tag: '${item.rid}${item.seasonType}');
+    return Get.find<ZoneController>(tag: '${item.rid}');
   }
 
   @override

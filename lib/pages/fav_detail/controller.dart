@@ -115,7 +115,7 @@ class FavDetailController
     if (response.hasMore == false) {
       isEnd = true;
     }
-    return response.medias;
+    return response.medias?.where((item) => item.type != 24).toList();
   }
 
   @override

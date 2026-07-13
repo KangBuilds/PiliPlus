@@ -52,11 +52,6 @@ class VideoCardH extends StatelessWidget {
                     return;
                   }
 
-                  if (videoItem.redirectUrl?.isNotEmpty == true &&
-                      PageUtils.viewPgcFromUri(videoItem.redirectUrl!)) {
-                    return;
-                  }
-
                   int? cid = videoItem.cid;
                   Dimension? dimension = videoItem.dimension;
                   if (cid == null) {

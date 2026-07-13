@@ -9,7 +9,8 @@ class LaterData {
   factory LaterData.fromJson(Map<String, dynamic> json) => LaterData(
     count: json['count'] as int?,
     list: (json['list'] as List<dynamic>?)
-        ?.map((e) => LaterItemModel.fromJson(e as Map<String, dynamic>))
+        ?.where((e) => e['is_pgc'] != true)
+        .map((e) => LaterItemModel.fromJson(e as Map<String, dynamic>))
         .toList(),
   );
 }

@@ -5,10 +5,6 @@ enum VideoType {
     type: 3,
     api: Api.ugcUrl,
   ),
-  pgc(
-    type: 4,
-    api: Api.pgcUrl,
-  ),
   pugv(
     type: 10,
     replyType: 33,

@@ -130,7 +130,6 @@ class PlPlayerController with BlockConfigMixin {
   int? cid;
   int? _epid;
   int? _seasonId;
-  int? _pgcType;
   VideoType _videoType = VideoType.ugc;
   int _heartDuration = 0;
   int? width;
@@ -252,7 +251,6 @@ class PlPlayerController with BlockConfigMixin {
   late final preInitPlayer = Pref.preInitPlayer;
   late final showRelatedVideo = Pref.showRelatedVideo;
   late final showVideoReply = Pref.showVideoReply;
-  late final showBangumiReply = Pref.showBangumiReply;
   late final reverseFromFirst = Pref.reverseFromFirst;
   late final horizontalPreview = Pref.horizontalPreview;
   late final showDmChart = Pref.showDmChart;
@@ -488,7 +486,6 @@ class PlPlayerController with BlockConfigMixin {
     int? cid,
     int? epid,
     int? seasonId,
-    int? pgcType,
     VideoType? videoType,
     VoidCallback? onInit,
     Volume? volume,
@@ -512,7 +509,6 @@ class PlPlayerController with BlockConfigMixin {
       this.cid = cid;
       _epid = epid;
       _seasonId = seasonId;
-      _pgcType = pgcType;
 
       if (showSeekPreview) {
         _clearPreview();
@@ -572,17 +568,13 @@ class PlPlayerController with BlockConfigMixin {
     );
   }
 
-  late final isAnim = _pgcType == 1 || _pgcType == 4;
   late final Rx<SuperResolutionType> superResolutionType =
-      (isAnim ? Pref.superResolutionType : SuperResolutionType.disable).obs;
+      SuperResolutionType.disable.obs;
   Future<void> setShader([SuperResolutionType? type, NativePlayer? pp]) async {
     if (type == null) {
       type = superResolutionType.value;
     } else {
       superResolutionType.value = type;
-      if (isAnim && !tempPlayerConf) {
-        setting.put(SettingBoxKey.superResolutionType, type.index);
-      }
     }
     pp ??= _videoPlayerController!;
     switch (type) {
@@ -678,7 +670,7 @@ class PlPlayerController with BlockConfigMixin {
         return;
       }
       _videoPlayerController = player;
-      if (isAnim && superResolutionType.value != .disable) {
+      if (superResolutionType.value != .disable) {
         await setShader();
       }
     }
@@ -1315,7 +1307,6 @@ class PlPlayerController with BlockConfigMixin {
     dynamic cid,
     dynamic epid,
     dynamic seasonId,
-    dynamic pgcType,
     VideoType? videoType,
   }) {
     if (!enableHeart || progress == 0 || (playerStatus.isPaused && !isManual)) {
@@ -1330,7 +1321,6 @@ class PlPlayerController with BlockConfigMixin {
         progress: progress,
         epid: epid ?? _epid,
         seasonId: seasonId ?? _seasonId,
-        subType: pgcType ?? _pgcType,
         videoType: videoType ?? _videoType,
       );
     }

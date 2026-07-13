@@ -24,7 +24,6 @@ class VListItemModel extends HorizontalVideoModel {
       badge = '合作';
     }
     seasonId = json['season_id'];
-    redirectUrl = json['jump_url'];
     final position = json['playback_position'] as num?; // percent
     if (position != null) {
       if (position == 100) {

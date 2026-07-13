@@ -9,8 +9,8 @@ import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/video/video_quality.dart';
 import 'package:PiliPlus/models_new/download/bili_download_entry_info.dart';
 import 'package:PiliPlus/models_new/download/bili_download_media_file_info.dart';
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/episode.dart' as pgc;
-import 'package:PiliPlus/models_new/pgc/pgc_info_model/result.dart';
+import 'package:PiliPlus/models_new/pugv/season_info/episode.dart' as pugv;
+import 'package:PiliPlus/models_new/pugv/season_info/result.dart';
 import 'package:PiliPlus/models_new/video/video_detail/data.dart';
 import 'package:PiliPlus/models_new/video/video_detail/episode.dart' as ugc;
 import 'package:PiliPlus/models_new/video/video_detail/page.dart';
@@ -168,10 +168,10 @@ class DownloadService extends GetxService {
     _createDownload(entry);
   }
 
-  void downloadBangumi(
+  void downloadPugv(
     int index,
-    PgcInfoModel pgcItem,
-    pgc.EpisodeItem episode,
+    SeasonInfoModel seasonItem,
+    pugv.EpisodeItem episode,
     VideoQuality quality,
   ) {
     final cid = episode.cid!;
@@ -195,8 +195,8 @@ class DownloadService extends GetxService {
       index: episode.title!,
       indexTitle: episode.longTitle ?? '',
       showTitle: episode.showTitle,
-      from: episode.from ?? 'bangumi',
-      seasonType: pgcItem.type ?? (episode.from == 'pugv' ? -1 : 0),
+      from: 'pugv',
+      seasonType: -1,
       width: 0,
       height: 0,
       rotate: 0,
@@ -210,28 +210,26 @@ class DownloadService extends GetxService {
       isCompleted: false,
       totalBytes: 0,
       downloadedBytes: 0,
-      title: pgcItem.seasonTitle ?? pgcItem.title ?? '',
+      title: seasonItem.seasonTitle ?? seasonItem.title ?? '',
       typeTag: quality.code.toString(),
       cover: episode.cover!,
       preferedVideoQuality: quality.code,
       qualityPithyDescription: quality.desc,
       guessedTotalBytes: 0,
-      totalTimeMilli:
-          (episode.duration ?? 0) *
-          (episode.from == 'pugv' ? 1000 : 1), // pgc millisec,, pugv sec
-      danmakuCount: pgcItem.stat?.danmaku ?? 0,
+      totalTimeMilli: (episode.duration ?? 0) * 1000,
+      danmakuCount: seasonItem.stat?.danmaku ?? 0,
       timeUpdateStamp: currentTime,
       timeCreateStamp: currentTime,
       canPlayInAdvance: true,
       interruptTransformTempFile: false,
       spid: 0,
-      seasonId: pgcItem.seasonId!.toString(),
+      seasonId: seasonItem.seasonId!.toString(),
       bvid: episode.bvid ?? IdUtils.av2bv(source.avId),
       avid: source.avId,
       ep: ep,
       source: source,
-      ownerId: pgcItem.upInfo?.mid,
-      ownerName: pgcItem.upInfo?.uname,
+      ownerId: seasonItem.upInfo?.mid,
+      ownerName: seasonItem.upInfo?.uname,
       pageData: null,
     );
     _createDownload(entry);

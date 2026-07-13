@@ -33,11 +33,6 @@ class Privacy {
         value: json['fav_video'],
       ),
       SpaceSettingModel(
-        name: '公开我的追番追剧',
-        key: 'bangumi',
-        value: json['bangumi'],
-      ),
-      SpaceSettingModel(
         name: '公开我的追漫',
         key: 'comic',
         value: json['comic'],

@@ -19,10 +19,6 @@ abstract final class Api {
   // https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/videostream_url.md
   static const String ugcUrl = '/x/player/wbi/playurl';
 
-  // 番剧视频流
-  // https://api.bilibili.com/pgc/player/web/v2/playurl?cid=104236640&bvid=BV13t411n7ex
-  static const String pgcUrl = '/pgc/player/web/v2/playurl';
-
   static const String pugvUrl = '/pugv/player/web/playurl';
 
   static const String tvPlayUrl = '/x/tv/playurl';
@@ -55,8 +51,6 @@ abstract final class Api {
   /// bvid	str	稿件bvid	必要（可选）	avid与bvid任选一个
   // https://api.bilibili.com/x/web-interface/archive/has/like
   // static const String hasLikeVideo = '/x/web-interface/archive/has/like';
-
-  static const String pgcLikeCoinFav = '/pgc/season/episode/community';
 
   // 视频点踩 web端不支持
 
@@ -138,8 +132,6 @@ abstract final class Api {
   // bvid	str	稿件bvid	必要（可选）	avid与bvid任选一个
   // csrf	str	CSRF Token（位于cookie）	必要
   static const String ugcTriple = '/x/web-interface/archive/like/triple';
-
-  static const String pgcTriple = '/pgc/season/episode/like/triple';
 
   // 获取指定用户创建的所有收藏夹信息
   // 该接口也能查询目标内容id存在于那些收藏夹中
@@ -280,13 +272,7 @@ abstract final class Api {
   // 查询视频分P列表 (avid/bvid转cid)
   static const String ab2c = '/x/player/pagelist';
 
-  // 番剧/剧集明细
-  static const String pgcInfo = '/pgc/view/web/season';
-
   static const String pugvInfo = '/pugv/view/web/season';
-
-  // https://api.bilibili.com/pgc/season/episode/web/info?ep_id=12345678
-  static const String episodeInfo = '/pgc/season/episode/web/info';
 
   // 全部关注的up
   // vmid 用户id pn 页码 ps 每页个数，最大50 order: desc
@@ -321,9 +307,6 @@ abstract final class Api {
 
   static const String spaceSeries =
       '${HttpString.appBaseUrl}/x/v2/space/series';
-
-  static const String spaceBangumi =
-      '${HttpString.appBaseUrl}/x/v2/space/bangumi';
 
   static const String spaceArticle =
       '${HttpString.appBaseUrl}/x/v2/space/article';
@@ -365,17 +348,6 @@ abstract final class Api {
 
   // 清空稍后再看
   static const String toViewClear = '/x/v2/history/toview/clear';
-
-  // 追番
-  static const String pgcAdd = '/pgc/web/follow/add';
-
-  // 取消追番
-  static const String pgcDel = '/pgc/web/follow/del';
-
-  static const String pgcUpdate = '/pgc/web/follow/status/update';
-
-  // 我的追番/追剧 ?type=1&pn=1&ps=15
-  static const String favPgc = '/x/space/bangumi/follow/list';
 
   // 黑名单
   static const String blackLst = '/x/relation/blacks';
@@ -645,10 +617,6 @@ abstract final class Api {
   /// 排行榜
   static const String getRankApi = "/x/web-interface/ranking/v2";
 
-  static const String pgcRank = "/pgc/web/rank/list";
-
-  static const String pgcSeasonRank = "/pgc/season/rank/web/list";
-
   /// 取消订阅-播单
   static const String unfavFolder = '/x/v3/fav/folder/unfav';
 
@@ -688,10 +656,6 @@ abstract final class Api {
   /// 稍后再看&收藏夹视频列表
   static const String mediaList = '/x/v2/medialist/resource/list';
 
-  static const String pgcIndexCondition = '/pgc/season/index/condition';
-
-  static const String pgcIndexResult = '/pgc/season/index/result';
-
   static const String archiveNoteList = '/x/note/publish/list/archive';
 
   static const String noteList = '/x/note/list';
@@ -718,8 +682,6 @@ abstract final class Api {
   static const String replyTop = '/x/v2/reply/top';
 
   static const String getCoin = '${HttpString.accountBaseUrl}/site/getCoin';
-
-  static const String pgcTimeline = '/pgc/web/timeline';
 
   static const String searchTrending = '/x/v2/search/trending/ranking';
 
@@ -787,20 +749,6 @@ abstract final class Api {
   static const String delFavTopic = '/x/topic/fav/sub/cancel';
 
   static const String likeTopic = '/x/topic/like';
-
-  static const String pgcReviewL = '/pgc/review/long/list';
-
-  static const String pgcReviewS = '/pgc/review/short/list';
-
-  static const String pgcReviewLike = '/pgc/review/action/like';
-
-  static const String pgcReviewDislike = '/pgc/review/action/dislike';
-
-  static const String pgcReviewPost = '/pgc/review/short/post';
-
-  static const String pgcReviewMod = '/pgc/review/short/modify';
-
-  static const String pgcReviewDel = '/pgc/review/short/del';
 
   static const String topicPubSearch =
       '${HttpString.appBaseUrl}/x/topic/pub/search';
@@ -883,8 +831,6 @@ abstract final class Api {
   static const String followedUp = '/x/relation/followings/followed_upper';
 
   static const String sameFollowing = '/x/relation/same/followings';
-
-  static const String seasonStatus = '/pgc/view/web/season/user/status';
 
   static const String followeeVotes =
       '${HttpString.tUrl}/vote_svr/v1/vote_svr/followee_votes';

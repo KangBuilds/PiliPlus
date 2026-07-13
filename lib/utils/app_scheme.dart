@@ -104,19 +104,6 @@ abstract final class PiliScheme {
               (Route<dynamic> route) => route.isFirst,
             );
             return true;
-          case 'pgc':
-            // bilibili://pgc/season/ep/123456?h5_awaken_params=random
-            String? id = uriDigitRegExp.firstMatch(path)?.group(1);
-            if (id != null) {
-              bool isEp = path.contains('/ep/');
-              PageUtils.viewPgc(
-                seasonId: isEp ? null : id,
-                epId: isEp ? id : null,
-                progress: _videoProgress(uri.queryParameters),
-              );
-              return true;
-            }
-            return false;
           case 'space':
             // bilibili://space/12345678?frommodule=XX&h5awaken=random
             String? mid = uriDigitRegExp.firstMatch(path)?.group(1);
@@ -173,16 +160,6 @@ abstract final class PiliScheme {
                 );
               }
               return true;
-            }
-            return false;
-          case 'bangumi':
-            // bilibili://bangumi/season/12345678?h5_awaken_params=random
-            if (path.startsWith('/season')) {
-              String? seasonId = uriDigitRegExp.firstMatch(path)?.group(1);
-              if (seasonId != null) {
-                PageUtils.viewPgc(seasonId: seasonId, epId: null);
-                return true;
-              }
             }
             return false;
           case 'opus':
@@ -432,9 +409,6 @@ abstract final class PiliScheme {
     bool off = false,
     Map? parameters,
   }) async {
-    // https://m.bilibili.com/bangumi/play/ss39708
-    // https | m.bilibili.com | /bangumi/play/ss39708
-
     String host = uri.host;
 
     void launchURL() {
@@ -626,18 +600,6 @@ abstract final class PiliScheme {
         }
         launchURL();
         return false;
-      case 'bangumi':
-        // www.bilibili.com/bangumi/play/ep{eid}?start_progress={offset}&thumb_up_dm_id={dmid}
-        // if (kDebugMode) debugPrint('番剧');
-        bool hasMatch = PageUtils.viewPgcFromUri(
-          path,
-          progress: _videoProgress(uri.queryParameters),
-        );
-        if (hasMatch) {
-          return true;
-        }
-        launchURL();
-        return false;
       case 'video':
         // if (kDebugMode) debugPrint('投稿');
         final res = IdUtils.matchAvorBv(input: path);
@@ -775,7 +737,7 @@ abstract final class PiliScheme {
         return false;
       case 'cheese':
         // https://www.bilibili.com/cheese/play/ss123456
-        bool hasMatch = PageUtils.viewPgcFromUri(path, isPgc: false);
+        bool hasMatch = PageUtils.viewPugvFromUri(path);
         if (hasMatch) {
           return true;
         }
