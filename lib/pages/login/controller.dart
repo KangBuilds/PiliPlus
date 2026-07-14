@@ -3,16 +3,13 @@ import 'dart:io';
 
 import 'package:PiliPlus/common/dial_prefix.dart';
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
-import 'package:PiliPlus/common/widgets/radio_widget.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/login.dart';
-import 'package:PiliPlus/models/common/account_type.dart';
 import 'package:PiliPlus/models/login/model.dart';
 import 'package:PiliPlus/pages/login/geetest/geetest_webview_dialog.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -169,7 +166,7 @@ class LoginPageController extends GetxController
       );
       if (result.data['code'] == 0) {
         try {
-          await LoginAccount(
+          final account = LoginAccount(
             BiliCookieJar.fromJson(
               Map.fromEntries(
                 cookieTextController.text.split(';').map((item) {
@@ -180,8 +177,12 @@ class LoginPageController extends GetxController
             ),
             null,
             null,
-          ).onChange();
-          if (!Accounts.main.isLogin) await switchAccountDialog(Get.context!);
+          );
+          await AnonymousAccount().delete();
+          await Accounts.set(.heartbeat, account);
+          await Accounts.set(.recommend, account);
+          await Accounts.set(.video, account);
+          await Accounts.set(.main, account);
           SmartDialog.showToast('登录成功');
           Get.back();
         } catch (e) {
@@ -624,143 +625,11 @@ class LoginPageController extends GetxController
       tokenInfo['access_token'],
       tokenInfo['refresh_token'],
     );
-    await Future.wait([account.onChange(), AnonymousAccount().delete()]);
-    for (int i = 0; i < AccountType.values.length; i++) {
-      if (Accounts.accountMode[i].mid == account.mid) {
-        Accounts.accountMode[i] = account;
-      }
-    }
-    if (Accounts.main.isLogin) {
-      SmartDialog.showToast('登录成功');
-    } else {
-      SmartDialog.showToast('登录成功, 请先设置账号模式');
-      await switchAccountDialog(Get.context!);
-    }
-  }
-
-  static Future<void>? switchAccountDialog(BuildContext context) {
-    if (Accounts.account.isEmpty) {
-      SmartDialog.showToast('请先登录');
-      return Get.toNamed('/loginPage');
-    }
-    final colorScheme = ColorScheme.of(context);
-    final selectAccount = List.of(Accounts.accountMode);
-    final options = {
-      AnonymousAccount(): '0',
-      ...Accounts.account.toMap().map(
-        (k, v) => MapEntry(v, k as String),
-      ),
-    };
-    bool quickSelect = selectAccount.every((e) => e == selectAccount.first);
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          crossAxisAlignment: .start,
-          mainAxisAlignment: .spaceBetween,
-          children: [
-            Text.rich(
-              style: const TextStyle(height: 1.5),
-              TextSpan(
-                children: [
-                  const TextSpan(text: '账号切换'),
-                  TextSpan(
-                    text: '\nmid为0时使用匿名',
-                    style: TextStyle(fontSize: 14, color: colorScheme.outline),
-                  ),
-                ],
-              ),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                visualDensity: .compact,
-                tapTargetSize: .shrinkWrap,
-              ),
-              onPressed: () {
-                quickSelect = !quickSelect;
-                (context as Element).markNeedsBuild();
-              },
-              child: Text(quickSelect ? '详细' : '快速'),
-            ),
-          ],
-        ),
-        titlePadding: const .only(left: 22, top: 16, right: 22, bottom: 3),
-        contentPadding: const .symmetric(vertical: 5),
-        actionsPadding: const .only(left: 16, right: 16, bottom: 10),
-        content: SingleChildScrollView(
-          child: AnimatedSize(
-            curve: Curves.easeIn,
-            alignment: .topCenter,
-            duration: const Duration(milliseconds: 200),
-            child: quickSelect
-                ? Builder(
-                    builder: (context) => RadioGroup<Account>(
-                      groupValue: selectAccount[0],
-                      onChanged: (v) {
-                        selectAccount.fillRange(0, selectAccount.length, v);
-                        (context as Element).markNeedsBuild();
-                      },
-                      child: Column(
-                        crossAxisAlignment: .start,
-                        children: options.entries
-                            .map(
-                              (entry) => RadioWidget<Account>(
-                                value: entry.key,
-                                title: entry.value,
-                                mainAxisSize: .max,
-                                padding: PlatformUtils.isDesktop
-                                    ? const .only(left: 12)
-                                    : const .only(left: 12, top: 2, bottom: 2),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: .start,
-                    children: AccountType.values
-                        .map(
-                          (e) => Builder(
-                            builder: (context) => RadioGroup<Account>(
-                              groupValue: selectAccount[e.index],
-                              onChanged: (v) {
-                                selectAccount[e.index] = v!;
-                                (context as Element).markNeedsBuild();
-                              },
-                              child: WrapRadioOptionsGroup<Account>(
-                                groupTitle: e.title,
-                                options: options,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Get.back,
-            child: Text('取消', style: TextStyle(color: colorScheme.outline)),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              for (final type in AccountType.values) {
-                final index = type.index;
-                final account = quickSelect
-                    ? selectAccount.first
-                    : selectAccount[index];
-                if (account != Accounts.accountMode[index]) {
-                  Accounts.set(type, account);
-                }
-              }
-            },
-            child: const Text('确定'),
-          ),
-        ],
-      ),
-    );
+    await AnonymousAccount().delete();
+    await Accounts.set(.heartbeat, account);
+    await Accounts.set(.recommend, account);
+    await Accounts.set(.video, account);
+    await Accounts.set(.main, account);
+    SmartDialog.showToast('登录成功');
   }
 }
