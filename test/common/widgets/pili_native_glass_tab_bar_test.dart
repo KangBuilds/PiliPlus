@@ -9,9 +9,11 @@ void main() {
     final params = piliNativeGlassTabBarCreationParams(
       selectedIndex: 1,
       labels: const ['Home', 'Dynamics', 'Mine'],
+      searchLabel: 'Search',
     );
 
     expect(params['selectedIndex'], 1);
+    expect(params['searchLabel'], 'Search');
     expect(params['items'], const <Map<String, String>>[
       <String, String>{
         'label': 'Home',
@@ -44,6 +46,24 @@ void main() {
       ),
       isTrue,
     );
+    expect(
+      usesPiliNativeGlassTabBar(
+        platform: TargetPlatform.iOS,
+        isPortrait: true,
+        isTablet: false,
+        hasRequiredDestinations: true,
+      ),
+      isTrue,
+    );
+    expect(
+      usesPiliNativeGlassTabBar(
+        platform: TargetPlatform.iOS,
+        isPortrait: false,
+        isTablet: false,
+        hasRequiredDestinations: true,
+      ),
+      isFalse,
+    );
   });
 
   test(
@@ -59,10 +79,19 @@ void main() {
       });
 
       final tappedIndices = <int>[];
+      var searchTapCount = 0;
       final channel = PiliNativeGlassTabBarChannel(
         onTap: tappedIndices.add,
+        onSearchTap: () => searchTapCount++,
         binaryMessenger: messenger,
       )..attach(7, 0);
+
+      await channel.handleMethodCall(const MethodCall('searchTapped'));
+      expect(searchTapCount, 1);
+      expect(tappedIndices, isEmpty);
+
+      await channel.setSelectedIndex(0);
+      expect(outgoingCalls, isEmpty);
 
       for (var count = 0; count < 2; count++) {
         await channel.handleMethodCall(

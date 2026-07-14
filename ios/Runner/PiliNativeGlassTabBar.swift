@@ -56,6 +56,7 @@ final class PiliNativeGlassTabBarPlatformView: NSObject,
   private let container: UIView
   private let tabBar = UITabBar(frame: .zero)
   private let channel: FlutterMethodChannel
+  private var selectedContentIndex = 0
 
   init(
     frame: CGRect,
@@ -102,6 +103,15 @@ final class PiliNativeGlassTabBarPlatformView: NSObject,
 
   func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
     guard let index = tabBar.items?.firstIndex(of: item) else { return }
+    if index == 3 {
+      let contentIndex = selectedContentIndex
+      DispatchQueue.main.async { [weak self] in
+        self?.selectItem(at: contentIndex)
+        self?.channel.invokeMethod("searchTapped", arguments: nil)
+      }
+      return
+    }
+    selectedContentIndex = index
     channel.invokeMethod("valueChanged", arguments: ["index": index])
   }
 
@@ -127,7 +137,9 @@ final class PiliNativeGlassTabBarPlatformView: NSObject,
       item.tag = index
       return item
     }
-    tabBar.items = items
+    let searchItem = UITabBarItem(tabBarSystemItem: .search, tag: 3)
+    searchItem.title = arguments["searchLabel"] as? String
+    tabBar.items = items + [searchItem]
 
     let selectedIndex = (arguments["selectedIndex"] as? NSNumber)?.intValue ?? 0
     selectItem(at: selectedIndex)
@@ -141,7 +153,8 @@ final class PiliNativeGlassTabBarPlatformView: NSObject,
   }
 
   private func selectItem(at index: Int) {
-    guard let items = tabBar.items, items.indices.contains(index) else { return }
+    guard let items = tabBar.items, (0..<3).contains(index) else { return }
+    selectedContentIndex = index
     tabBar.selectedItem = items[index]
   }
 

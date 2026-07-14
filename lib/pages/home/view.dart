@@ -1,11 +1,13 @@
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/custom_height_widget.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+import 'package:PiliPlus/common/widgets/pili_native_glass_tab_bar.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/pages/common/common_page.dart';
 import 'package:PiliPlus/pages/home/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
+import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
@@ -14,7 +16,9 @@ import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({this.isMainPage = false, super.key});
+
+  final bool isMainPage;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -25,8 +29,18 @@ class _HomePageState extends CommonPageState<HomePage>
   final _homeController = Get.putOrFind(HomeController.new);
   final _mainController = Get.find<MainController>();
 
+  bool get _usesNativeGlassTabBar =>
+      widget.isMainPage &&
+      _mainController.useBottomNav &&
+      usesPiliNativeGlassTabBar(
+        isPortrait: MediaQuery.orientationOf(context) == Orientation.portrait,
+        isTablet: context.isTablet,
+        hasRequiredDestinations: _mainController.hasPiliNativeGlassDestinations,
+      );
+
   @override
-  bool get needsCorrection => _homeController.hideTopBar;
+  bool get needsCorrection =>
+      _homeController.hideTopBar && !_usesNativeGlassTabBar;
 
   @override
   bool get wantKeepAlive => true;
@@ -71,7 +85,8 @@ class _HomePageState extends CommonPageState<HomePage>
     }
     return Column(
       children: [
-        if (!_mainController.useSideBar &&
+        if (!_usesNativeGlassTabBar &&
+            !_mainController.useSideBar &&
             MediaQuery.sizeOf(context).isPortrait)
           customAppBar(theme),
         tabBar,
@@ -151,12 +166,7 @@ class _HomePageState extends CommonPageState<HomePage>
             splashColor: theme.colorScheme.primaryContainer.withValues(
               alpha: 0.3,
             ),
-            onTap: () => Get.toNamed(
-              '/search',
-              parameters: _homeController.enableSearchWord
-                  ? {'hintText': _homeController.defaultSearch.value}
-                  : null,
-            ),
+            onTap: _mainController.openSearch,
             child: Row(
               children: [
                 const SizedBox(width: 14),

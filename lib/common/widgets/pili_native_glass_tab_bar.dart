@@ -18,13 +18,26 @@ bool supportsPiliNativeGlassTabBar({
   TargetPlatform? platform,
 }) => !kIsWeb && (platform ?? defaultTargetPlatform) == TargetPlatform.iOS;
 
+bool usesPiliNativeGlassTabBar({
+  required bool isPortrait,
+  required bool isTablet,
+  required bool hasRequiredDestinations,
+  TargetPlatform? platform,
+}) =>
+    isPortrait &&
+    !isTablet &&
+    hasRequiredDestinations &&
+    supportsPiliNativeGlassTabBar(platform: platform);
+
 Map<String, Object> piliNativeGlassTabBarCreationParams({
   required int selectedIndex,
   required List<String> labels,
+  required String searchLabel,
 }) {
   assert(labels.length == piliNativeGlassTabBarItems.length);
   return <String, Object>{
     'selectedIndex': selectedIndex,
+    'searchLabel': searchLabel,
     'items': <Map<String, String>>[
       for (var index = 0; index < piliNativeGlassTabBarItems.length; index++)
         <String, String>{
@@ -40,10 +53,12 @@ Map<String, Object> piliNativeGlassTabBarCreationParams({
 final class PiliNativeGlassTabBarChannel {
   PiliNativeGlassTabBarChannel({
     required this.onTap,
+    required this.onSearchTap,
     this.binaryMessenger,
   });
 
   final ValueChanged<int> onTap;
+  final VoidCallback onSearchTap;
   final BinaryMessenger? binaryMessenger;
   MethodChannel? _channel;
   int? _lastSelectedIndex;
@@ -61,13 +76,16 @@ final class PiliNativeGlassTabBarChannel {
   }
 
   Future<dynamic> handleMethodCall(MethodCall call) async {
-    if (call.method == 'valueChanged') {
-      final arguments = call.arguments as Map<Object?, Object?>?;
-      final index = (arguments?['index'] as num?)?.toInt();
-      if (index != null) {
-        _lastSelectedIndex = index;
-        onTap(index);
-      }
+    switch (call.method) {
+      case 'valueChanged':
+        final arguments = call.arguments as Map<Object?, Object?>?;
+        final index = (arguments?['index'] as num?)?.toInt();
+        if (index != null) {
+          _lastSelectedIndex = index;
+          onTap(index);
+        }
+      case 'searchTapped':
+        onSearchTap();
     }
     return null;
   }
@@ -93,12 +111,16 @@ class PiliNativeGlassTabBar extends StatefulWidget {
     required this.selectedIndex,
     required this.labels,
     required this.onTap,
+    required this.onSearchTap,
+    required this.searchLabel,
     super.key,
   }) : assert(labels.length == piliNativeGlassTabBarItems.length);
 
   final int selectedIndex;
   final List<String> labels;
   final ValueChanged<int> onTap;
+  final VoidCallback onSearchTap;
+  final String searchLabel;
 
   @override
   State<PiliNativeGlassTabBar> createState() => _PiliNativeGlassTabBarState();
@@ -106,7 +128,10 @@ class PiliNativeGlassTabBar extends StatefulWidget {
 
 class _PiliNativeGlassTabBarState extends State<PiliNativeGlassTabBar> {
   late final PiliNativeGlassTabBarChannel _channel =
-      PiliNativeGlassTabBarChannel(onTap: (index) => widget.onTap(index));
+      PiliNativeGlassTabBarChannel(
+        onTap: (index) => widget.onTap(index),
+        onSearchTap: () => widget.onSearchTap(),
+      );
 
   @override
   void didUpdateWidget(PiliNativeGlassTabBar oldWidget) {
@@ -131,6 +156,7 @@ class _PiliNativeGlassTabBarState extends State<PiliNativeGlassTabBar> {
         creationParams: piliNativeGlassTabBarCreationParams(
           selectedIndex: widget.selectedIndex,
           labels: widget.labels,
+          searchLabel: widget.searchLabel,
         ),
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: (viewId) {

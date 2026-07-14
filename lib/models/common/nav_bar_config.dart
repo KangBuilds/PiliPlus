@@ -10,7 +10,7 @@ enum NavigationBarType implements EnumWithLabel {
     '首页',
     Icon(Icons.home_outlined),
     Icon(Icons.home),
-    HomePage(),
+    HomePage(isMainPage: true),
   ),
   dynamics(
     '动态',

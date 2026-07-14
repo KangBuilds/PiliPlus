@@ -105,18 +105,18 @@ class _MainAppState extends PopScopeState<MainApp>
     Widget? bottomNav;
     if (_mainController.navigationBars.length > 1) {
       final navigationBars = _mainController.navigationBars;
-      if (supportsPiliNativeGlassTabBar() &&
-          MediaQuery.orientationOf(context) == Orientation.portrait &&
-          !context.isTablet &&
-          navigationBars.length == 3 &&
-          navigationBars[0] == NavigationBarType.home &&
-          navigationBars[1] == NavigationBarType.dynamics &&
-          navigationBars[2] == NavigationBarType.mine) {
+      if (usesPiliNativeGlassTabBar(
+        isPortrait: MediaQuery.orientationOf(context) == Orientation.portrait,
+        isTablet: context.isTablet,
+        hasRequiredDestinations: _mainController.hasPiliNativeGlassDestinations,
+      )) {
         return Obx(
           () => PiliNativeGlassTabBar(
             selectedIndex: _mainController.selectedIndex.value,
             labels: navigationBars.map((item) => item.label).toList(),
             onTap: _mainController.setIndex,
+            onSearchTap: _mainController.openSearch,
+            searchLabel: '搜索',
           ),
         );
       }

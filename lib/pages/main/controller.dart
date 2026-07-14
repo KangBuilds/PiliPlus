@@ -48,6 +48,12 @@ class MainController extends GetxController
   late bool hasHome = false;
   late final homeController = Get.putOrFind(HomeController.new);
 
+  bool get hasPiliNativeGlassDestinations =>
+      navigationBars.length == 3 &&
+      navigationBars[0] == NavigationBarType.home &&
+      navigationBars[1] == NavigationBarType.dynamics &&
+      navigationBars[2] == NavigationBarType.mine;
+
   late DynamicBadgeMode msgBadgeMode = Pref.msgBadgeMode;
   late Set<MsgUnReadType> msgUnReadTypes = Pref.msgUnReadTypeV2;
   late final RxString msgUnReadCount = ''.obs;
@@ -244,6 +250,15 @@ class MainController extends GetxController
           ..querySearchDefault();
       }
     }
+  }
+
+  void openSearch() {
+    Get.toNamed(
+      '/search',
+      parameters: homeController.enableSearchWord
+          ? {'hintText': homeController.defaultSearch.value}
+          : null,
+    );
   }
 
   void checkUnread([bool shouldCheck = false]) {
