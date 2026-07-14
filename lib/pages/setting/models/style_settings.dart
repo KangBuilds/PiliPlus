@@ -16,7 +16,6 @@ import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/models/common/theme/theme_type.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
-import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/pages/setting/slide_color_picker.dart';
 import 'package:PiliPlus/pages/setting/widgets/dual_slider_dialog.dart';
@@ -866,9 +865,6 @@ Future<void> _showThemeTypeDialog(
     ),
   );
   if (res != null) {
-    try {
-      Get.find<MineController>().themeType.value = res;
-    } catch (_) {}
     GStorage.setting.put(SettingBoxKey.themeMode, res.index);
     Get.changeThemeMode(ThemeUtils.themeMode = res.toThemeMode);
     setState();

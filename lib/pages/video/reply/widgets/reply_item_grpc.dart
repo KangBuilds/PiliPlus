@@ -49,7 +49,6 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:protobuf/protobuf.dart';
 
 class ReplyItemGrpc extends StatelessWidget {
   const ReplyItemGrpc({
@@ -998,55 +997,6 @@ class ReplyItemGrpc extends StatelessWidget {
               ),
             ),
           ),
-          if (kDebugMode && GStorage.reply != null) ...[
-            ListTile(
-              onTap: () {
-                Get.back();
-                GStorage.reply!.put(
-                  item.id.toString(),
-                  (item.deepCopy()
-                        ..unknownFields.clear()
-                        ..replies.clear()
-                        ..clearTrackInfo())
-                      .writeToBuffer(),
-                );
-              },
-              title: Text(
-                'save to local',
-                style: style.copyWith(color: colorScheme.primary),
-              ),
-            ),
-            ListTile(
-              onTap: () {
-                Get.back();
-                onDelete();
-                GStorage.reply!.delete(item.id.toString());
-              },
-              title: Text(
-                'remove from local',
-                style: style.copyWith(color: colorScheme.primary),
-              ),
-            ),
-            ListTile(
-              onTap: () {
-                Get.back();
-                final oid = item.oid.toInt();
-                final data =
-                    (item.deepCopy()
-                          ..unknownFields.clear()
-                          ..replies.clear()
-                          ..clearTrackInfo())
-                        .writeToBuffer();
-                GStorage.reply!.putAll({
-                  for (var i = oid; i < oid + 1000; i++) i.toString(): data,
-                });
-              },
-              title: Text(
-                'save to local (x1000)',
-                style: style.copyWith(color: colorScheme.primary),
-              ),
-            ),
-          ],
           if (ownerMid == upMid || ownerMid == item.member.mid)
             ListTile(
               onTap: () async {

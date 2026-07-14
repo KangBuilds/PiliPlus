@@ -32,14 +32,12 @@ import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/recommend_filter.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
-import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/subtitle_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/wbi_sign.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show compute;
-import 'package:protobuf/protobuf.dart';
 
 /// view层根据 status 判断渲染逻辑
 abstract final class VideoHttp {
@@ -509,13 +507,6 @@ abstract final class VideoHttp {
     if (res.data['code'] == 0) {
       try {
         final replyInfo = RequestUtils.replyCast(res.data['data']['reply']);
-        GStorage.reply?.put(
-          replyInfo.id.toString(),
-          (replyInfo.deepCopy()
-                ..unknownFields.clear()
-                ..clearTrackInfo())
-              .writeToBuffer(),
-        );
         return Success(replyInfo);
       } catch (e, s) {
         Utils.reportError(e, s);
@@ -542,7 +533,6 @@ abstract final class VideoHttp {
       options: Options(contentType: Headers.formUrlEncodedContentType),
     );
     if (res.data['code'] == 0) {
-      GStorage.reply?.delete(rpid.toString());
       return const Success(null);
     } else {
       return const Error('请退出账号后重新登录');

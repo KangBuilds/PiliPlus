@@ -18,7 +18,6 @@ import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
-import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart' hide ListTile;
 import 'package:flutter_svg/svg.dart';
@@ -163,15 +162,6 @@ class _MediaPageState extends CommonPageState<MinePage>
           ),
         ],
         msgBadge(_mainController),
-        if (GStorage.reply != null)
-          IconButton(
-            iconSize: iconSize,
-            padding: padding,
-            style: style,
-            tooltip: '评论记录',
-            onPressed: () => Get.toNamed('/myReply'),
-            icon: const Icon(Icons.message_outlined),
-          ),
         Obx(
           () {
             final anonymity = MineController.anonymity.value;
@@ -184,18 +174,6 @@ class _MediaPageState extends CommonPageState<MinePage>
               icon: anonymity
                   ? const Icon(MdiIcons.incognito)
                   : const Icon(MdiIcons.incognitoOff),
-            );
-          },
-        ),
-        Obx(
-          () {
-            return IconButton(
-              iconSize: iconSize,
-              padding: padding,
-              style: style,
-              tooltip: '切换至${controller.nextThemeType.desc}主题',
-              onPressed: controller.onChangeTheme,
-              icon: controller.themeType.value.icon,
             );
           },
         ),

@@ -214,8 +214,7 @@ abstract final class SettingBoxKey {
       msgUnReadTypeV2 = 'msgUnReadTypeV2',
       navBarSort = 'navBarSort',
       tempPlayerConf = 'tempPlayerConf',
-      reduceLuxColor = 'reduceLuxColor',
-      saveReply = 'saveReply';
+      reduceLuxColor = 'reduceLuxColor';
 }
 
 abstract final class LocalCacheKey {

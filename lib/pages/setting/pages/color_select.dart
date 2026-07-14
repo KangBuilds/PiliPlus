@@ -7,7 +7,6 @@ import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/models/common/theme/theme_type.dart';
 import 'package:PiliPlus/pages/home/view.dart';
-import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/pages/setting/widgets/popup_item.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
@@ -83,9 +82,6 @@ class _ColorSelectPageState extends State<ColorSelectPage> {
                 ),
               );
               if (result != null) {
-                try {
-                  Get.find<MineController>().themeType.value = result;
-                } catch (_) {}
                 ctr.themeType.value = result;
                 GStorage.setting.put(SettingBoxKey.themeMode, result.index);
                 Get.changeThemeMode(ThemeUtils.themeMode = result.toThemeMode);

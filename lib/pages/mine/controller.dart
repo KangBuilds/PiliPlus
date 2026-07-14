@@ -3,7 +3,6 @@ import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
-import 'package:PiliPlus/models/common/theme/theme_type.dart';
 import 'package:PiliPlus/models/user/info.dart';
 import 'package:PiliPlus/models/user/stat.dart';
 import 'package:PiliPlus/models_new/fav/fav_folder/data.dart';
@@ -13,9 +12,7 @@ import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
 import 'package:PiliPlus/utils/storage.dart';
-import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
-import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
@@ -32,11 +29,6 @@ class MineController extends CommonDataController<FavFolderData, FavFolderData>
   final Rx<UserInfoData> userInfo = UserInfoData().obs;
   // 用户状态 动态、关注、粉丝
   final Rx<UserStat> userStat = const UserStat().obs;
-
-  final Rx<ThemeType> themeType = Pref.themeType.obs;
-
-  ThemeType get nextThemeType =>
-      ThemeType.values[(themeType.value.index + 1) % ThemeType.values.length];
 
   static RxBool anonymity =
       (Accounts.account.isNotEmpty && !Accounts.heartbeat.isLogin).obs;
@@ -257,13 +249,6 @@ class MineController extends CommonDataController<FavFolderData, FavFolderData>
         },
       );
     }
-  }
-
-  void onChangeTheme() {
-    final newVal = nextThemeType;
-    themeType.value = newVal;
-    GStorage.setting.put(SettingBoxKey.themeMode, newVal.index);
-    Get.changeThemeMode(ThemeUtils.themeMode = newVal.toThemeMode);
   }
 
   void push(String name) {

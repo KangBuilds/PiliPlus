@@ -43,7 +43,6 @@ import 'package:PiliPlus/pages/msg_feed_top/like_me/view.dart';
 import 'package:PiliPlus/pages/msg_feed_top/reply_me/view.dart';
 import 'package:PiliPlus/pages/msg_feed_top/sys_msg/view.dart';
 import 'package:PiliPlus/pages/music/view.dart';
-import 'package:PiliPlus/pages/my_reply/view.dart';
 import 'package:PiliPlus/pages/popular_precious/view.dart';
 import 'package:PiliPlus/pages/popular_series/view.dart';
 import 'package:PiliPlus/pages/search/view.dart';
@@ -162,7 +161,6 @@ class Routes {
     GetPage(name: '/sameFollowing', page: () => const FollowSamePage()),
     GetPage(name: '/download', page: () => const DownloadPage()),
     GetPage(name: '/dlna', page: () => const DLNAPage()),
-    GetPage(name: '/myReply', page: () => const MyReply()),
     GetPage(name: '/videoWeb', page: () => const MemberVideoWeb()),
     GetPage(name: '/ssWeb', page: () => const MemberSSWeb()),
     GetPage(name: '/bubble', page: () => const BubblePage()),
