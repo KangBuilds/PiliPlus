@@ -263,14 +263,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.4"
-  cli_config:
-    dependency: transitive
-    description:
-      name: cli_config
-      sha256: ac20a183a07002b700f0c25e61b7ee46b23c309d76ab7b7640a028f18e4d99ec
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
   cli_util:
     dependency: transitive
     description:
@@ -375,15 +367,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.14"
-  desktop_webview_window:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: main
-      resolved-ref: b429f8ba6b8a99cd0f7eb5fe8d1621f325635c3d
-      url: "https://github.com/Predidit/linux_webview_window"
-    source: git
-    version: "0.2.4"
   device_info_plus:
     dependency: "direct main"
     description:
@@ -583,14 +566,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_displaymode:
-    dependency: "direct main"
-    description:
-      name: flutter_displaymode
-      sha256: ecd44b1e902b0073b42ff5b55bf283f38e088270724cdbb7f7065ccf54aa60a8
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.0"
   flutter_html:
     dependency: "direct main"
     description:
@@ -608,13 +583,12 @@ packages:
     source: hosted
     version: "6.1.5"
   flutter_inappwebview_android:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: flutter_inappwebview_android
-      ref: "v6.1.5"
-      resolved-ref: "0bfa46dfff87f0d9e9d5e13cbd5c4a7c7310f8c9"
-      url: "https://github.com/bggRGjQaUbCoE/flutter_inappwebview.git"
-    source: git
+      name: flutter_inappwebview_android
+      sha256: "62557c15a5c2db5d195cb3892aab74fcaec266d7b86d59a6f0027abd672cddba"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.1.3"
   flutter_inappwebview_internal_annotations:
     dependency: transitive
@@ -657,13 +631,12 @@ packages:
     source: hosted
     version: "1.1.2"
   flutter_inappwebview_windows:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: flutter_inappwebview_windows
-      ref: "v6.1.5"
-      resolved-ref: "0bfa46dfff87f0d9e9d5e13cbd5c4a7c7310f8c9"
-      url: "https://github.com/bggRGjQaUbCoE/flutter_inappwebview.git"
-    source: git
+      name: flutter_inappwebview_windows
+      sha256: "8b4d3a46078a2cdc636c4a3d10d10f2a16882f6be607962dbfff8874d1642055"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.6.0"
   flutter_launcher_icons:
     dependency: "direct dev"
@@ -965,7 +938,7 @@ packages:
     source: hosted
     version: "0.6.1"
   jni:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: jni
       sha256: c2230682d5bc2362c1c9e8d3c7f406d9cbba23ab3f2e203a025dd47e0fb2e68f
@@ -980,15 +953,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
-  jnigen:
-    dependency: "direct dev"
-    description:
-      path: "pkgs/jnigen"
-      ref: "55520836d363aac7f1ebae47387d03a30302be7b"
-      resolved-ref: "55520836d363aac7f1ebae47387d03a30302be7b"
-      url: "https://github.com/dart-lang/native.git"
-    source: git
-    version: "0.17.0-wip"
   js:
     dependency: transitive
     description:
@@ -1112,14 +1076,13 @@ packages:
     source: git
     version: "1.1.11"
   media_kit_libs_android_video:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "libs/android/media_kit_libs_android_video"
-      ref: "version_1.2.5"
-      resolved-ref: deac6b62569584b6a5e28e6c60c187a0a7281b3a
-      url: "https://github.com/My-Responsitories/media-kit.git"
-    source: git
-    version: "1.3.7"
+      name: media_kit_libs_android_video
+      sha256: "3f6274e5ab2de512c286a25c327288601ee445ed8ac319e0ef0b66148bd8f76c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.8"
   media_kit_libs_ios_video:
     dependency: "direct overridden"
     description:
@@ -1155,14 +1118,13 @@ packages:
     source: git
     version: "1.0.5"
   media_kit_libs_windows_video:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "libs/windows/media_kit_libs_windows_video"
-      ref: "version_1.2.5"
-      resolved-ref: deac6b62569584b6a5e28e6c60c187a0a7281b3a
-      url: "https://github.com/My-Responsitories/media-kit.git"
-    source: git
-    version: "1.0.10"
+      name: media_kit_libs_windows_video
+      sha256: dff76da2778729ab650229e6b4ec6ec111eb5151431002cbd7ea304ff1f112ab
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.11"
   media_kit_native_event_loop:
     dependency: "direct overridden"
     description:
@@ -1181,14 +1143,6 @@ packages:
       url: "https://github.com/My-Responsitories/media-kit.git"
     source: git
     version: "1.2.5"
-  menu_base:
-    dependency: transitive
-    description:
-      name: menu_base
-      sha256: "820368014a171bd1241030278e6c2617354f492f5c703d7b7d4570a6b8b84405"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.1"
   meta:
     dependency: transitive
     description:
@@ -1326,14 +1280,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
-  permission_handler_android:
-    dependency: "direct main"
-    description:
-      name: permission_handler_android
-      sha256: "1e3bc410ca1bf84662104b100eb126e066cb55791b7451307f9708d4007350e6"
-      url: "https://pub.dev"
-    source: hosted
-    version: "13.0.1"
   permission_handler_apple:
     dependency: "direct main"
     description:
@@ -1494,46 +1440,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
-  screen_retriever:
-    dependency: "direct main"
-    description:
-      name: screen_retriever
-      sha256: ace919117a7520c13a50a6259e60c4a0d4cbe98809468792a91b5c5adada2aa6
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.2"
-  screen_retriever_linux:
-    dependency: transitive
-    description:
-      name: screen_retriever_linux
-      sha256: "7b52006a5ceae1f3d5af7f77188c3290d6e7d8ded16d99809bea84967c65c257"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.2"
-  screen_retriever_macos:
-    dependency: transitive
-    description:
-      name: screen_retriever_macos
-      sha256: a1489b99cce597c45a54b9aae1cd94c8d4705353b7e0bb2457a6e4de44e0ad8a
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.2"
-  screen_retriever_platform_interface:
-    dependency: transitive
-    description:
-      name: screen_retriever_platform_interface
-      sha256: "94a5535277510a63184ca178ce12a1449bc0b38618879aa1c18bf57369c5064a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.2"
-  screen_retriever_windows:
-    dependency: transitive
-    description:
-      name: screen_retriever_windows
-      sha256: dafc6922b0bfbf1d48cf3ccbf519b4fff47bdcb820da1728ea6db675fecc9324
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.2"
   share_plus:
     dependency: "direct main"
     description:
@@ -1622,14 +1528,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
-  shortid:
-    dependency: transitive
-    description:
-      name: shortid
-      sha256: d0b40e3dbb50497dad107e19c54ca7de0d1a274eb9b4404991e443dadb9ebedb
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.2"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -1708,14 +1606,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.11"
-  tray_manager:
-    dependency: "direct main"
-    description:
-      name: tray_manager
-      sha256: "1a659b08baa6e9b91ef8ce16eda37740de398be1c4cf322b8a1ddfef25c68c5a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.5.3"
   typed_data:
     dependency: transitive
     description:
@@ -1917,7 +1807,7 @@ packages:
     source: hosted
     version: "3.0.3"
   win32:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: win32
       sha256: ba6f4bba816c8d7e3c1580e170f3786d216951cc6b94babc3b814c08d2cb2738
@@ -1932,15 +1822,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.3"
-  window_manager:
-    dependency: "direct main"
-    description:
-      path: "packages/window_manager"
-      ref: main
-      resolved-ref: ac535d09a5850279e6591a9bdd285f9a3edeebf8
-      url: "https://github.com/bggRGjQaUbCoE/window_manager.git"
-    source: git
-    version: "0.5.2"
   xdg_directories:
     dependency: transitive
     description:
