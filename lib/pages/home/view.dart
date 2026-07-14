@@ -54,7 +54,7 @@ class _HomePageState extends CommonPageState<HomePage>
     if (_homeController.tabs.length > 1) {
       if (_usesNativeGlassTabBar) {
         tabBar = Padding(
-          padding: const EdgeInsets.only(bottom: 4),
+          padding: const EdgeInsets.only(bottom: 8),
           child: PiliNativeSegmentedControl(
             controller: _homeController.tabController,
             labels: _homeController.tabs.map((e) => e.label).toList(),
