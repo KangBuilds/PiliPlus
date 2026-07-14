@@ -3,6 +3,7 @@ import 'package:PiliPlus/common/widgets/floating_navigation_bar.dart';
 import 'package:PiliPlus/common/widgets/flutter/pop_scope.dart';
 import 'package:PiliPlus/common/widgets/flutter/tabs.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+import 'package:PiliPlus/common/widgets/pili_native_glass_tab_bar.dart';
 import 'package:PiliPlus/common/widgets/route_aware_mixin.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/pages/home/view.dart';
@@ -103,6 +104,22 @@ class _MainAppState extends PopScopeState<MainApp>
   Widget? get _bottomNav {
     Widget? bottomNav;
     if (_mainController.navigationBars.length > 1) {
+      final navigationBars = _mainController.navigationBars;
+      if (supportsPiliNativeGlassTabBar() &&
+          MediaQuery.orientationOf(context) == Orientation.portrait &&
+          !context.isTablet &&
+          navigationBars.length == 3 &&
+          navigationBars[0] == NavigationBarType.home &&
+          navigationBars[1] == NavigationBarType.dynamics &&
+          navigationBars[2] == NavigationBarType.mine) {
+        return Obx(
+          () => PiliNativeGlassTabBar(
+            selectedIndex: _mainController.selectedIndex.value,
+            labels: navigationBars.map((item) => item.label).toList(),
+            onTap: _mainController.setIndex,
+          ),
+        );
+      }
       if (_mainController.floatingNavBar) {
         bottomNav = Obx(
           () => FloatingNavigationBar(

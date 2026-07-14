@@ -13,5 +13,12 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    guard let registrar = engineBridge.pluginRegistry.registrar(
+      forPlugin: "PiliNativeGlassTabBar"
+    ) else { return }
+    registrar.register(
+      PiliNativeGlassTabBarFactory(messenger: registrar.messenger()),
+      withId: "pili/native_glass_tab_bar"
+    )
   }
 }
