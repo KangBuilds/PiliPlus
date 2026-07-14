@@ -20,9 +20,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:dio_http2_adapter/dio_http2_adapter.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, listEquals;
+import 'package:flutter/foundation.dart' show compute, kDebugMode, listEquals;
+
+String _decodeResponse((List<int>, Map<String, List<String>>) args) =>
+    utf8.decode(
+      Request.responseBytesDecoder(args.$1, args.$2),
+      allowMalformed: true,
+    );
 
 class Request {
+  static const _isolateSize = 50 * 1024;
   static const _gzipDecoder = GZipDecoder();
   static const _brotliDecoder = BrotliDecoder();
 
@@ -213,7 +220,7 @@ class Request {
         if (!_enableHttp2) 'connection': 'keep-alive',
         'accept-encoding': 'br,gzip',
       },
-      responseDecoder: _responseDecoder, // Http2Adapter没有自动解压
+      responseDecoder: responseDecoder, // Http2Adapter没有自动解压
       persistentConnection: true,
     );
 
@@ -349,12 +356,14 @@ class Request {
     _ => responseBytes,
   };
 
-  static String _responseDecoder(
+  static FutureOr<String> responseDecoder(
     List<int> responseBytes,
     RequestOptions options,
     ResponseBody responseBody,
-  ) => utf8.decode(
-    responseBytesDecoder(responseBytes, responseBody.headers),
-    allowMalformed: true,
-  );
+  ) {
+    final args = (responseBytes, responseBody.headers);
+    return responseBytes.length >= _isolateSize
+        ? compute(_decodeResponse, args)
+        : _decodeResponse(args);
+  }
 }
