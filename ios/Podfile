@@ -36,6 +36,11 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  webview_storyboard = File.join(__dir__, '.symlinks/plugins/flutter_inappwebview_ios/ios/Storyboards/WebView.storyboard')
+  if File.exist?(webview_storyboard) && (storyboard = File.read(webview_storyboard)).sub!(' version="2048"', '')
+    File.write(webview_storyboard, storyboard)
+  end
+
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
         target.build_configurations.each do |config|
