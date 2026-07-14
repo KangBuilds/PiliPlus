@@ -1,16 +1,20 @@
-import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/loading_state.dart';
+import 'package:PiliPlus/http/search.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
 import 'package:PiliPlus/models/user/info.dart';
 import 'package:PiliPlus/models/user/stat.dart';
 import 'package:PiliPlus/models_new/fav/fav_folder/data.dart';
+import 'package:PiliPlus/models_new/history/list.dart';
+import 'package:PiliPlus/models_new/later/list.dart';
 import 'package:PiliPlus/pages/common/common_data_controller.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
+import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +29,9 @@ class MineController extends CommonDataController<FavFolderData, FavFolderData>
 
   int? favFolderCount;
 
+  final laterList = <LaterItemModel>[].obs;
+  final historyList = <HistoryItemModel>[].obs;
+
   // 用户信息 头像、昵称、lv
   final Rx<UserInfoData> userInfo = UserInfoData().obs;
   // 用户状态 动态、关注、粉丝
@@ -33,41 +40,6 @@ class MineController extends CommonDataController<FavFolderData, FavFolderData>
   static RxBool anonymity =
       (Accounts.account.isNotEmpty && !Accounts.heartbeat.isLogin).obs;
 
-  late final list = <({IconData icon, String title, VoidCallback onTap})>[
-    (
-      icon: CustomIcons.folderDownloadOutline,
-      title: '离线缓存',
-      onTap: () => Get.toNamed('/download'),
-    ),
-    (
-      icon: CustomIcons.history,
-      title: '观看记录',
-      onTap: () {
-        if (isLogin) {
-          Get.toNamed('/history');
-        }
-      },
-    ),
-    (
-      icon: CustomIcons.subscriptions_outlined,
-      title: '我的订阅',
-      onTap: () {
-        if (isLogin) {
-          Get.toNamed('/subscription');
-        }
-      },
-    ),
-    (
-      icon: CustomIcons.watch_later_outlined,
-      title: '稍后再看',
-      onTap: () {
-        if (isLogin) {
-          Get.toNamed('/later');
-        }
-      },
-    ),
-  ];
-
   @override
   void onInit() {
     super.onInit();
@@ -75,7 +47,73 @@ class MineController extends CommonDataController<FavFolderData, FavFolderData>
     if (userInfoCache != null) {
       userInfo.value = userInfoCache;
       queryData();
+      queryVideoPreviews();
       queryUserInfo();
+    }
+  }
+
+  Future<void> queryVideoPreviews() => Future.wait([
+    UserHttp.seeYouLater(page: 1).then((res) {
+      if (res case Success(:final response)) {
+        laterList.assignAll(response.list ?? const []);
+      }
+    }),
+    UserHttp.historyList(type: 'all').then((res) {
+      if (res case Success(:final response)) {
+        historyList.assignAll(
+          response.list?.where((item) => item.history.business == 'archive') ??
+              const [],
+        );
+      }
+    }),
+  ]);
+
+  Future<void> openLater(LaterItemModel item) async {
+    if (item.isPugv ?? false) {
+      PageUtils.viewPugv(seasonId: item.aid);
+      return;
+    }
+    await _openVideo(
+      aid: item.aid,
+      bvid: item.bvid,
+      cid: item.cid,
+      cover: item.pic,
+      title: item.title,
+    );
+  }
+
+  Future<void> openHistory(HistoryItemModel item) => _openVideo(
+    aid: item.history.oid,
+    bvid: item.history.bvid,
+    cid: item.history.cid,
+    cover: item.cover?.isNotEmpty == true
+        ? item.cover
+        : item.covers?.firstOrNull,
+    title: item.title,
+  );
+
+  Future<void> _openVideo({
+    required int? aid,
+    required String? bvid,
+    required int? cid,
+    required String? cover,
+    required String? title,
+  }) async {
+    if (aid == null && bvid == null) return;
+    bvid ??= IdUtils.av2bv(aid!);
+    final videoInfo = cid == null
+        ? await SearchHttp.ab2cWithDimension(aid: aid, bvid: bvid)
+        : null;
+    cid ??= videoInfo?.cid;
+    if (cid != null) {
+      PageUtils.toVideoPage(
+        aid: aid,
+        bvid: bvid,
+        cid: cid,
+        cover: cover,
+        title: title,
+        dimension: videoInfo?.dimension,
+      );
     }
   }
 
@@ -272,11 +310,13 @@ class MineController extends CommonDataController<FavFolderData, FavFolderData>
       return Future.syncValue(null);
     }
     queryUserInfo();
-    return super.onRefresh().whenComplete(() {
-      if (isManual) {
-        scrollController.jumpToTop();
-      }
-    });
+    return Future.wait([super.onRefresh(), queryVideoPreviews()]).whenComplete(
+      () {
+        if (isManual) {
+          scrollController.jumpToTop();
+        }
+      },
+    );
   }
 
   @override
@@ -286,6 +326,8 @@ class MineController extends CommonDataController<FavFolderData, FavFolderData>
     } else {
       userInfo.value = UserInfoData();
       userStat.value = const UserStat();
+      laterList.clear();
+      historyList.clear();
       loadingState.value = LoadingState.loading();
     }
   }

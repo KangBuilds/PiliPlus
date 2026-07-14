@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/common/style.dart';
+import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
@@ -83,7 +84,38 @@ class _MediaPageState extends CommonPageState<MinePage>
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
                     _buildUserInfo(theme, secondary),
-                    _buildActions(secondary),
+                    Obx(
+                      () => _buildVideoSection(
+                        theme: theme,
+                        secondary: secondary,
+                        title: '稍后再看',
+                        route: '/later',
+                        items: controller.laterList,
+                        itemBuilder: (item) => _MineVideoItem(
+                          cover: item.pic,
+                          title: item.title,
+                          subtitle: item.owner?.name,
+                          onTap: () => controller.openLater(item),
+                        ),
+                      ),
+                    ),
+                    Obx(
+                      () => _buildVideoSection(
+                        theme: theme,
+                        secondary: secondary,
+                        title: '观看记录',
+                        route: '/history',
+                        items: controller.historyList,
+                        itemBuilder: (item) => _MineVideoItem(
+                          cover: item.cover?.isNotEmpty == true
+                              ? item.cover
+                              : item.covers?.firstOrNull,
+                          title: item.title,
+                          subtitle: item.authorName,
+                          onTap: () => controller.openHistory(item),
+                        ),
+                      ),
+                    ),
                     Obx(
                       () => controller.loadingState.value is Loading
                           ? const SizedBox.shrink()
@@ -96,40 +128,6 @@ class _MediaPageState extends CommonPageState<MinePage>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildActions(Color primary) {
-    return Row(
-      mainAxisAlignment: .spaceEvenly,
-      children: controller.list
-          .map(
-            (e) => Flexible(
-              child: InkWell(
-                onTap: e.onTap,
-                borderRadius: Style.mdRadius,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 80),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Column(
-                      spacing: 6,
-                      mainAxisSize: .min,
-                      mainAxisAlignment: .center,
-                      children: [
-                        Icon(e.icon, color: primary),
-                        Text(
-                          e.title,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          )
-          .toList(),
     );
   }
 
@@ -176,6 +174,14 @@ class _MediaPageState extends CommonPageState<MinePage>
                   : const Icon(MdiIcons.incognitoOff),
             );
           },
+        ),
+        IconButton(
+          iconSize: iconSize,
+          padding: padding,
+          style: style,
+          tooltip: '离线缓存',
+          onPressed: () => Get.toNamed('/download'),
+          icon: const Icon(CustomIcons.folderDownloadOutline),
         ),
         IconButton(
           iconSize: iconSize,
@@ -413,6 +419,55 @@ class _MediaPageState extends CommonPageState<MinePage>
     () => controller.onRefresh(isManual: false),
   );
 
+  Widget _buildVideoSection<T>({
+    required ThemeData theme,
+    required Color secondary,
+    required String title,
+    required String route,
+    required List<T> items,
+    required Widget Function(T item) itemBuilder,
+  }) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    return Column(
+      children: [
+        Divider(
+          height: 20,
+          color: theme.dividerColor.withValues(alpha: 0.1),
+        ),
+        ListTile(
+          onTap: () => Get.toNamed(route),
+          dense: true,
+          title: Padding(
+            padding: const EdgeInsets.only(left: 10),
+            child: Row(
+              spacing: 8,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: theme.textTheme.titleMedium!.fontSize,
+                    fontWeight: .bold,
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, size: 18, color: secondary),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 185,
+          child: ListView.separated(
+            padding: const .symmetric(horizontal: 20),
+            scrollDirection: .horizontal,
+            itemCount: items.length,
+            itemBuilder: (_, index) => itemBuilder(items[index]),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildFav(ThemeData theme, Color secondary) {
     return Column(
       children: [
@@ -534,5 +589,64 @@ class _MediaPageState extends CommonPageState<MinePage>
         ),
       ),
     };
+  }
+}
+
+class _MineVideoItem extends StatelessWidget {
+  const _MineVideoItem({
+    required this.cover,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String? cover;
+  final String? title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 180,
+      child: Card(
+        clipBehavior: Clip.hardEdge,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: .start,
+            children: [
+              SizedBox(
+                width: 180,
+                height: 110,
+                child: NetworkImgLayer(src: cover, width: 180, height: 110),
+              ),
+              Padding(
+                padding: const .fromLTRB(8, 6, 8, 0),
+                child: Text(
+                  title ?? '',
+                  maxLines: 2,
+                  overflow: .ellipsis,
+                  style: const TextStyle(height: 1.25),
+                ),
+              ),
+              if (subtitle?.isNotEmpty == true)
+                Padding(
+                  padding: const .symmetric(horizontal: 8),
+                  child: Text(
+                    subtitle!,
+                    maxLines: 1,
+                    overflow: .ellipsis,
+                    style: theme.textTheme.labelSmall!.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
