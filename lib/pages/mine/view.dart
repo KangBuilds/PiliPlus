@@ -161,8 +161,8 @@ class _MediaPageState extends CommonPageState<MinePage>
             onPressed: () => Get.toNamed('/search'),
             icon: const Icon(Icons.search),
           ),
-          msgBadge(_mainController),
         ],
+        msgBadge(_mainController),
         if (GStorage.reply != null)
           IconButton(
             iconSize: iconSize,

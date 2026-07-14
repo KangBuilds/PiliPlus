@@ -160,15 +160,7 @@ class _HomePageState extends CommonPageState<HomePage>
 
   Widget customAppBar(ThemeData theme) {
     const padding = EdgeInsets.fromLTRB(14, 6, 14, 0);
-    final child = Row(
-      children: [
-        searchBar(theme),
-        const SizedBox(width: 4),
-        msgBadge(_mainController),
-        const SizedBox(width: 8),
-        userAvatar(theme: theme, mainController: _mainController),
-      ],
-    );
+    final child = Row(children: [searchBar(theme)]);
     if (_homeController.hideTopBar) {
       if (_mainController.barOffset case final barOffset?) {
         return Obx(
