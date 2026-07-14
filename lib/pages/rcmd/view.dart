@@ -30,7 +30,7 @@ class _RcmdPageState extends State<RcmdPage>
     final colorScheme = ColorScheme.of(context);
     return Container(
       clipBehavior: .hardEdge,
-      margin: const .symmetric(horizontal: Style.safeSpace),
+      margin: const .symmetric(horizontal: 4),
       decoration: const BoxDecoration(borderRadius: Style.mdRadius),
       child: refreshIndicator(
         onRefresh: controller.onRefresh,
