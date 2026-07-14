@@ -107,6 +107,38 @@ class _HomePageState extends CommonPageState<HomePage>
     } else {
       tabBar = const SizedBox(height: 6);
     }
+    if (_usesNativeGlassTabBar && _homeController.hideTopBar) {
+      final child = tabBar;
+      final barOffset = _mainController.barOffset;
+      final showTopBar = _homeController.showTopBar;
+      if (barOffset != null || showTopBar != null) {
+        tabBar = Obx(() {
+          final visible = barOffset != null
+              ? 1 - barOffset.value / Style.topBarHeight
+              : showTopBar!.value
+              ? 1.0
+              : 0.0;
+          final duration = barOffset == null
+              ? const Duration(milliseconds: 500)
+              : Duration.zero;
+          const curve = Curves.easeInOutCubicEmphasized;
+          return ClipRect(
+            child: AnimatedAlign(
+              alignment: Alignment.topCenter,
+              heightFactor: visible,
+              duration: duration,
+              curve: curve,
+              child: AnimatedSlide(
+                offset: Offset(0, visible - 1),
+                duration: duration,
+                curve: curve,
+                child: child,
+              ),
+            ),
+          );
+        });
+      }
+    }
     return Column(
       children: [
         if (!_usesNativeGlassTabBar &&
