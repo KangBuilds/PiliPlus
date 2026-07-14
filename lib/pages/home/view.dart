@@ -2,6 +2,7 @@ import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/custom_height_widget.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/pili_native_glass_tab_bar.dart';
+import 'package:PiliPlus/common/widgets/pili_native_segmented_control.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/pages/common/common_page.dart';
 import 'package:PiliPlus/pages/home/controller.dart';
@@ -51,28 +52,51 @@ class _HomePageState extends CommonPageState<HomePage>
     final theme = Theme.of(context);
     Widget tabBar;
     if (_homeController.tabs.length > 1) {
-      tabBar = Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: SizedBox(
-          height: 42,
-          width: double.infinity,
-          child: TabBar(
+      if (_usesNativeGlassTabBar) {
+        tabBar = Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: PiliNativeSegmentedControl(
             controller: _homeController.tabController,
-            tabs: _homeController.tabs.map((e) => Tab(text: e.label)).toList(),
-            isScrollable: true,
-            dividerColor: Colors.transparent,
-            dividerHeight: 0,
-            splashBorderRadius: Style.mdRadius,
-            tabAlignment: TabAlignment.center,
-            onTap: (_) {
+            labels: _homeController.tabs.map((e) => e.label).toList(),
+            onTap: (index) {
               feedBack();
-              if (!_homeController.tabController.indexIsChanging) {
-                _homeController.animateToTop();
+              final controller = _homeController.tabController;
+              if (index == controller.index) {
+                if (!controller.indexIsChanging) {
+                  _homeController.animateToTop();
+                }
+              } else {
+                controller.animateTo(index);
               }
             },
           ),
-        ),
-      );
+        );
+      } else {
+        tabBar = Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: SizedBox(
+            height: 42,
+            width: double.infinity,
+            child: TabBar(
+              controller: _homeController.tabController,
+              tabs: _homeController.tabs
+                  .map((e) => Tab(text: e.label))
+                  .toList(),
+              isScrollable: true,
+              dividerColor: Colors.transparent,
+              dividerHeight: 0,
+              splashBorderRadius: Style.mdRadius,
+              tabAlignment: TabAlignment.center,
+              onTap: (_) {
+                feedBack();
+                if (!_homeController.tabController.indexIsChanging) {
+                  _homeController.animateToTop();
+                }
+              },
+            ),
+          ),
+        );
+      }
       if (_homeController.hideTopBar &&
           _mainController.barHideType == .instant) {
         tabBar = Material(

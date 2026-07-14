@@ -20,5 +20,9 @@ import UIKit
       PiliNativeGlassTabBarFactory(messenger: registrar.messenger()),
       withId: "pili/native_glass_tab_bar"
     )
+    registrar.register(
+      PiliNativeSegmentedControlFactory(messenger: registrar.messenger()),
+      withId: "pili/native_segmented_control"
+    )
   }
 }
