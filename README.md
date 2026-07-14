@@ -60,7 +60,6 @@
 - [x] 移除粉丝
 - [x] 收藏夹排序
 - [x] 稍后再看 ~~`未看`~~ / `未看完` / ~~`已看完`~~ 分类
-- [x] WebDAV 备份/恢复设置
 - [x] 保存评论/动态
 - [x] 高级弹幕 by [@My-Responsitories](https://github.com/My-Responsitories)
 - [x] 取消/置顶评论

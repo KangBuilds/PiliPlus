@@ -6,14 +6,12 @@ import 'package:PiliPlus/pages/about/view.dart';
 import 'package:PiliPlus/pages/login/controller.dart';
 import 'package:PiliPlus/pages/setting/common_setting.dart';
 import 'package:PiliPlus/pages/setting/widgets/multi_select_dialog.dart';
-import 'package:PiliPlus/pages/webdav/view.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:flutter/material.dart' hide ListTile;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class _SettingsModel {
   final SettingType type;
@@ -72,10 +70,6 @@ class _SettingPageState extends State<SettingPage> {
       icon: Icon(Icons.extension_outlined),
     ),
     _SettingsModel(
-      type: SettingType.webdavSetting,
-      icon: Icon(MdiIcons.databaseCogOutline),
-    ),
-    _SettingsModel(
       type: SettingType.about,
       icon: Icon(Icons.info_outline),
     ),
@@ -122,9 +116,6 @@ class _SettingPageState extends State<SettingPage> {
                         settingType: _type,
                         showAppBar: false,
                       ),
-                      .webdavSetting => const WebDavSettingPage(
-                        showAppBar: false,
-                      ),
                       .about => const AboutPage(showAppBar: false),
                     },
                   ),
@@ -150,7 +141,6 @@ class _SettingPageState extends State<SettingPage> {
           .playSetting ||
           .styleSetting ||
           .extraSetting => CommonSetting(settingType: type),
-          .webdavSetting => const WebDavSettingPage(),
           .about => const AboutPage(),
         },
       );

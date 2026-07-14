@@ -560,18 +560,6 @@ abstract final class Pref {
   static bool get recordSearchHistory =>
       _setting.get(SettingBoxKey.recordSearchHistory, defaultValue: true);
 
-  static String get webdavUri =>
-      _setting.get(SettingBoxKey.webdavUri, defaultValue: '');
-
-  static String get webdavUsername =>
-      _setting.get(SettingBoxKey.webdavUsername, defaultValue: '');
-
-  static String get webdavPassword =>
-      _setting.get(SettingBoxKey.webdavPassword, defaultValue: '');
-
-  static String get webdavDirectory =>
-      _setting.get(SettingBoxKey.webdavDirectory, defaultValue: '/');
-
   static num get maxCacheSize =>
       _setting.get(SettingBoxKey.maxCacheSize) ?? 1 << 30;
 
