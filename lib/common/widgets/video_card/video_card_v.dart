@@ -111,14 +111,44 @@ class VideoCardV extends StatelessWidget {
                             height: maxHeight,
                             type: .emote,
                           ),
+                          Positioned(
+                            left: 7,
+                            bottom: 6,
+                            child: DefaultTextStyle.merge(
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              child: Row(
+                                spacing: 8,
+                                children: [
+                                  StatWidget(
+                                    type: StatType.play,
+                                    value: videoItem.stat.view,
+                                    color: Colors.white,
+                                  ),
+                                  if (videoItem.goto != 'picture')
+                                    StatWidget(
+                                      type: StatType.danmaku,
+                                      value: videoItem.stat.danmu,
+                                      color: Colors.white,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
                           if (videoItem.duration > 0)
-                            PBadge(
+                            Positioned(
                               bottom: 6,
                               right: 7,
-                              size: .small,
-                              type: .gray,
-                              text: DurationUtils.formatDuration(
-                                videoItem.duration,
+                              child: Text(
+                                DurationUtils.formatDuration(
+                                  videoItem.duration,
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                         ],
@@ -165,7 +195,7 @@ class VideoCardV extends StatelessWidget {
                 ),
               ),
             ),
-            videoStat(context, theme),
+            if (videoItem is RcmdVideoItemModel) pubdate(theme),
             Row(
               spacing: 2,
               children: [
@@ -217,56 +247,21 @@ class VideoCardV extends StatelessWidget {
   static final shortFormat = DateFormat('M-d');
   static final longFormat = DateFormat('yy-M-d');
 
-  Widget videoStat(BuildContext context, ThemeData theme) {
-    return Row(
-      children: [
-        StatWidget(
-          type: StatType.play,
-          value: videoItem.stat.view,
+  Widget pubdate(ThemeData theme) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Text(
+        DateFormatUtils.dateFormat(
+          videoItem.pubdate,
+          short: shortFormat,
+          long: longFormat,
         ),
-        if (videoItem.goto != 'picture') ...[
-          const SizedBox(width: 4),
-          StatWidget(
-            type: StatType.danmaku,
-            value: videoItem.stat.danmu,
-          ),
-        ],
-        if (videoItem is RcmdVideoItemModel) ...[
-          const Spacer(),
-          Text.rich(
-            maxLines: 1,
-            TextSpan(
-              style: TextStyle(
-                fontSize: theme.textTheme.labelSmall!.fontSize,
-                color: theme.colorScheme.outline.withValues(alpha: 0.8),
-              ),
-              text: DateFormatUtils.dateFormat(
-                videoItem.pubdate,
-                short: shortFormat,
-                long: longFormat,
-              ),
-            ),
-          ),
-          const SizedBox(width: 2),
-        ],
-        // deprecated
-        //  else if (videoItem is RcmdVideoItemAppModel &&
-        //     videoItem.desc != null &&
-        //     videoItem.desc!.contains(' · ')) ...[
-        //   const Spacer(),
-        //   Text.rich(
-        //     maxLines: 1,
-        //     TextSpan(
-        //         style: TextStyle(
-        //           fontSize: theme.textTheme.labelSmall!.fontSize,
-        //           color: theme.colorScheme.outline.withValues(alpha: 0.8),
-        //         ),
-        //         text: Utils.shortenChineseDateString(
-        //             videoItem.desc!.split(' · ').last)),
-        //   ),
-        //   const SizedBox(width: 2),
-        // ]
-      ],
+        maxLines: 1,
+        style: TextStyle(
+          fontSize: theme.textTheme.labelSmall!.fontSize,
+          color: theme.colorScheme.outline.withValues(alpha: 0.8),
+        ),
+      ),
     );
   }
 }
