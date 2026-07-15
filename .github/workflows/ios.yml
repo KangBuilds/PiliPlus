@@ -1,6 +1,11 @@
 name: Build for iOS
 
 on:
+  push:
+    branches:
+      - nightly/experiment
+    paths-ignore:
+      - "**.md"
   pull_request:
     paths-ignore:
       - "**.md"
