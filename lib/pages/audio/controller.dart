@@ -162,11 +162,6 @@ class AudioController extends GetxController
         _queryPlayUrl();
       }
     });
-    videoPlayerServiceHandler
-      ?..onPlay = onPlay
-      ..onPause = onPause
-      ..onSeek = onSeek;
-
     animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -200,10 +195,12 @@ class AudioController extends GetxController
     hasLike.value = item.stat.hasLike_7;
     coinNum.value = item.stat.hasCoin_8 ? 2 : 0;
     hasFav.value = item.stat.hasFav;
-    videoPlayerServiceHandler?.onVideoDetailChange(
-      item,
-      (subId.firstOrNull ?? oid).toInt(),
-      hashCode.toString(),
+    withAudioService(
+      (handler) => handler.onVideoDetailChange(
+        item,
+        (subId.firstOrNull ?? oid).toInt(),
+        hashCode.toString(),
+      ),
     );
   }
 
@@ -328,6 +325,11 @@ class AudioController extends GetxController
   Future<void> _initPlayerIfNeeded() async {
     if (_hasInit) return;
     _hasInit = true;
+    final handler = await setupServiceLocator();
+    handler
+      ..onPlay = onPlay
+      ..onPause = onPause
+      ..onSeek = onSeek;
     assert(player == null, _subscriptions = null);
     player = await Player.create(
       configuration: PlayerConfiguration(

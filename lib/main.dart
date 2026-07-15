@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:PiliPlus/build_config.dart';
@@ -12,7 +13,6 @@ import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
 import 'package:PiliPlus/services/logger.dart';
-import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
@@ -41,6 +41,20 @@ WebViewEnvironment? webViewEnvironment;
 
 EdgeInsets? tmpPadding;
 
+Future<T> _traceInit<T>(String name, Future<T> Function() init) async {
+  final task = TimelineTask()..start('startup.$name');
+  try {
+    return await init();
+  } finally {
+    task.finish();
+  }
+}
+
+void _initAfterFirstFrame(Duration _) {
+  RequestUtils.syncHistoryStatus().ignore();
+  ScreenBrightnessPlatform.instance.setAutoReset(false).ignore();
+}
+
 Future<void> _initTmpPath() async {
   tmpDirPath = (await getTemporaryDirectory()).path;
 }
@@ -52,9 +66,9 @@ Future<void> _initAppPath() async {
 void main() async {
   ScaledWidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  await _initAppPath();
+  await _traceInit('appPath', _initAppPath);
   try {
-    await GStorage.init();
+    await _traceInit('storage', GStorage.init);
   } catch (e) {
     await Utils.copyText(e.toString());
     if (kDebugMode) debugPrint('GStorage init error: $e');
@@ -63,22 +77,23 @@ void main() async {
   ScaledWidgetsFlutterBinding.instance.scaleFactor = Pref.uiScale;
   downloadPath = defDownloadPath;
   await Future.wait([
-    _initTmpPath(),
-    CacheManager.ensureInitialized(),
+    _traceInit('tmpPath', _initTmpPath),
+    _traceInit('cache', CacheManager.ensureInitialized),
   ]);
   Get
     ..lazyPut(AccountService.new)
     ..lazyPut(DownloadService.new);
   HttpOverrides.global = _CustomHttpOverrides();
 
-  await Future.wait([
-    if (Pref.horizontalScreen) ?fullMode() else ?portraitUpMode(),
-    setupServiceLocator(),
-  ]);
+  await _traceInit(
+    'orientation',
+    () async {
+      await (Pref.horizontalScreen ? fullMode() : portraitUpMode());
+    },
+  );
 
   Request();
   Request.setCookie();
-  RequestUtils.syncHistoryStatus();
 
   SmartDialog.config.toast = SmartConfigToast(displayType: .onlyRefresh);
 
@@ -91,11 +106,11 @@ void main() async {
       systemNavigationBarContrastEnforced: false,
     ),
   );
-  ScreenBrightnessPlatform.instance.setAutoReset(false);
-
   if (Pref.dynamicColor) {
-    await MyApp.initPlatformState();
+    await _traceInit('dynamicColor', MyApp.initPlatformState);
   }
+
+  WidgetsBinding.instance.addPostFrameCallback(_initAfterFirstFrame);
 
   if (Pref.enableLog) {
     // 异常捕获 logo记录

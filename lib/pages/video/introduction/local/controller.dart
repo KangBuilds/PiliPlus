@@ -147,6 +147,8 @@ class LocalIntroController extends CommonIntroController {
   }
 
   void onVideoDetailChange(BiliDownloadEntryInfo entry) {
-    videoPlayerServiceHandler?.onVideoDetailChange(entry, entry.cid, heroTag);
+    withAudioService(
+      (handler) => handler.onVideoDetailChange(entry, entry.cid, heroTag),
+    );
   }
 }

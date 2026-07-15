@@ -200,11 +200,13 @@ class PugvIntroController extends CommonIntroController {
     videoDetail
       ..value.title = episode.showTitle
       ..refresh();
-    videoPlayerServiceHandler?.onVideoDetailChange(
-      episode,
-      cid.value,
-      heroTag,
-      artist: seasonItem.title,
+    withAudioService(
+      (handler) => handler.onVideoDetailChange(
+        episode,
+        cid.value,
+        heroTag,
+        artist: seasonItem.title,
+      ),
     );
   }
 

@@ -4,8 +4,18 @@ import 'package:PiliPlus/services/audio_session.dart';
 VideoPlayerServiceHandler? videoPlayerServiceHandler;
 AudioSessionHandler? audioSessionHandler;
 
-Future<void> setupServiceLocator() async {
-  final audio = await initAudioService();
+final Future<VideoPlayerServiceHandler> _setupFuture = _setupServiceLocator();
+
+Future<VideoPlayerServiceHandler> setupServiceLocator() => _setupFuture;
+
+void withAudioService(void Function(VideoPlayerServiceHandler) action) {
+  setupServiceLocator().then(action).ignore();
+}
+
+Future<VideoPlayerServiceHandler> _setupServiceLocator() async {
+  final session = AudioSessionHandler();
+  final (audio, _) = await (initAudioService(), session.initSession()).wait;
   videoPlayerServiceHandler = audio;
-  audioSessionHandler = AudioSessionHandler();
+  audioSessionHandler = session;
+  return audio;
 }
