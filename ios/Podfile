@@ -36,6 +36,12 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  # ponytail: remove when permission_handler_apple adds its own include guard.
+  Dir.glob(File.join(__dir__, 'Flutter/ephemeral/Packages/.packages/permission_handler_apple-*/Sources/permission_handler_apple/PermissionHandlerEnums.h')).each do |header|
+    contents = File.read(header)
+    File.write(header, "#pragma once\n#{contents}") unless contents.start_with?('#pragma once')
+  end
+
   webview_storyboard = File.join(__dir__, '.symlinks/plugins/flutter_inappwebview_ios/ios/Storyboards/WebView.storyboard')
   if File.exist?(webview_storyboard) && (storyboard = File.read(webview_storyboard)).sub!(' version="2048"', '')
     File.write(webview_storyboard, storyboard)
