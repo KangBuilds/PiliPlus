@@ -202,6 +202,7 @@ class PlPlayerController with BlockConfigMixin {
   bool _applicationInBackground = false;
   bool _pictureInPictureDisposed = false;
   int _pictureInPictureSession = 0;
+  ui.Rect _pictureInPictureRect = ui.Rect.zero;
 
   Map<String, Object> get _pictureInPictureState => {
     'handle': videoPlayerController!.handle.toString(),
@@ -214,7 +215,17 @@ class PlPlayerController with BlockConfigMixin {
     'position': positionInMilliseconds / 1000,
     'duration': durationInMilliseconds / 1000,
     'playing': videoPlayerController!.state.playing && playerStatus.isPlaying,
+    'inlineX': _pictureInPictureRect.left,
+    'inlineY': _pictureInPictureRect.top,
+    'inlineWidth': _pictureInPictureRect.width,
+    'inlineHeight': _pictureInPictureRect.height,
   };
+
+  void updatePictureInPictureRect(ui.Rect rect) {
+    if (!Platform.isIOS || rect == _pictureInPictureRect) return;
+    _pictureInPictureRect = rect;
+    unawaited(_syncNativePictureInPicture());
+  }
 
   static void syncAutoPictureInPictureSetting() {
     final instance = _instance;

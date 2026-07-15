@@ -131,6 +131,20 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   final _playerKey = GlobalKey();
   final _videoKey = GlobalKey();
+  ui.Rect? _pictureInPictureRect;
+
+  void _syncPictureInPictureRect() {
+    if (!Platform.isIOS) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final box = _playerKey.currentContext?.findRenderObject();
+      if (box is! RenderBox || !box.hasSize) return;
+      final rect = box.localToGlobal(Offset.zero) & box.size;
+      if (rect == _pictureInPictureRect) return;
+      _pictureInPictureRect = rect;
+      plPlayerController.updatePictureInPictureRect(rect);
+    });
+  }
 
   final RxDouble _brightnessValue = 0.0.obs;
   final RxBool _brightnessIndicator = false.obs;
@@ -1291,6 +1305,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   Widget build(BuildContext context) {
+    _syncPictureInPictureRect();
     maxWidth = widget.maxWidth;
     maxHeight = widget.maxHeight;
     final isFullScreen = this.isFullScreen;

@@ -256,7 +256,13 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
           completed: (args?["completed"] as? Bool) ?? false,
           audioOnly: (args?["audioOnly"] as? Bool) ?? false,
           position: (args?["position"] as? NSNumber)?.doubleValue ?? 0,
-          duration: (args?["duration"] as? NSNumber)?.doubleValue ?? 0
+          duration: (args?["duration"] as? NSNumber)?.doubleValue ?? 0,
+          inlineFrame: CGRect(
+            x: (args?["inlineX"] as? NSNumber)?.doubleValue ?? 0,
+            y: (args?["inlineY"] as? NSNumber)?.doubleValue ?? 0,
+            width: (args?["inlineWidth"] as? NSNumber)?.doubleValue ?? 0,
+            height: (args?["inlineHeight"] as? NSNumber)?.doubleValue ?? 0
+          )
         ))
     }
   #endif

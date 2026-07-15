@@ -66,6 +66,7 @@ final class PictureInPictureController: NSObject {
     var audioOnly: Bool
     var position: Double
     var duration: Double
+    var inlineFrame: CGRect
 
     var eligible: Bool {
       automatic && loaded && playing && !completed && !audioOnly
@@ -73,6 +74,7 @@ final class PictureInPictureController: NSObject {
   }
 
   private static let readinessTimeout: TimeInterval = 1.5
+  private static let inlineFrameInterval = CMTime(value: 1, timescale: 5)
 
   private let displayLayer = AVSampleBufferDisplayLayer()
   private let hostClock = CMClockGetHostTimeClock()
@@ -92,6 +94,7 @@ final class PictureInPictureController: NSObject {
   private var stopReason: String?
   private var restoreRequested = false
   private var loggedFirstFrame = false
+  private var lastInlineFrameTime = CMTime.invalid
 
   override init() {
     super.init()
@@ -135,7 +138,8 @@ final class PictureInPictureController: NSObject {
     completed: Bool,
     audioOnly: Bool,
     position: Double,
-    duration: Double
+    duration: Double,
+    inlineFrame: CGRect
   ) -> [String: Any] {
     if let current = configuration, current.handle != handle {
       dispose(handle: current.handle)
@@ -155,7 +159,8 @@ final class PictureInPictureController: NSObject {
       completed: completed,
       audioOnly: audioOnly,
       position: position,
-      duration: duration
+      duration: duration,
+      inlineFrame: inlineFrame
     )
     controller?.invalidatePlaybackState()
 
@@ -226,7 +231,23 @@ final class PictureInPictureController: NSObject {
       width: CVPixelBufferGetWidth(pixelBuffer),
       height: CVPixelBufferGetHeight(pixelBuffer)
     )
-    if formatDescription == nil || formatSize != size {
+    let isNewFormat = formatDescription == nil || formatSize != size
+    let presentationTime = CMClockGetTime(hostClock)
+    if state == .inline,
+      !isNewFormat,
+      lastInlineFrameTime.isValid,
+      CMTimeCompare(
+        CMTimeSubtract(presentationTime, lastInlineFrameTime),
+        Self.inlineFrameInterval
+      ) < 0
+    {
+      return
+    }
+    if state == .inline {
+      lastInlineFrameTime = presentationTime
+    }
+
+    if isNewFormat {
       formatSize = size
       CMVideoFormatDescriptionCreateForImageBuffer(
         allocator: kCFAllocatorDefault,
@@ -238,7 +259,7 @@ final class PictureInPictureController: NSObject {
 
     var timing = CMSampleTimingInfo(
       duration: .invalid,
-      presentationTimeStamp: CMClockGetTime(hostClock),
+      presentationTimeStamp: presentationTime,
       decodeTimeStamp: .invalid
     )
     var sampleBuffer: CMSampleBuffer?
@@ -429,22 +450,24 @@ final class PictureInPictureController: NSObject {
     guard let window,
       let rootView = window.rootViewController?.view
     else { return false }
+    let inlineFrame = rootView.convert(configuration?.inlineFrame ?? .zero, from: window)
+      .intersection(rootView.bounds)
+    guard !inlineFrame.isNull, !inlineFrame.isEmpty else { return false }
 
     if hostView?.window !== window {
       hostView?.removeFromSuperview()
       let hostView = PictureInPictureHostView(
-        frame: rootView.bounds,
+        frame: inlineFrame,
         displayLayer: displayLayer
       )
       hostView.isUserInteractionEnabled = false
       hostView.backgroundColor = .clear
-      hostView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
       rootView.insertSubview(hostView, at: 0)
       self.hostView = hostView
       loggedFirstFrame = false
     }
-    hostView?.frame = rootView.bounds
-    displayLayer.frame = hostView?.bounds ?? rootView.bounds
+    hostView?.frame = inlineFrame
+    displayLayer.frame = hostView?.bounds ?? .zero
     return true
   }
 
@@ -453,6 +476,7 @@ final class PictureInPictureController: NSObject {
     hostView?.removeFromSuperview()
     hostView = nil
     loggedFirstFrame = false
+    lastInlineFrameTime = .invalid
   }
 
   private func emitState(
