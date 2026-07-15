@@ -148,13 +148,27 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.enableLongShowControl,
     defaultVal: false,
   ),
-  const SwitchModel(
-    title: '后台播放',
-    subtitle: '进入后台时继续播放',
-    leading: Icon(Icons.motion_photos_pause_outlined),
-    setKey: SettingBoxKey.continuePlayInBackground,
-    defaultVal: false,
-  ),
+  if (PlatformUtils.isMobile)
+    const SwitchModel(
+      title: '后台播放',
+      subtitle: '进入后台时继续播放',
+      leading: Icon(Icons.motion_photos_pause_outlined),
+      setKey: SettingBoxKey.continuePlayInBackground,
+      defaultVal: false,
+    ),
+  if (Platform.isAndroid || Platform.isIOS)
+    SwitchModel(
+      title: '后台画中画',
+      subtitle: '进入后台时以小窗形式（PiP）播放',
+      leading: const Icon(Icons.picture_in_picture_outlined),
+      setKey: SettingBoxKey.autoPiP,
+      defaultVal: false,
+      onChanged: (val) {
+        if (val && !Pref.enableBackgroundPlay) {
+          SmartDialog.showToast('建议开启后台音频服务');
+        }
+      },
+    ),
   const SwitchModel(
     title: '全屏手势反向',
     subtitle: '默认播放器中部向上滑动进入全屏，向下退出\n开启后向下全屏，向上退出',

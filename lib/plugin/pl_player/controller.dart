@@ -1,4 +1,4 @@
-import 'dart:async' show StreamSubscription, Timer;
+import 'dart:async' show StreamSubscription, Timer, unawaited;
 import 'dart:convert' show ascii;
 import 'dart:math' show max, min;
 import 'dart:ui' as ui;
@@ -46,7 +46,8 @@ import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show HapticFeedback, DeviceOrientation;
+import 'package:flutter/services.dart'
+    show DeviceOrientation, HapticFeedback, MethodChannel;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:get/get.dart';
@@ -183,6 +184,54 @@ class PlPlayerController with BlockConfigMixin {
 
   bool get isPipMode => false;
   bool isDesktopPip = false;
+  late final bool autoPip = Pref.autoPiP;
+  bool _nativePipActive = false;
+  bool get isNativePipActive => _nativePipActive;
+  static const _pictureInPictureChannel = MethodChannel(
+    'com.alexmercerind/media_kit_video',
+  );
+
+  Map<String, Object> get _pictureInPictureState => {
+    'handle': videoPlayerController!.handle.toString(),
+    'position': positionInMilliseconds / 1000,
+    'duration': durationInMilliseconds / 1000,
+    'playing': videoPlayerController!.state.playing,
+  };
+
+  Future<void> enterNativePictureInPicture() async {
+    if (!Platform.isIOS ||
+        videoPlayerController == null ||
+        onlyPlayAudio.value) {
+      return;
+    }
+    final started =
+        await _pictureInPictureChannel.invokeMethod<bool>(
+          'PictureInPicture.Start',
+          _pictureInPictureState,
+        ) ??
+        false;
+    _nativePipActive = started;
+    if (!started) {
+      SmartDialog.showToast('当前设备或播放状态不支持画中画');
+    }
+  }
+
+  Future<void> _updateNativePictureInPicture() async {
+    if (!_nativePipActive || videoPlayerController == null) return;
+    _nativePipActive =
+        await _pictureInPictureChannel.invokeMethod<bool>(
+          'PictureInPicture.Update',
+          _pictureInPictureState,
+        ) ??
+        false;
+  }
+
+  Future<void> exitNativePictureInPicture() async {
+    if (!Platform.isIOS || !_nativePipActive) return;
+    _nativePipActive = false;
+    await _pictureInPictureChannel.invokeMethod<void>('PictureInPicture.Stop');
+  }
+
   late final RxBool isAlwaysOnTop = false.obs;
   Future<void> setAlwaysOnTop(bool value) {
     isAlwaysOnTop.value = value;
@@ -740,6 +789,7 @@ class PlPlayerController with BlockConfigMixin {
         }
 
         final seconds = videoPlayerController!.state.position.inSeconds;
+        unawaited(_updateNativePictureInPicture());
         if (seconds != 0) {
           makeHeartBeat(seconds, type: .status);
         }
@@ -770,6 +820,7 @@ class PlPlayerController with BlockConfigMixin {
           videoPlayerServiceHandler?.onPositionChange(position);
 
           makeHeartBeat(posInSeconds);
+          unawaited(_updateNativePictureInPicture());
         }
 
         for (final element in _positionListeners) {
@@ -1364,6 +1415,7 @@ class PlPlayerController with BlockConfigMixin {
     if (kDebugMode) {
       debugPrint('dispose player');
     }
+    unawaited(exitNativePictureInPicture());
     _videoPlayerController?.dispose();
     _videoPlayerController = null;
     _videoController = null;
