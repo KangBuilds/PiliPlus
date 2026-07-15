@@ -307,17 +307,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == .inactive &&
-        Platform.isIOS &&
-        plPlayerController.autoPip &&
-        plPlayerController.playerStatus.isPlaying) {
-      unawaited(plPlayerController.enterNativePictureInPicture());
-    }
-    final keepPlayingInPip =
-        Platform.isIOS &&
-        (plPlayerController.autoPip || plPlayerController.isNativePipActive);
-    if (!plPlayerController.continuePlayInBackground.value &&
-        !keepPlayingInPip) {
+    // iOS background playback is coordinated by AVPictureInPictureController
+    // from the native application lifecycle.
+    if (Platform.isIOS) return;
+    if (!plPlayerController.continuePlayInBackground.value) {
       late final player = plPlayerController.videoPlayerController;
       if (const <AppLifecycleState>[.paused, .detached].contains(state)) {
         if (player != null && player.state.playing) {
@@ -870,21 +863,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           inAppFullScreen: true,
         ),
       ),
-
-      BottomControlType.pip => SizedBox(
-        width: widgetWidth,
-        height: 30,
-        child: IconButton(
-          padding: EdgeInsets.zero,
-          tooltip: '画中画',
-          onPressed: plPlayerController.enterNativePictureInPicture,
-          icon: const Icon(
-            Icons.picture_in_picture_outlined,
-            size: 20,
-            color: Colors.white,
-          ),
-        ),
-      ),
     };
 
     final isNotFileSource = !plPlayerController.isFileSource;
@@ -906,7 +884,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       .subtitle,
       .speed,
       if (isNotFileSource && flag) .qa,
-      if (Platform.isIOS) .pip,
       if (!plPlayerController.isDesktopPip) .fullscreen,
     ];
     return PlayerBar(

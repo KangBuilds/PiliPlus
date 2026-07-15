@@ -7,7 +7,6 @@ enum BottomControlType {
   fit,
   subtitle,
   speed,
-  pip,
   fullscreen,
   viewPoints,
   superResolution,

@@ -35,7 +35,7 @@ abstract final class SettingBoxKey {
       horizontalScreen = 'horizontalScreen',
       CDNService = 'CDNService',
       disableAudioCDN = 'disableAudioCDN',
-      autoPiP = 'autoPiP',
+      autoPictureInPicture = 'autoPiP',
       enableAutoLongPressSpeed = 'enableAutoLongPressSpeed',
       useRelativeSlide = 'useRelativeSlide',
       sliderDuration = 'sliderOffset',

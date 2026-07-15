@@ -47,7 +47,7 @@ import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
-    show DeviceOrientation, HapticFeedback, MethodChannel;
+    show DeviceOrientation, HapticFeedback, MethodCall, MethodChannel;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:get/get.dart';
@@ -59,6 +59,13 @@ import 'package:path/path.dart' as path;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 typedef PlayCallback = Future<void>? Function();
+
+enum AutoPictureInPictureState {
+  inline,
+  requestingPiP,
+  pipActive,
+  restoringInline,
+}
 
 class PlPlayerController with BlockConfigMixin {
   Player? _videoPlayerController;
@@ -184,52 +191,100 @@ class PlPlayerController with BlockConfigMixin {
 
   bool get isPipMode => false;
   bool isDesktopPip = false;
-  late final bool autoPip = Pref.autoPiP;
-  bool _nativePipActive = false;
-  bool get isNativePipActive => _nativePipActive;
   static const _pictureInPictureChannel = MethodChannel(
     'com.alexmercerind/media_kit_video',
   );
+  static const _pictureInPictureEventChannel = MethodChannel(
+    'com.alexmercerind/media_kit_video/picture_in_picture',
+  );
+  AutoPictureInPictureState _autoPictureInPictureState =
+      AutoPictureInPictureState.inline;
+  bool _applicationInBackground = false;
+  bool _pictureInPictureDisposed = false;
+  int _pictureInPictureSession = 0;
 
   Map<String, Object> get _pictureInPictureState => {
     'handle': videoPlayerController!.handle.toString(),
+    'session': _pictureInPictureSession,
+    'automatic': Pref.autoPictureInPicture,
+    'loaded': dataStatus.value == .loaded,
+    'completed':
+        dataStatus.value == DataStatus.loaded && playerStatus.value.isCompleted,
+    'audioOnly': onlyPlayAudio.value,
     'position': positionInMilliseconds / 1000,
     'duration': durationInMilliseconds / 1000,
-    'playing': videoPlayerController!.state.playing,
+    'playing': videoPlayerController!.state.playing && playerStatus.isPlaying,
   };
 
-  Future<void> enterNativePictureInPicture() async {
-    if (!Platform.isIOS ||
-        videoPlayerController == null ||
-        onlyPlayAudio.value) {
+  static void syncAutoPictureInPictureSetting() {
+    final instance = _instance;
+    if (instance != null) {
+      unawaited(instance._syncNativePictureInPicture());
+    }
+  }
+
+  Future<void> _handleNativePictureInPictureEvent(MethodCall call) async {
+    if (_pictureInPictureDisposed) return;
+    final args = Map<Object?, Object?>.from(call.arguments as Map);
+    final player = videoPlayerController;
+    if (player == null ||
+        args['handle'] != player.handle ||
+        args['session'] != _pictureInPictureSession) {
       return;
     }
-    final started =
-        await _pictureInPictureChannel.invokeMethod<bool>(
-          'PictureInPicture.Start',
-          _pictureInPictureState,
-        ) ??
-        false;
-    _nativePipActive = started;
-    if (!started) {
-      SmartDialog.showToast('当前设备或播放状态不支持画中画');
+
+    if (call.method == 'PictureInPicture.SetPlaying') {
+      if (args['playing'] == true) {
+        await play();
+      } else {
+        await pause();
+      }
+      return;
+    }
+    if (call.method == 'PictureInPicture.Seek') {
+      await seekTo(
+        Duration(
+          milliseconds: ((args['position'] as num) * 1000).round(),
+        ),
+      );
+      return;
+    }
+    if (call.method != 'PictureInPicture.StateChanged') return;
+
+    _autoPictureInPictureState = switch (args['state']) {
+      'requestingPiP' => AutoPictureInPictureState.requestingPiP,
+      'pipActive' => AutoPictureInPictureState.pipActive,
+      'restoringInline' => AutoPictureInPictureState.restoringInline,
+      _ => AutoPictureInPictureState.inline,
+    };
+    _applicationInBackground = args['background'] == true;
+    if (kDebugMode) {
+      debugPrint(
+        '[AutoPiP] state=${args['state']}, reason=${args['reason']}',
+      );
+    }
+    if (args['pauseRequired'] == true) {
+      if (kDebugMode) {
+        debugPrint('[AutoPiP] pausing playback without active PiP');
+      }
+      await pause();
     }
   }
 
-  Future<void> _updateNativePictureInPicture() async {
-    if (!_nativePipActive || videoPlayerController == null) return;
-    _nativePipActive =
-        await _pictureInPictureChannel.invokeMethod<bool>(
-          'PictureInPicture.Update',
-          _pictureInPictureState,
-        ) ??
-        false;
-  }
-
-  Future<void> exitNativePictureInPicture() async {
-    if (!Platform.isIOS || !_nativePipActive) return;
-    _nativePipActive = false;
-    await _pictureInPictureChannel.invokeMethod<void>('PictureInPicture.Stop');
+  Future<void> _syncNativePictureInPicture() async {
+    if (!Platform.isIOS ||
+        _pictureInPictureDisposed ||
+        videoPlayerController == null) {
+      return;
+    }
+    try {
+      await _pictureInPictureChannel.invokeMapMethod<String, Object?>(
+        'PictureInPicture.Update',
+        _pictureInPictureState,
+      );
+    } catch (error) {
+      if (kDebugMode) debugPrint('[AutoPiP] state sync failed: $error');
+    }
   }
 
   late final RxBool isAlwaysOnTop = false.obs;
@@ -394,7 +449,18 @@ class PlPlayerController with BlockConfigMixin {
   static PlayCallback? _playCallBack;
 
   static Future<void>? playIfExists() {
+    if (Platform.isIOS && !canPlayFromSystemControls) return null;
     return _playCallBack?.call();
+  }
+
+  static bool get canPlayFromSystemControls {
+    final instance = _instance;
+    return instance == null ||
+        !instance._applicationInBackground ||
+        instance._autoPictureInPictureState ==
+            AutoPictureInPictureState.pipActive ||
+        instance._autoPictureInPictureState ==
+            AutoPictureInPictureState.restoringInline;
   }
 
   // try to get PlayerStatus
@@ -479,6 +545,15 @@ class PlPlayerController with BlockConfigMixin {
         .onOrientationChanged(checkIsAutoRotate: false)
         .listen(_onOrientationChanged);
 
+    if (Platform.isIOS) {
+      _pictureInPictureEventChannel.setMethodCallHandler(
+        _handleNativePictureInPictureEvent,
+      );
+      // The audio session remains available for PiP controls, while native
+      // lifecycle state decides whether the player may continue in background.
+      videoPlayerServiceHandler?.enableBackgroundPlay = true;
+    }
+
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
     }
@@ -526,10 +601,12 @@ class PlPlayerController with BlockConfigMixin {
       this.height = height;
       this.dataSource = dataSource;
       _autoPlay = autoplay;
+      _pictureInPictureSession++;
       // 初始化视频倍速
       // _playbackSpeed.value = speed;
       // 初始化数据加载状态
       dataStatus.value = DataStatus.loading;
+      unawaited(_syncNativePictureInPicture());
       // 初始化全屏方向
       _isVertical = isVertical ?? false;
       _aid = aid;
@@ -565,6 +642,7 @@ class PlPlayerController with BlockConfigMixin {
       position.value = buffered.value = seekTo?.inSeconds ?? 0;
 
       dataStatus.value = .loaded;
+      unawaited(_syncNativePictureInPicture());
 
       if (autoFullScreenFlag && autoEnterFullScreen) {
         triggerFullScreen(status: true);
@@ -789,7 +867,7 @@ class PlPlayerController with BlockConfigMixin {
         }
 
         final seconds = videoPlayerController!.state.position.inSeconds;
-        unawaited(_updateNativePictureInPicture());
+        unawaited(_syncNativePictureInPicture());
         if (seconds != 0) {
           makeHeartBeat(seconds, type: .status);
         }
@@ -805,6 +883,7 @@ class PlPlayerController with BlockConfigMixin {
           }
 
           makeHeartBeat(-1, type: .completed);
+          unawaited(_syncNativePictureInPicture());
         }
       }),
 
@@ -820,14 +899,19 @@ class PlPlayerController with BlockConfigMixin {
           videoPlayerServiceHandler?.onPositionChange(position);
 
           makeHeartBeat(posInSeconds);
-          unawaited(_updateNativePictureInPicture());
+          if (_autoPictureInPictureState != AutoPictureInPictureState.inline) {
+            unawaited(_syncNativePictureInPicture());
+          }
         }
 
         for (final element in _positionListeners) {
           element(position);
         }
       }),
-      stream.duration.listen(updateDuration),
+      stream.duration.listen((value) {
+        updateDuration(value);
+        unawaited(_syncNativePictureInPicture());
+      }),
       stream.buffer.listen((Duration buffer) {
         buffered.value = buffer.inSeconds;
       }),
@@ -1415,7 +1499,10 @@ class PlPlayerController with BlockConfigMixin {
     if (kDebugMode) {
       debugPrint('dispose player');
     }
-    unawaited(exitNativePictureInPicture());
+    _pictureInPictureDisposed = true;
+    if (Platform.isIOS) {
+      _pictureInPictureEventChannel.setMethodCallHandler(null);
+    }
     _videoPlayerController?.dispose();
     _videoPlayerController = null;
     _videoController = null;
@@ -1446,6 +1533,7 @@ class PlPlayerController with BlockConfigMixin {
     videoPlayerController?.setVideoTrack(
       onlyPlayAudio.value ? VideoTrack.no() : VideoTrack.auto(),
     );
+    unawaited(_syncNativePictureInPicture());
   }
 
   late final Map<String, ui.Image?> previewCache = {};

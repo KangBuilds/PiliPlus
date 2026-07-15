@@ -533,7 +533,7 @@ class HeaderControlState extends State<HeaderControl>
                             );
                           },
                         ),
-                      if (PlatformUtils.isMobile)
+                      if (Platform.isAndroid)
                         Obx(
                           () => ActionRowLineItem(
                             iconData: Icons.play_circle_outline,

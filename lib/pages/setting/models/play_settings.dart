@@ -6,6 +6,8 @@ import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_progress_behavior.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
+import 'package:PiliPlus/plugin/pl_player/controller.dart'
+    show PlPlayerController;
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -148,7 +150,7 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.enableLongShowControl,
     defaultVal: false,
   ),
-  if (PlatformUtils.isMobile)
+  if (Platform.isAndroid)
     const SwitchModel(
       title: '后台播放',
       subtitle: '进入后台时继续播放',
@@ -156,18 +158,14 @@ List<SettingsModel> get playSettings => [
       setKey: SettingBoxKey.continuePlayInBackground,
       defaultVal: false,
     ),
-  if (Platform.isAndroid || Platform.isIOS)
+  if (Platform.isIOS)
     SwitchModel(
-      title: '后台画中画',
-      subtitle: '进入后台时以小窗形式（PiP）播放',
+      title: '自动开启画中画',
+      subtitle: '离开 PiliPlus 时继续以画中画播放',
       leading: const Icon(Icons.picture_in_picture_outlined),
-      setKey: SettingBoxKey.autoPiP,
+      setKey: SettingBoxKey.autoPictureInPicture,
       defaultVal: false,
-      onChanged: (val) {
-        if (val && !Pref.enableBackgroundPlay) {
-          SmartDialog.showToast('建议开启后台音频服务');
-        }
-      },
+      onChanged: (_) => PlPlayerController.syncAutoPictureInPictureSetting(),
     ),
   const SwitchModel(
     title: '全屏手势反向',
