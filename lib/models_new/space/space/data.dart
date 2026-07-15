@@ -17,6 +17,7 @@ import 'package:PiliPlus/models_new/space/space/ugc_season.dart';
 
 class SpaceData {
   int? relation;
+  int? guestRelation;
   int? medal;
   String? defaultTab;
   SpaceSetting? setting;
@@ -40,6 +41,7 @@ class SpaceData {
 
   SpaceData({
     this.relation,
+    this.guestRelation,
     this.medal,
     this.defaultTab,
     this.setting,
@@ -63,6 +65,7 @@ class SpaceData {
 
   SpaceData.fromJson(Map<String, dynamic> json) {
     relation = json['relation'] as int?;
+    guestRelation = json['guest_relation'] as int?;
     medal = json['medal'] as int?;
     defaultTab = json['default_tab'] as String?;
     setting = json['setting'] == null
