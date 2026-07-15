@@ -2,6 +2,26 @@ import AVKit
 import CoreMedia
 import UIKit
 
+private final class PictureInPictureHostView: UIView {
+  let displayLayer: AVSampleBufferDisplayLayer
+
+  init(frame: CGRect, displayLayer: AVSampleBufferDisplayLayer) {
+    self.displayLayer = displayLayer
+    super.init(frame: frame)
+    layer.addSublayer(displayLayer)
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    displayLayer.frame = bounds
+  }
+}
+
 final class PictureInPictureController: NSObject {
   typealias StateCallback = (
     Int64,
@@ -59,7 +79,7 @@ final class PictureInPictureController: NSObject {
   private var controller: AVPictureInPictureController?
   private var possibleObservation: NSKeyValueObservation?
   private var readinessTimer: Timer?
-  private var hostView: UIView?
+  private var hostView: PictureInPictureHostView?
   private var formatDescription: CMVideoFormatDescription?
   private var formatSize = CGSize.zero
   private var configuration: PlaybackConfiguration?
@@ -76,7 +96,6 @@ final class PictureInPictureController: NSObject {
   override init() {
     super.init()
     displayLayer.videoGravity = .resizeAspect
-    displayLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
     var timebase: CMTimebase?
     if CMTimebaseCreateWithSourceClock(
       allocator: kCFAllocatorDefault,
@@ -413,11 +432,13 @@ final class PictureInPictureController: NSObject {
 
     if hostView?.window !== window {
       hostView?.removeFromSuperview()
-      let hostView = UIView(frame: rootView.bounds)
+      let hostView = PictureInPictureHostView(
+        frame: rootView.bounds,
+        displayLayer: displayLayer
+      )
       hostView.isUserInteractionEnabled = false
       hostView.backgroundColor = .clear
       hostView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      hostView.layer.addSublayer(displayLayer)
       rootView.insertSubview(hostView, at: 0)
       self.hostView = hostView
       loggedFirstFrame = false
