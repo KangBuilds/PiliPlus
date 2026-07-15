@@ -38,6 +38,7 @@ final class PictureInPictureController: NSObject {
 
   private enum State {
     case inline
+    case preparing
     case requesting
     case active
     case restoring
@@ -46,7 +47,7 @@ final class PictureInPictureController: NSObject {
       switch self {
       case .inline:
         "inline"
-      case .requesting:
+      case .preparing, .requesting:
         "requestingPiP"
       case .active:
         "pipActive"
@@ -59,7 +60,6 @@ final class PictureInPictureController: NSObject {
   private struct PlaybackConfiguration {
     let handle: Int64
     let session: Int64
-    var automatic: Bool
     var loaded: Bool
     var playing: Bool
     var completed: Bool
@@ -69,13 +69,11 @@ final class PictureInPictureController: NSObject {
     var inlineFrame: CGRect
 
     var eligible: Bool {
-      automatic && loaded && playing && !completed && !audioOnly
+      loaded && playing && !completed && !audioOnly
     }
   }
 
   private static let readinessTimeout: TimeInterval = 1.5
-  private static let inlineFrameInterval = CMTime(value: 1, timescale: 5)
-
   private let displayLayer = AVSampleBufferDisplayLayer()
   private let hostClock = CMClockGetHostTimeClock()
   private var controller: AVPictureInPictureController?
@@ -90,11 +88,9 @@ final class PictureInPictureController: NSObject {
   private var state = State.inline
   private var isInBackground =
     UIApplication.shared.applicationState == .background
-  private var attemptedInCurrentBackground = false
   private var stopReason: String?
   private var restoreRequested = false
   private var loggedFirstFrame = false
-  private var lastInlineFrameTime = CMTime.invalid
 
   override init() {
     super.init()
@@ -132,7 +128,6 @@ final class PictureInPictureController: NSObject {
   func update(
     handle: Int64,
     session: Int64,
-    automatic: Bool,
     loaded: Bool,
     playing: Bool,
     completed: Bool,
@@ -153,7 +148,6 @@ final class PictureInPictureController: NSObject {
     configuration = PlaybackConfiguration(
       handle: handle,
       session: session,
-      automatic: automatic,
       loaded: loaded,
       playing: playing,
       completed: completed,
@@ -164,7 +158,7 @@ final class PictureInPictureController: NSObject {
     )
     controller?.invalidatePlaybackState()
 
-    if state == .requesting,
+    if (state == .preparing || state == .requesting),
       configuration?.eligible != true
     {
       cancelRequest(reason: "playbackBecameIneligible")
@@ -175,21 +169,55 @@ final class PictureInPictureController: NSObject {
       state = .restoring
       emitState(reason: stopReason!)
       controller?.stopPictureInPicture()
-    } else if state == .inline, configuration?.eligible == true {
-      _ = prepare()
-    }
-    controller?.canStartPictureInPictureAutomaticallyFromInline =
-      configuration?.eligible == true
-
-    if isInBackground && !attemptedInCurrentBackground && state == .inline {
-      attemptAutomaticStart()
     }
 
-    return [
+    return status
+  }
+
+  var status: [String: Any] {
+    [
       "supported": AVPictureInPictureController.isPictureInPictureSupported(),
       "possible": controller?.isPictureInPicturePossible == true,
       "state": state.eventValue,
     ]
+  }
+
+  func start() -> [String: Any] {
+    if state == .preparing || state == .requesting || state == .active {
+      return status.merging(["accepted": true]) { _, new in new }
+    }
+    guard state == .inline, let configuration else {
+      return status.merging(["accepted": false]) { _, new in new }
+    }
+
+    let supported = AVPictureInPictureController.isPictureInPictureSupported()
+    guard supported, configuration.eligible else {
+      log("manual request rejected, reason=\(ineligibleReason(configuration, supported: supported))")
+      return status.merging(["accepted": false]) { _, new in new }
+    }
+
+    transitionHandle = configuration.handle
+    transitionSession = configuration.session
+    state = .preparing
+    log("requesting PiP")
+    emitState(reason: "manualRequest")
+    guard prepare() else {
+      failRequest(reason: "rendererUnavailable")
+      return status.merging(["accepted": false]) { _, new in new }
+    }
+
+    readinessTimer?.invalidate()
+    readinessTimer = Timer.scheduledTimer(
+      withTimeInterval: Self.readinessTimeout,
+      repeats: false
+    ) { [weak self] _ in
+      guard let self,
+        self.state == .preparing || self.state == .requesting
+      else { return }
+      self.failRequest(reason: "readinessTimeout")
+    }
+    startWhenPossible()
+    return status.merging(["accepted": true]) { _, new in new }
   }
 
   func dispose(handle: Int64) {
@@ -219,7 +247,7 @@ final class PictureInPictureController: NSObject {
 
   func enqueue(handle: Int64, pixelBuffer: CVPixelBuffer) {
     guard configuration?.handle == handle,
-      configuration?.eligible == true || state == .active
+      state == .preparing || state == .requesting || state == .active
         || state == .restoring
     else { return }
     if displayLayer.status == .failed {
@@ -233,19 +261,6 @@ final class PictureInPictureController: NSObject {
     )
     let isNewFormat = formatDescription == nil || formatSize != size
     let presentationTime = CMClockGetTime(hostClock)
-    if state == .inline,
-      !isNewFormat,
-      lastInlineFrameTime.isValid,
-      CMTimeCompare(
-        CMTimeSubtract(presentationTime, lastInlineFrameTime),
-        Self.inlineFrameInterval
-      ) < 0
-    {
-      return
-    }
-    if state == .inline {
-      lastInlineFrameTime = presentationTime
-    }
 
     if isNewFormat {
       formatSize = size
@@ -289,27 +304,29 @@ final class PictureInPictureController: NSObject {
   @objc private func didEnterBackground() {
     isInBackground = true
     if state == .active {
-      attemptedInCurrentBackground = true
       log("lifecycle background, PiP already active")
       emitState(reason: "backgrounded")
       return
     }
-    attemptAutomaticStart()
+    if state == .preparing || state == .requesting {
+      log("lifecycle background, PiP request pending")
+      return
+    }
+    if configuration?.playing == true {
+      log("backgrounded without PiP; pausing playback")
+      emitState(reason: "backgroundedWithoutPiP", pauseRequired: true)
+    }
   }
 
   @objc private func willEnterForeground() {
     isInBackground = false
-    attemptedInCurrentBackground = false
     readinessTimer?.invalidate()
     readinessTimer = nil
     log("lifecycle foreground")
 
     switch state {
-    case .requesting:
-      state = .inline
-      emitState(reason: "returnedToForeground")
-      transitionHandle = nil
-      transitionSession = nil
+    case .preparing, .requesting:
+      cancelRequest(reason: "returnedToForeground")
     case .active:
       state = .restoring
       stopReason = "returnedToForeground"
@@ -322,48 +339,8 @@ final class PictureInPictureController: NSObject {
     }
   }
 
-  private func attemptAutomaticStart() {
-    guard !attemptedInCurrentBackground, state == .inline else { return }
-    attemptedInCurrentBackground = true
-
-    guard let configuration else { return }
-    let supported = AVPictureInPictureController.isPictureInPictureSupported()
-    let eligible = configuration.eligible && supported
-    log("backgrounded, eligible=\(eligible)")
-    guard eligible else {
-      let reason = ineligibleReason(configuration, supported: supported)
-      emitState(
-        reason: reason,
-        pauseRequired: configuration.playing
-      )
-      log("pausing playback, reason=\(reason)")
-      return
-    }
-
-    transitionHandle = configuration.handle
-    transitionSession = configuration.session
-    state = .requesting
-    log("requesting PiP through system automatic transition")
-    emitState(reason: "backgrounded")
-    guard prepare() else {
-      failRequest(reason: "rendererUnavailable")
-      return
-    }
-
-    readinessTimer?.invalidate()
-    readinessTimer = Timer.scheduledTimer(
-      withTimeInterval: Self.readinessTimeout,
-      repeats: false
-    ) { [weak self] _ in
-      guard let self,
-        self.state == .requesting
-      else { return }
-      self.failRequest(reason: "readinessTimeout")
-    }
-  }
-
   private func cancelRequest(reason: String) {
-    guard state == .requesting else { return }
+    guard state == .preparing || state == .requesting else { return }
     readinessTimer?.invalidate()
     readinessTimer = nil
     state = .inline
@@ -373,15 +350,19 @@ final class PictureInPictureController: NSObject {
     )
     transitionHandle = nil
     transitionSession = nil
+    cleanUpRenderer()
   }
 
   private func failRequest(reason: String) {
-    guard state == .requesting else { return }
+    guard state == .preparing || state == .requesting else { return }
     readinessTimer?.invalidate()
     readinessTimer = nil
     state = .inline
     log("PiP start failed, reason=\(reason)")
-    emitState(reason: reason, pauseRequired: isInBackground)
+    emitState(
+      reason: reason,
+      pauseRequired: isInBackground && configuration?.playing == true
+    )
     transitionHandle = nil
     transitionSession = nil
     cleanUpRenderer()
@@ -391,7 +372,6 @@ final class PictureInPictureController: NSObject {
     _ configuration: PlaybackConfiguration,
     supported: Bool
   ) -> String {
-    if !configuration.automatic { return "disabled" }
     if !supported { return "unsupported" }
     if !configuration.loaded { return "noVideo" }
     if configuration.audioOnly { return "audioOnly" }
@@ -416,16 +396,25 @@ final class PictureInPictureController: NSObject {
     )
     let controller = AVPictureInPictureController(contentSource: source)
     controller.delegate = self
-    controller.canStartPictureInPictureAutomaticallyFromInline =
-      configuration?.eligible == true
+    controller.canStartPictureInPictureAutomaticallyFromInline = false
     possibleObservation = controller.observe(
       \.isPictureInPicturePossible,
       options: [.initial, .new]
     ) { [weak self] controller, _ in
       guard let self else { return }
       self.log("readiness possible=\(controller.isPictureInPicturePossible)")
+      self.startWhenPossible()
     }
     self.controller = controller
+  }
+
+  private func startWhenPossible() {
+    guard state == .preparing,
+      controller?.isPictureInPicturePossible == true
+    else { return }
+    state = .requesting
+    log("PiP ready; starting")
+    controller?.startPictureInPicture()
   }
 
   private func attachDisplayLayer() -> Bool {
@@ -450,8 +439,10 @@ final class PictureInPictureController: NSObject {
     guard let window,
       let rootView = window.rootViewController?.view
     else { return false }
-    let inlineFrame = rootView.convert(configuration?.inlineFrame ?? .zero, from: window)
-      .intersection(rootView.bounds)
+    guard let containerView = rootView.superview else { return false }
+    let inlineFrame = containerView
+      .convert(configuration?.inlineFrame ?? .zero, from: window)
+      .intersection(containerView.bounds)
     guard !inlineFrame.isNull, !inlineFrame.isEmpty else { return false }
 
     if hostView?.window !== window {
@@ -462,7 +453,7 @@ final class PictureInPictureController: NSObject {
       )
       hostView.isUserInteractionEnabled = false
       hostView.backgroundColor = .clear
-      rootView.insertSubview(hostView, at: 0)
+      containerView.insertSubview(hostView, belowSubview: rootView)
       self.hostView = hostView
       loggedFirstFrame = false
     }
@@ -476,7 +467,6 @@ final class PictureInPictureController: NSObject {
     hostView?.removeFromSuperview()
     hostView = nil
     loggedFirstFrame = false
-    lastInlineFrameTime = .invalid
   }
 
   private func emitState(
@@ -516,7 +506,7 @@ final class PictureInPictureController: NSObject {
 
   private func log(_ message: String) {
     #if DEBUG
-      NSLog("[AutoPiP] \(message)")
+      NSLog("[PiP] \(message)")
     #endif
   }
 }
@@ -528,7 +518,7 @@ extension PictureInPictureController:
   func pictureInPictureControllerDidStartPictureInPicture(
     _ pictureInPictureController: AVPictureInPictureController
   ) {
-    guard state == .requesting || (state == .inline && !isInBackground),
+    guard state == .requesting,
       configuration?.eligible == true
     else {
       pictureInPictureController.stopPictureInPicture()
@@ -576,9 +566,6 @@ extension PictureInPictureController:
     stopReason = nil
     restoreRequested = false
     cleanUpRenderer()
-    if !isInBackground, configuration?.eligible == true {
-      _ = prepare()
-    }
   }
 
   func pictureInPictureController(

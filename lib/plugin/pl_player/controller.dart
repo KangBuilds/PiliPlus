@@ -60,7 +60,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 typedef PlayCallback = Future<void>? Function();
 
-enum AutoPictureInPictureState {
+enum PictureInPictureState {
   inline,
   requestingPiP,
   pipActive,
@@ -197,8 +197,8 @@ class PlPlayerController with BlockConfigMixin {
   static const _pictureInPictureEventChannel = MethodChannel(
     'com.alexmercerind/media_kit_video/picture_in_picture',
   );
-  AutoPictureInPictureState _autoPictureInPictureState =
-      AutoPictureInPictureState.inline;
+  PictureInPictureState _pictureInPictureTransitionState =
+      PictureInPictureState.inline;
   bool _applicationInBackground = false;
   bool _pictureInPictureDisposed = false;
   int _pictureInPictureSession = 0;
@@ -207,7 +207,6 @@ class PlPlayerController with BlockConfigMixin {
   Map<String, Object> get _pictureInPictureState => {
     'handle': videoPlayerController!.handle.toString(),
     'session': _pictureInPictureSession,
-    'automatic': Pref.autoPictureInPicture,
     'loaded': dataStatus.value == .loaded,
     'completed':
         dataStatus.value == DataStatus.loaded && playerStatus.value.isCompleted,
@@ -224,13 +223,39 @@ class PlPlayerController with BlockConfigMixin {
   void updatePictureInPictureRect(ui.Rect rect) {
     if (!Platform.isIOS || rect == _pictureInPictureRect) return;
     _pictureInPictureRect = rect;
-    unawaited(_syncNativePictureInPicture());
   }
 
-  static void syncAutoPictureInPictureSetting() {
-    final instance = _instance;
-    if (instance != null) {
-      unawaited(instance._syncNativePictureInPicture());
+  bool get isPictureInPictureTransitioning =>
+      _pictureInPictureTransitionState != PictureInPictureState.inline;
+
+  void setApplicationInBackground(bool value) {
+    _applicationInBackground = value;
+  }
+
+  Future<void> enterPictureInPicture() async {
+    final player = videoPlayerController;
+    if (!Platform.isIOS || player == null) return;
+    if (dataStatus.value != .loaded ||
+        !player.state.playing ||
+        !playerStatus.isPlaying ||
+        playerStatus.value.isCompleted ||
+        onlyPlayAudio.value ||
+        _pictureInPictureRect.isEmpty) {
+      SmartDialog.showToast('请先播放视频');
+      return;
+    }
+    try {
+      final result = await _pictureInPictureChannel
+          .invokeMapMethod<String, Object?>(
+            'PictureInPicture.Start',
+            _pictureInPictureState,
+          );
+      if (result?['accepted'] != true) {
+        SmartDialog.showToast('当前视频无法开启画中画');
+      }
+    } catch (error) {
+      if (kDebugMode) debugPrint('[PiP] start failed: $error');
+      SmartDialog.showToast('画中画启动失败');
     }
   }
 
@@ -262,21 +287,21 @@ class PlPlayerController with BlockConfigMixin {
     }
     if (call.method != 'PictureInPicture.StateChanged') return;
 
-    _autoPictureInPictureState = switch (args['state']) {
-      'requestingPiP' => AutoPictureInPictureState.requestingPiP,
-      'pipActive' => AutoPictureInPictureState.pipActive,
-      'restoringInline' => AutoPictureInPictureState.restoringInline,
-      _ => AutoPictureInPictureState.inline,
+    _pictureInPictureTransitionState = switch (args['state']) {
+      'requestingPiP' => PictureInPictureState.requestingPiP,
+      'pipActive' => PictureInPictureState.pipActive,
+      'restoringInline' => PictureInPictureState.restoringInline,
+      _ => PictureInPictureState.inline,
     };
     _applicationInBackground = args['background'] == true;
     if (kDebugMode) {
       debugPrint(
-        '[AutoPiP] state=${args['state']}, reason=${args['reason']}',
+        '[PiP] state=${args['state']}, reason=${args['reason']}',
       );
     }
     if (args['pauseRequired'] == true) {
       if (kDebugMode) {
-        debugPrint('[AutoPiP] pausing playback without active PiP');
+        debugPrint('[PiP] pausing playback without active PiP');
       }
       await pause();
     }
@@ -294,7 +319,7 @@ class PlPlayerController with BlockConfigMixin {
         _pictureInPictureState,
       );
     } catch (error) {
-      if (kDebugMode) debugPrint('[AutoPiP] state sync failed: $error');
+      if (kDebugMode) debugPrint('[PiP] state sync failed: $error');
     }
   }
 
@@ -468,10 +493,10 @@ class PlPlayerController with BlockConfigMixin {
     final instance = _instance;
     return instance == null ||
         !instance._applicationInBackground ||
-        instance._autoPictureInPictureState ==
-            AutoPictureInPictureState.pipActive ||
-        instance._autoPictureInPictureState ==
-            AutoPictureInPictureState.restoringInline;
+        instance._pictureInPictureTransitionState ==
+            PictureInPictureState.pipActive ||
+        instance._pictureInPictureTransitionState ==
+            PictureInPictureState.restoringInline;
   }
 
   // try to get PlayerStatus
@@ -617,7 +642,9 @@ class PlPlayerController with BlockConfigMixin {
       // _playbackSpeed.value = speed;
       // 初始化数据加载状态
       dataStatus.value = DataStatus.loading;
-      unawaited(_syncNativePictureInPicture());
+      if (isPictureInPictureTransitioning) {
+        unawaited(_syncNativePictureInPicture());
+      }
       // 初始化全屏方向
       _isVertical = isVertical ?? false;
       _aid = aid;
@@ -653,7 +680,9 @@ class PlPlayerController with BlockConfigMixin {
       position.value = buffered.value = seekTo?.inSeconds ?? 0;
 
       dataStatus.value = .loaded;
-      unawaited(_syncNativePictureInPicture());
+      if (isPictureInPictureTransitioning) {
+        unawaited(_syncNativePictureInPicture());
+      }
 
       if (autoFullScreenFlag && autoEnterFullScreen) {
         triggerFullScreen(status: true);
@@ -878,7 +907,9 @@ class PlPlayerController with BlockConfigMixin {
         }
 
         final seconds = videoPlayerController!.state.position.inSeconds;
-        unawaited(_syncNativePictureInPicture());
+        if (isPictureInPictureTransitioning) {
+          unawaited(_syncNativePictureInPicture());
+        }
         if (seconds != 0) {
           makeHeartBeat(seconds, type: .status);
         }
@@ -894,7 +925,9 @@ class PlPlayerController with BlockConfigMixin {
           }
 
           makeHeartBeat(-1, type: .completed);
-          unawaited(_syncNativePictureInPicture());
+          if (isPictureInPictureTransitioning) {
+            unawaited(_syncNativePictureInPicture());
+          }
         }
       }),
 
@@ -910,7 +943,7 @@ class PlPlayerController with BlockConfigMixin {
           videoPlayerServiceHandler?.onPositionChange(position);
 
           makeHeartBeat(posInSeconds);
-          if (_autoPictureInPictureState != AutoPictureInPictureState.inline) {
+          if (isPictureInPictureTransitioning) {
             unawaited(_syncNativePictureInPicture());
           }
         }
@@ -921,7 +954,9 @@ class PlPlayerController with BlockConfigMixin {
       }),
       stream.duration.listen((value) {
         updateDuration(value);
-        unawaited(_syncNativePictureInPicture());
+        if (isPictureInPictureTransitioning) {
+          unawaited(_syncNativePictureInPicture());
+        }
       }),
       stream.buffer.listen((Duration buffer) {
         buffered.value = buffer.inSeconds;
@@ -1544,7 +1579,9 @@ class PlPlayerController with BlockConfigMixin {
     videoPlayerController?.setVideoTrack(
       onlyPlayAudio.value ? VideoTrack.no() : VideoTrack.auto(),
     );
-    unawaited(_syncNativePictureInPicture());
+    if (isPictureInPictureTransitioning) {
+      unawaited(_syncNativePictureInPicture());
+    }
   }
 
   late final Map<String, ui.Image?> previewCache = {};

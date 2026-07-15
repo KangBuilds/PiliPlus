@@ -321,9 +321,21 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // iOS background playback is coordinated by AVPictureInPictureController
-    // from the native application lifecycle.
-    if (Platform.isIOS) return;
+    if (Platform.isIOS) {
+      final isInBackground = const <AppLifecycleState>[
+        .paused,
+        .detached,
+      ].contains(state);
+      plPlayerController.setApplicationInBackground(isInBackground);
+      if (isInBackground &&
+          !plPlayerController.isPictureInPictureTransitioning) {
+        final player = plPlayerController.videoPlayerController;
+        if (player != null && player.state.playing) {
+          player.pause();
+        }
+      }
+      return;
+    }
     if (!plPlayerController.continuePlayInBackground.value) {
       late final player = plPlayerController.videoPlayerController;
       if (const <AppLifecycleState>[.paused, .detached].contains(state)) {

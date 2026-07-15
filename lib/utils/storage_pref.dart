@@ -695,9 +695,6 @@ abstract final class Pref {
   static bool get fullScreenGestureReverse =>
       _setting.get(SettingBoxKey.fullScreenGestureReverse, defaultValue: false);
 
-  static bool get autoPictureInPicture =>
-      _setting.get(SettingBoxKey.autoPictureInPicture, defaultValue: false);
-
   static bool get enableSponsorBlock =>
       _setting.get(SettingBoxKey.enableSponsorBlock, defaultValue: false);
 

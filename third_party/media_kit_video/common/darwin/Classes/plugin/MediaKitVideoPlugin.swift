@@ -119,7 +119,9 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
       handleExitNativeFullscreenMethodCall(call.arguments, result)
     #if os(iOS)
       case "PictureInPicture.Update":
-        handlePictureInPictureUpdate(call.arguments, result)
+        handlePictureInPictureUpdate(call.arguments, start: false, result)
+      case "PictureInPicture.Start":
+        handlePictureInPictureUpdate(call.arguments, start: true, result)
     #endif
     default:
       result(FlutterMethodNotImplemented)
@@ -233,6 +235,7 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
   #if os(iOS)
     private func handlePictureInPictureUpdate(
       _ arguments: Any?,
+      start: Bool,
       _ result: FlutterResult
     ) {
       let args = arguments as? [String: Any]
@@ -246,24 +249,23 @@ public class MediaKitVideoPlugin: NSObject, FlutterPlugin {
             details: nil
           ))
       }
-      result(
-        pictureInPicture.update(
-          handle: handle,
-          session: (args?["session"] as? NSNumber)?.int64Value ?? 0,
-          automatic: (args?["automatic"] as? Bool) ?? false,
-          loaded: (args?["loaded"] as? Bool) ?? false,
-          playing: (args?["playing"] as? Bool) ?? false,
-          completed: (args?["completed"] as? Bool) ?? false,
-          audioOnly: (args?["audioOnly"] as? Bool) ?? false,
-          position: (args?["position"] as? NSNumber)?.doubleValue ?? 0,
-          duration: (args?["duration"] as? NSNumber)?.doubleValue ?? 0,
-          inlineFrame: CGRect(
-            x: (args?["inlineX"] as? NSNumber)?.doubleValue ?? 0,
-            y: (args?["inlineY"] as? NSNumber)?.doubleValue ?? 0,
-            width: (args?["inlineWidth"] as? NSNumber)?.doubleValue ?? 0,
-            height: (args?["inlineHeight"] as? NSNumber)?.doubleValue ?? 0
-          )
-        ))
+      _ = pictureInPicture.update(
+        handle: handle,
+        session: (args?["session"] as? NSNumber)?.int64Value ?? 0,
+        loaded: (args?["loaded"] as? Bool) ?? false,
+        playing: (args?["playing"] as? Bool) ?? false,
+        completed: (args?["completed"] as? Bool) ?? false,
+        audioOnly: (args?["audioOnly"] as? Bool) ?? false,
+        position: (args?["position"] as? NSNumber)?.doubleValue ?? 0,
+        duration: (args?["duration"] as? NSNumber)?.doubleValue ?? 0,
+        inlineFrame: CGRect(
+          x: (args?["inlineX"] as? NSNumber)?.doubleValue ?? 0,
+          y: (args?["inlineY"] as? NSNumber)?.doubleValue ?? 0,
+          width: (args?["inlineWidth"] as? NSNumber)?.doubleValue ?? 0,
+          height: (args?["inlineHeight"] as? NSNumber)?.doubleValue ?? 0
+        )
+      )
+      result(start ? pictureInPicture.start() : pictureInPicture.status)
     }
   #endif
 }
