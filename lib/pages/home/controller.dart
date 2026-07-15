@@ -5,7 +5,6 @@ import 'package:PiliPlus/http/api.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/models/common/home_tab_type.dart';
 import 'package:PiliPlus/pages/common/common_controller.dart';
-import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -40,13 +39,7 @@ class HomeController extends GetxController
 
     hideTopBar = !Pref.useSideBar && Pref.hideTopBar;
     if (hideTopBar) {
-      final mainCtr = Get.find<MainController>();
-      switch (mainCtr.barHideType) {
-        case .instant:
-          showTopBar = RxBool(true);
-        case .sync:
-          mainCtr.barOffset ??= RxDouble(0.0);
-      }
+      showTopBar = RxBool(true);
     }
 
     if (enableSearchWord) {

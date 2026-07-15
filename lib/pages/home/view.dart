@@ -1,5 +1,4 @@
 import 'package:PiliPlus/common/style.dart';
-import 'package:PiliPlus/common/widgets/custom_height_widget.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/pili_native_glass_tab_bar.dart';
 import 'package:PiliPlus/common/widgets/pili_native_segmented_control.dart';
@@ -38,10 +37,6 @@ class _HomePageState extends CommonPageState<HomePage>
         isTablet: context.isTablet,
         hasRequiredDestinations: _mainController.hasPiliNativeGlassDestinations,
       );
-
-  @override
-  bool get needsCorrection =>
-      _homeController.hideTopBar && !_usesNativeGlassTabBar;
 
   @override
   bool get wantKeepAlive => true;
@@ -97,8 +92,7 @@ class _HomePageState extends CommonPageState<HomePage>
           ),
         );
       }
-      if (_homeController.hideTopBar &&
-          _mainController.barHideType == .instant) {
+      if (_homeController.hideTopBar) {
         tabBar = Material(
           color: theme.colorScheme.surface,
           child: tabBar,
@@ -109,18 +103,11 @@ class _HomePageState extends CommonPageState<HomePage>
     }
     if (_usesNativeGlassTabBar && _homeController.hideTopBar) {
       final child = tabBar;
-      final barOffset = _mainController.barOffset;
       final showTopBar = _homeController.showTopBar;
-      if (barOffset != null || showTopBar != null) {
+      if (showTopBar != null) {
         tabBar = Obx(() {
-          final visible = barOffset != null
-              ? 1 - barOffset.value / Style.topBarHeight
-              : showTopBar!.value
-              ? 1.0
-              : 0.0;
-          final duration = barOffset == null
-              ? const Duration(milliseconds: 500)
-              : Duration.zero;
+          final visible = showTopBar.value ? 1.0 : 0.0;
+          const duration = Duration(milliseconds: 500);
           const curve = Curves.easeInOutCubicEmphasized;
           return ClipRect(
             child: AnimatedAlign(
@@ -162,21 +149,6 @@ class _HomePageState extends CommonPageState<HomePage>
     const padding = EdgeInsets.fromLTRB(14, 6, 14, 0);
     final child = Row(children: [searchBar(theme)]);
     if (_homeController.hideTopBar) {
-      if (_mainController.barOffset case final barOffset?) {
-        return Obx(
-          () {
-            final offset = barOffset.value;
-            return CustomHeightWidget(
-              offset: Offset(0, -offset),
-              height: Style.topBarHeight - offset,
-              child: Padding(
-                padding: padding,
-                child: child,
-              ),
-            );
-          },
-        );
-      }
       if (_homeController.showTopBar case final showTopBar?) {
         return Obx(() {
           final showSearchBar = showTopBar.value;

@@ -4,7 +4,6 @@ import 'package:PiliPlus/common/widgets/gesture/horizontal_drag_gesture_recogniz
     show deviceTouchSlop;
 import 'package:PiliPlus/common/widgets/pair.dart';
 import 'package:PiliPlus/http/constants.dart';
-import 'package:PiliPlus/models/common/bar_hide_type.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamic_badge_mode.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/common/dynamic/up_panel_position.dart';
@@ -643,12 +642,6 @@ abstract final class Pref {
     SettingBoxKey.hideBottomBar,
     defaultValue: PlatformUtils.isMobile,
   );
-
-  static BarHideType get barHideType =>
-      BarHideType.values[_setting.get(
-        SettingBoxKey.barHideType,
-        defaultValue: BarHideType.sync.index,
-      )];
 
   static bool get enableSearchWord =>
       _setting.get(SettingBoxKey.enableSearchWord, defaultValue: false);

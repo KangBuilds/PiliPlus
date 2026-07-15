@@ -98,19 +98,11 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
       _mainController.selectedIndex.value == 0;
 
   @override
-  bool onNotificationType1(UserScrollNotification notification) {
+  bool onUserScrollNotification(UserScrollNotification notification) {
     if (checkPage) {
       return false;
     }
-    return super.onNotificationType1(notification);
-  }
-
-  @override
-  bool onNotificationType2(ScrollNotification notification) {
-    if (checkPage) {
-      return false;
-    }
-    return super.onNotificationType2(notification);
+    return super.onUserScrollNotification(notification);
   }
 
   @override
