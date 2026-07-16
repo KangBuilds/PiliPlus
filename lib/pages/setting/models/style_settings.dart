@@ -173,14 +173,6 @@ List<SettingsModel> get styleSettings => [
     defaultVal: PlatformUtils.isMobile,
     needReboot: true,
   ),
-  SwitchModel(
-    title: '首页底栏收起',
-    subtitle: '首页列表滑动时，收起底栏',
-    leading: const Icon(Icons.vertical_align_bottom_outlined),
-    setKey: SettingBoxKey.hideBottomBar,
-    defaultVal: PlatformUtils.isMobile,
-    needReboot: true,
-  ),
   NormalModel(
     onTap: (context, setState) => _showQualityDialog(
       context: context,

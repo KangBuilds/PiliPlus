@@ -632,11 +632,6 @@ abstract final class Pref {
     defaultValue: PlatformUtils.isMobile,
   );
 
-  static bool get hideBottomBar => _setting.get(
-    SettingBoxKey.hideBottomBar,
-    defaultValue: PlatformUtils.isMobile,
-  );
-
   static bool get enableSearchWord =>
       _setting.get(SettingBoxKey.enableSearchWord, defaultValue: false);
 

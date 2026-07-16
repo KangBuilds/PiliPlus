@@ -94,7 +94,6 @@ class _MainAppState extends PopScopeState<MainApp>
         _mainController.selectedIndex.value != 0) {
       _mainController
         ..setIndex(0)
-        ..showBottomBar?.value = true
         ..setSearchBar();
     }
   }
@@ -171,19 +170,6 @@ class _MainAppState extends PopScopeState<MainApp>
                 .toList(),
           ),
         );
-      }
-
-      if (_mainController.hideBottomBar) {
-        if (_mainController.showBottomBar case final showBottomBar?) {
-          return Obx(
-            () => AnimatedSlide(
-              curve: Curves.easeInOutCubicEmphasized,
-              duration: const Duration(milliseconds: 500),
-              offset: Offset(0, showBottomBar.value ? 0 : 1),
-              child: bottomNav,
-            ),
-          );
-        }
       }
     }
 

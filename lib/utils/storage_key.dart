@@ -204,7 +204,6 @@ abstract final class SettingBoxKey {
       useSideBar = 'useSideBar',
       enableMYBar = 'enableMYBar',
       hideTopBar = 'hideSearchBar',
-      hideBottomBar = 'hideTabBar',
       tabBarSort = 'tabBarSortV3',
       dynamicBadgeMode = 'dynamicBadgeMode',
       msgBadgeMode = 'msgBadgeMode',

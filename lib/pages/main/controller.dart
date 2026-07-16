@@ -29,8 +29,6 @@ class MainController extends GetxController
 
   List<NavigationBarType> navigationBars = <NavigationBarType>[];
 
-  RxBool? showBottomBar;
-  late final bool hideBottomBar;
   bool useBottomNav = false;
   late dynamic controller;
   final RxInt selectedIndex = 0.obs;
@@ -84,12 +82,6 @@ class MainController extends GetxController
             length: navigationBars.length,
           )
         : PageController(initialPage: selectedIndex.value);
-
-    hideBottomBar =
-        !useSideBar && navigationBars.length > 1 && Pref.hideBottomBar;
-    if (hideBottomBar) {
-      showBottomBar = RxBool(true);
-    }
 
     dynamicBadgeMode = Pref.dynamicBadgeMode;
 
