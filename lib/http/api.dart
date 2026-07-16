@@ -590,9 +590,6 @@ abstract final class Api {
 
   static const seriesArchives = '/x/series/archives';
 
-  /// 获取未读动态数
-  static const getUnreadDynamic = '/x/web-interface/dynamic/entrance';
-
   /// 用户动态主页
   static const dynamicSpmPrefix = '${HttpString.spaceBaseUrl}/1/dynamic';
 

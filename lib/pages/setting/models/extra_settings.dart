@@ -17,7 +17,6 @@ import 'package:PiliPlus/models/dynamics/result.dart'
     show DynamicsDataModel, ItemModulesModel;
 import 'package:PiliPlus/pages/common/slide/common_slide_page.dart';
 import 'package:PiliPlus/pages/home/controller.dart';
-import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
@@ -48,19 +47,6 @@ List<SettingsModel> get extraSettings => [
       defaultVal: false,
       setKey: SettingBoxKey.enableSponsorBlock,
       onTap: (context) => Get.toNamed('/sponsorBlock'),
-    ),
-  ),
-  SplitModel(
-    normalModel: const NormalModel.split(
-      title: '检查未读动态',
-      subtitle: '点击设置检查周期(min)',
-      leading: Icon(Icons.notifications_none),
-    ),
-    switchModel: SwitchModel.split(
-      defaultVal: true,
-      setKey: SettingBoxKey.checkDynamic,
-      onChanged: (value) => Get.find<MainController>().checkDynamic = value,
-      onTap: _showDynDialog,
     ),
   ),
   const SwitchModel(
@@ -498,46 +484,6 @@ List<SettingsModel> get extraSettings => [
     onTap: _showCacheDialog,
   ),
 ];
-
-void _showDynDialog(BuildContext context) {
-  String dynamicPeriod = Pref.dynamicPeriod.toString();
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('检查周期'),
-      content: TextFormField(
-        autofocus: true,
-        initialValue: dynamicPeriod,
-        keyboardType: TextInputType.number,
-        onChanged: (value) => dynamicPeriod = value,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(suffixText: 'min'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: Get.back,
-          child: Text(
-            '取消',
-            style: TextStyle(color: ColorScheme.of(context).outline),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            try {
-              final val = int.parse(dynamicPeriod);
-              Get.back();
-              GStorage.setting.put(SettingBoxKey.dynamicPeriod, val);
-              Get.find<MainController>().dynamicPeriod = val * 60 * 1000;
-            } catch (e) {
-              SmartDialog.showToast(e.toString());
-            }
-          },
-          child: const Text('确定'),
-        ),
-      ],
-    ),
-  );
-}
 
 void _showReplyLengthDialog(BuildContext context, VoidCallback setState) {
   String replyLengthLimit = ReplyItemGrpc.replyLengthLimit.toString();

@@ -147,12 +147,6 @@ List<SettingsModel> get styleSettings => [
     needReboot: true,
   ),
   NormalModel(
-    title: '动态未读标记',
-    leading: const Icon(Icons.motion_photos_on_outlined),
-    getSubtitle: () => '当前标记样式：${Pref.dynamicBadgeType.desc}',
-    onTap: _showDynBadgeDialog,
-  ),
-  NormalModel(
     title: '消息未读标记',
     leading: const Icon(MdiIcons.bellBadgeOutline),
     getSubtitle: () => '当前标记样式：${Pref.msgBadgeMode.desc}',
@@ -660,33 +654,6 @@ Future<void> _showUpPosDialog(
   if (res != null) {
     await GStorage.setting.put(SettingBoxKey.upPanelPosition, res.index);
     SmartDialog.showToast('重启生效');
-    setState();
-  }
-}
-
-Future<void> _showDynBadgeDialog(
-  BuildContext context,
-  VoidCallback setState,
-) async {
-  final res = await showDialog<DynamicBadgeMode>(
-    context: context,
-    builder: (context) => SelectDialog<DynamicBadgeMode>(
-      title: '动态未读标记',
-      value: Pref.dynamicBadgeType,
-      values: DynamicBadgeMode.values.map((e) => (e, e.desc)).toList(),
-    ),
-  );
-  if (res != null) {
-    final mainController = Get.find<MainController>()
-      ..dynamicBadgeMode = DynamicBadgeMode.values[res.index];
-    if (mainController.dynamicBadgeMode != DynamicBadgeMode.hidden) {
-      mainController.getUnreadDynamic();
-    }
-    await GStorage.setting.put(
-      SettingBoxKey.dynamicBadgeMode,
-      res.index,
-    );
-    SmartDialog.showToast('设置成功');
     setState();
   }
 }

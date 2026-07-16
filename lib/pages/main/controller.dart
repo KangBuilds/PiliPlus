@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:PiliPlus/common/widgets/view_safe_area.dart';
-import 'package:PiliPlus/grpc/dyn.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/msg.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamic_badge_mode.dart';
@@ -22,9 +19,7 @@ import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class MainController extends GetxController
-    with GetSingleTickerProviderStateMixin, AccountMixin {
-  @override
+class MainController extends GetxController with GetSingleTickerProviderStateMixin {
   final AccountService accountService = Get.find<AccountService>();
 
   List<NavigationBarType> navigationBars = <NavigationBarType>[];
@@ -33,12 +28,6 @@ class MainController extends GetxController
   late dynamic controller;
   final RxInt selectedIndex = 0.obs;
 
-  final RxInt dynCount = 0.obs;
-  late DynamicBadgeMode dynamicBadgeMode;
-  late bool checkDynamic = Pref.checkDynamic;
-  late int dynamicPeriod = Pref.dynamicPeriod * 60 * 1000;
-  late int _lastCheckDynamicAt = 0;
-  late bool hasDyn = false;
   late final dynamicController = Get.putOrFind(DynamicsController.new);
 
   late bool hasHome = false;
@@ -82,18 +71,6 @@ class MainController extends GetxController
             length: navigationBars.length,
           )
         : PageController(initialPage: selectedIndex.value);
-
-    dynamicBadgeMode = Pref.dynamicBadgeMode;
-
-    hasDyn = navigationBars.contains(NavigationBarType.dynamics);
-    if (dynamicBadgeMode != DynamicBadgeMode.hidden) {
-      if (hasDyn) {
-        if (checkDynamic) {
-          _lastCheckDynamicAt = DateTime.now().millisecondsSinceEpoch;
-        }
-        getUnreadDynamic();
-      }
-    }
 
     hasHome = navigationBars.contains(NavigationBarType.home);
     if (msgBadgeMode != DynamicBadgeMode.hidden) {
@@ -173,36 +150,6 @@ class MainController extends GetxController
       }
     } else {
       msgUnReadCount.value = countStr;
-    }
-  }
-
-  void getUnreadDynamic() {
-    if (!accountService.isLogin.value || !hasDyn) {
-      return;
-    }
-    DynGrpc.dynRed().then((res) {
-      if (res != null) {
-        setDynCount(res);
-      }
-    });
-  }
-
-  void setDynCount([int count = 0]) {
-    if (!hasDyn) return;
-    dynCount.value = count;
-  }
-
-  void checkUnreadDynamic() {
-    if (!hasDyn ||
-        !accountService.isLogin.value ||
-        dynamicBadgeMode == DynamicBadgeMode.hidden ||
-        !checkDynamic) {
-      return;
-    }
-    int now = DateTime.now().millisecondsSinceEpoch;
-    if (now - _lastCheckDynamicAt >= dynamicPeriod) {
-      _lastCheckDynamicAt = now;
-      getUnreadDynamic();
     }
   }
 
@@ -293,8 +240,6 @@ class MainController extends GetxController
       if (currentNav == NavigationBarType.home) {
         checkDefaultSearch();
         checkUnread();
-      } else if (currentNav == NavigationBarType.dynamics) {
-        setDynCount();
       }
     } else {
       int now = DateTime.now().millisecondsSinceEpoch;
@@ -331,14 +276,5 @@ class MainController extends GetxController
   void onClose() {
     controller.dispose();
     super.onClose();
-  }
-
-  @override
-  void onChangeAccount(bool isLogin) {
-    if (isLogin) {
-      getUnreadDynamic();
-    } else {
-      setDynCount();
-    }
   }
 }
