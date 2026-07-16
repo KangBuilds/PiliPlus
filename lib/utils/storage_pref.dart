@@ -803,9 +803,6 @@ abstract final class Pref {
   static int get cacheVideoFit =>
       _video.get(VideoBoxKey.cacheVideoFit, defaultValue: 1);
 
-  static bool get continuePlayInBackground =>
-      _setting.get(SettingBoxKey.continuePlayInBackground, defaultValue: false);
-
   static bool get directExitOnBack =>
       _setting.get(SettingBoxKey.directExitOnBack, defaultValue: false);
 

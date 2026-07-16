@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -135,7 +134,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   ui.Rect? _pictureInPictureRect;
 
   void _syncPictureInPictureRect() {
-    if (!Platform.isIOS) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final box = _playerKey.currentContext?.findRenderObject();
@@ -157,8 +155,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   GestureType? _gestureType;
   Offset? _initialFocalPoint;
-
-  bool _pauseDueToPauseUponEnteringBackgroundMode = false;
 
   StreamSubscription? _brightnessListener;
   void _onBrightnessChanged(double value) {
@@ -322,33 +318,15 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (Platform.isIOS) {
-      final isInBackground = const <AppLifecycleState>[
-        .paused,
-        .detached,
-      ].contains(state);
-      plPlayerController.setApplicationInBackground(isInBackground);
-      if (isInBackground &&
-          !plPlayerController.isPictureInPictureTransitioning) {
-        final player = plPlayerController.videoPlayerController;
-        if (player != null && player.state.playing) {
-          player.pause();
-        }
-      }
-      return;
-    }
-    if (!plPlayerController.continuePlayInBackground.value) {
-      late final player = plPlayerController.videoPlayerController;
-      if (const <AppLifecycleState>[.paused, .detached].contains(state)) {
-        if (player != null && player.state.playing) {
-          _pauseDueToPauseUponEnteringBackgroundMode = true;
-          player.pause();
-        }
-      } else {
-        if (_pauseDueToPauseUponEnteringBackgroundMode) {
-          _pauseDueToPauseUponEnteringBackgroundMode = false;
-          player?.play();
-        }
+    final isInBackground = const <AppLifecycleState>[
+      .paused,
+      .detached,
+    ].contains(state);
+    plPlayerController.setApplicationInBackground(isInBackground);
+    if (isInBackground && !plPlayerController.isPictureInPictureTransitioning) {
+      final player = plPlayerController.videoPlayerController;
+      if (player != null && player.state.playing) {
+        player.pause();
       }
     }
   }

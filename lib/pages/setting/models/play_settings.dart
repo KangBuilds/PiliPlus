@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/models/common/video/subtitle_pref_type.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
@@ -150,14 +148,6 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.enableLongShowControl,
     defaultVal: false,
   ),
-  if (Platform.isAndroid)
-    const SwitchModel(
-      title: '后台播放',
-      subtitle: '进入后台时继续播放',
-      leading: Icon(Icons.motion_photos_pause_outlined),
-      setKey: SettingBoxKey.continuePlayInBackground,
-      defaultVal: false,
-    ),
   const SwitchModel(
     title: '全屏手势反向',
     subtitle: '默认播放器中部向上滑动进入全屏，向下退出\n开启后向下全屏，向上退出',

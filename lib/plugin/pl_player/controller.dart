@@ -1,6 +1,5 @@
 import 'dart:async' show StreamSubscription, Timer, unawaited;
 import 'dart:convert' show ascii;
-import 'dart:io' show Platform;
 import 'dart:math' show max, min;
 import 'dart:ui' as ui;
 
@@ -125,9 +124,6 @@ class PlPlayerController with BlockConfigMixin {
 
   final Rx<VideoFitType> videoFit = Rx(.contain);
 
-  late final RxBool continuePlayInBackground =
-      Pref.continuePlayInBackground.obs;
-
   bool _autoPlay = false;
 
   // 记录历史记录
@@ -222,7 +218,7 @@ class PlPlayerController with BlockConfigMixin {
   };
 
   void updatePictureInPictureRect(ui.Rect rect) {
-    if (!Platform.isIOS || rect == _pictureInPictureRect) return;
+    if (rect == _pictureInPictureRect) return;
     _pictureInPictureRect = rect;
   }
 
@@ -235,7 +231,7 @@ class PlPlayerController with BlockConfigMixin {
 
   Future<void> enterPictureInPicture() async {
     final player = videoPlayerController;
-    if (!Platform.isIOS || player == null) return;
+    if (player == null) return;
     if (dataStatus.value != .loaded ||
         !player.state.playing ||
         !playerStatus.isPlaying ||
@@ -309,9 +305,7 @@ class PlPlayerController with BlockConfigMixin {
   }
 
   Future<void> _syncNativePictureInPicture() async {
-    if (!Platform.isIOS ||
-        _pictureInPictureDisposed ||
-        videoPlayerController == null) {
+    if (_pictureInPictureDisposed || videoPlayerController == null) {
       return;
     }
     try {
@@ -486,7 +480,7 @@ class PlPlayerController with BlockConfigMixin {
   static PlayCallback? _playCallBack;
 
   static Future<void>? playIfExists() {
-    if (Platform.isIOS && !canPlayFromSystemControls) return null;
+    if (!canPlayFromSystemControls) return null;
     return _playCallBack?.call();
   }
 
@@ -582,14 +576,12 @@ class PlPlayerController with BlockConfigMixin {
         .onOrientationChanged(checkIsAutoRotate: false)
         .listen(_onOrientationChanged);
 
-    if (Platform.isIOS) {
-      _pictureInPictureEventChannel.setMethodCallHandler(
-        _handleNativePictureInPictureEvent,
-      );
-      // The audio session remains available for PiP controls, while native
-      // lifecycle state decides whether the player may continue in background.
-      videoPlayerServiceHandler?.enableBackgroundPlay = true;
-    }
+    _pictureInPictureEventChannel.setMethodCallHandler(
+      _handleNativePictureInPictureEvent,
+    );
+    // The audio session remains available for PiP controls, while native
+    // lifecycle state decides whether the player may continue in background.
+    videoPlayerServiceHandler?.enableBackgroundPlay = true;
 
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
@@ -1547,9 +1539,7 @@ class PlPlayerController with BlockConfigMixin {
       debugPrint('dispose player');
     }
     _pictureInPictureDisposed = true;
-    if (Platform.isIOS) {
-      _pictureInPictureEventChannel.setMethodCallHandler(null);
-    }
+    _pictureInPictureEventChannel.setMethodCallHandler(null);
     _videoPlayerController?.dispose();
     _videoPlayerController = null;
     _videoController = null;
@@ -1562,16 +1552,6 @@ class PlPlayerController with BlockConfigMixin {
       _instance?.dispose();
     } else {
       _instance?._playerCount -= 1;
-    }
-  }
-
-  void setContinuePlayInBackground() {
-    continuePlayInBackground.value = !continuePlayInBackground.value;
-    if (!tempPlayerConf) {
-      setting.put(
-        SettingBoxKey.continuePlayInBackground,
-        continuePlayInBackground.value,
-      );
     }
   }
 

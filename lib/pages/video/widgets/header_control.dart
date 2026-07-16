@@ -1,6 +1,6 @@
 import 'dart:async' show Timer;
 import 'dart:convert' show jsonDecode, utf8;
-import 'dart:io' show File, Platform;
+import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:PiliPlus/common/constants.dart';
@@ -532,18 +532,6 @@ class HeaderControlState extends State<HeaderControl>
                               selectStatus: onlyPlayAudio,
                             );
                           },
-                        ),
-                      if (Platform.isAndroid)
-                        Obx(
-                          () => ActionRowLineItem(
-                            iconData: Icons.play_circle_outline,
-                            onTap:
-                                plPlayerController.setContinuePlayInBackground,
-                            text: " 后台播放 ",
-                            selectStatus: plPlayerController
-                                .continuePlayInBackground
-                                .value,
-                          ),
                         ),
                     ],
                   ),
@@ -1756,21 +1744,20 @@ class HeaderControlState extends State<HeaderControl>
                   ),
                 ),
               ),
-              if (Platform.isIOS)
-                SizedBox(
-                  width: btnWidth,
-                  height: btnHeight,
-                  child: IconButton(
-                    tooltip: '画中画',
-                    style: btnStyle,
-                    onPressed: plPlayerController.enterPictureInPicture,
-                    icon: const Icon(
-                      Icons.picture_in_picture_outlined,
-                      size: 20,
-                      color: Colors.white,
-                    ),
+              SizedBox(
+                width: btnWidth,
+                height: btnHeight,
+                child: IconButton(
+                  tooltip: '画中画',
+                  style: btnStyle,
+                  onPressed: plPlayerController.enterPictureInPicture,
+                  icon: const Icon(
+                    Icons.picture_in_picture_outlined,
+                    size: 20,
+                    color: Colors.white,
                   ),
                 ),
+              ),
               SizedBox(
                 width: btnWidth,
                 height: btnHeight,
