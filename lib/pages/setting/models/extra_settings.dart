@@ -464,18 +464,6 @@ List<SettingsModel> get extraSettings => [
     defaultVal: false,
     onChanged: (value) => MemberTabType.showMemberShop = value,
   ),
-  const SplitModel(
-    normalModel: NormalModel.split(
-      title: '设置代理',
-      subtitle: '设置代理 host:port',
-      leading: Icon(Icons.airplane_ticket_outlined),
-    ),
-    switchModel: SwitchModel.split(
-      defaultVal: false,
-      setKey: SettingBoxKey.enableSystemProxy,
-      onTap: _showProxyDialog,
-    ),
-  ),
   NormalModel(
     title: '最大缓存大小',
     getSubtitle: () =>
@@ -810,70 +798,6 @@ Future<void> _showMemberTabDialog(
     await GStorage.setting.put(SettingBoxKey.memberTab, res.index);
     setState();
   }
-}
-
-void _showProxyDialog(BuildContext context) {
-  String systemProxyHost = Pref.systemProxyHost;
-  String systemProxyPort = Pref.systemProxyPort;
-
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('设置代理'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 6),
-          TextFormField(
-            initialValue: systemProxyHost,
-            decoration: const InputDecoration(
-              isDense: true,
-              labelText: '请输入Host，使用 . 分割',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(6)),
-              ),
-            ),
-            onChanged: (e) => systemProxyHost = e,
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
-            initialValue: systemProxyPort,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              isDense: true,
-              labelText: '请输入Port',
-              border: OutlineInputBorder(borderRadius: .all(.circular(6))),
-            ),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (e) => systemProxyPort = e,
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: Get.back,
-          child: Text(
-            '取消',
-            style: TextStyle(color: ColorScheme.of(context).outline),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            Get.back();
-            GStorage.setting.put(
-              SettingBoxKey.systemProxyHost,
-              systemProxyHost,
-            );
-            GStorage.setting.put(
-              SettingBoxKey.systemProxyPort,
-              systemProxyPort,
-            );
-          },
-          child: const Text('确认'),
-        ),
-      ],
-    ),
-  );
 }
 
 void _showCacheDialog(BuildContext context, VoidCallback setState) {

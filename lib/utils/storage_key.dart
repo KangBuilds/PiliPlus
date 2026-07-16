@@ -58,7 +58,6 @@ abstract final class SettingBoxKey {
       enableQuickFav = 'enableQuickFav',
       enableWordRe = 'enableWordRe',
       enableSearchWord = 'enableSearchWord',
-      enableSystemProxy = 'enableSystemProxy',
       enableAi = 'enableAi',
       disableLikeMsg = 'disableLikeMsg',
       defaultHomePage = 'defaultHomePage',
@@ -181,9 +180,6 @@ abstract final class SettingBoxKey {
       danmakuLineHeight = 'danmakuLineHeight',
       danmakuStrokeWidth = 'strokeWidth',
       danmakuFontWeight = 'fontWeight';
-
-  static const String systemProxyHost = 'systemProxyHost',
-      systemProxyPort = 'systemProxyPort';
 
   static const String themeMode = 'themeMode',
       defaultTextScale = 'textScale',

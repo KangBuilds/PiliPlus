@@ -287,12 +287,6 @@ abstract final class Pref {
   static bool get appRcmd =>
       _setting.get(SettingBoxKey.appRcmd, defaultValue: true);
 
-  static String get systemProxyHost =>
-      _setting.get(SettingBoxKey.systemProxyHost, defaultValue: '');
-
-  static String get systemProxyPort =>
-      _setting.get(SettingBoxKey.systemProxyPort, defaultValue: '');
-
   static DynamicsTabType get defaultDynamicType =>
       DynamicsTabType.values[defaultDynamicTypeIndex];
 
@@ -624,9 +618,6 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.customColor, defaultValue: 0);
 
   static bool get dynamicColor => false;
-
-  static bool get enableSystemProxy =>
-      _setting.get(SettingBoxKey.enableSystemProxy, defaultValue: false);
 
   static bool get enableHttp2 =>
       _setting.get(SettingBoxKey.enableHttp2, defaultValue: false);
