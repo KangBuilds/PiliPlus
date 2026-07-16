@@ -1,6 +1,6 @@
 import 'dart:async' show Timer;
 import 'dart:convert' show jsonDecode, utf8;
-import 'dart:io' show Platform, File;
+import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:PiliPlus/common/constants.dart';
@@ -1200,10 +1200,9 @@ class HeaderControlState extends State<HeaderControl>
                   final name =
                       '${videoDetail.title}-${videoDetail.owner?.name}(${videoDetail.owner?.mid})-${videoDetailCtr.bvid}-${videoDetailCtr.cid.value}-${item.lanDoc}.${format.name}'
                           .replaceAll(
-                            Platform.isWindows ? RegExp(r'[<>:/\\|?*"]') : '/',
+                            '/',
                             '_',
                           );
-                  // Reserved characters may not be used in file names. See: https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#naming-conventions
                   StorageUtils.saveBytes2File(
                     name: name,
                     bytes: bytes,

@@ -734,7 +734,6 @@ class VideoDetailController extends GetxController
       },
       width: firstVideo.width,
       height: firstVideo.height,
-      volume: volume,
       autoFullScreenFlag: autoFullScreenFlag,
     );
 
@@ -771,8 +770,6 @@ class VideoDetailController extends GetxController
     queryVideoUrl(fromReset: true);
   }
 
-  Volume? volume;
-
   // 视频链接
   /// TODO: merge [DownloadHttp.getVideoUrl].
   Future<void> queryVideoUrl({
@@ -808,7 +805,6 @@ class VideoDetailController extends GetxController
       tryLook: plPlayerController.tryLook,
       videoType: videoType,
       language: currLang.value,
-      voiceBalance: plPlayerController.enableAudioNormalization,
     );
 
     if (result case Success(:final response)) {
@@ -816,8 +812,6 @@ class VideoDetailController extends GetxController
 
       languages.value = data.language?.items;
       currLang.value = data.curLanguage;
-
-      volume = data.volume;
 
       if (!fromReset) {
         final progress = args.remove('progress');

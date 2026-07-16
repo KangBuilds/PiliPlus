@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -161,18 +160,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     });
   }
 
-  void _getAppBrightness() {
-    ScreenBrightnessPlatform.instance.application.then((res) {
-      if (mounted) {
-        _brightnessValue.value = res;
-      }
-    });
-  }
-
   void _onVolumeChanged(double value) {
     if (mounted && !plPlayerController.volumeInterceptEventStream) {
       plPlayerController.volume.value = value;
-      if (Platform.isIOS && !FlutterVolumeController.showSystemUI) {
+      if (!FlutterVolumeController.showSystemUI) {
         plPlayerController
           ..volumeIndicator.value = true
           ..volumeTimer?.cancel()
@@ -273,19 +264,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         } catch (_) {}
 
         try {
-          if (Platform.isIOS || plPlayerController.setSystemBrightness) {
-            _getSystemBrightness();
-            _brightnessListener = ScreenBrightnessPlatform
-                .instance
-                .onSystemScreenBrightnessChanged
-                .listen(_onBrightnessChanged);
-          } else {
-            _getAppBrightness();
-            _brightnessListener = ScreenBrightnessPlatform
-                .instance
-                .onApplicationScreenBrightnessChanged
-                .listen(_onBrightnessChanged);
-          }
+          _getSystemBrightness();
+          _brightnessListener = ScreenBrightnessPlatform
+              .instance
+              .onSystemScreenBrightnessChanged
+              .listen(_onBrightnessChanged);
         } catch (_) {}
       });
     }
@@ -343,15 +326,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   Future<void> setBrightness(double value) async {
     _brightnessValue.value = value;
     try {
-      if (Platform.isIOS || plPlayerController.setSystemBrightness) {
-        await ScreenBrightnessPlatform.instance.setSystemScreenBrightness(
-          value,
-        );
-      } else {
-        await ScreenBrightnessPlatform.instance.setApplicationScreenBrightness(
-          value,
-        );
-      }
+      await ScreenBrightnessPlatform.instance.setSystemScreenBrightness(value);
     } catch (_) {}
     _brightnessIndicator.value = true;
     _brightnessTimer?.cancel();

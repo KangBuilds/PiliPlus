@@ -255,7 +255,7 @@ class Request {
         return status != null && status >= 200 && status < 300;
       };
 
-    if (Platform.isIOS) _watchConnectivity();
+    _watchConnectivity();
   }
 
   /*

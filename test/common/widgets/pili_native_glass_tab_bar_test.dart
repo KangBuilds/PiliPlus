@@ -17,8 +17,8 @@ void main() {
     expect(params['items'], const <Map<String, String>>[
       <String, String>{
         'label': 'Home',
-        'symbol': 'home',
-        'selectedSymbol': 'home.fill',
+        'symbol': 'house',
+        'selectedSymbol': 'house.fill',
       },
       <String, String>{
         'label': 'Dynamics',
@@ -33,22 +33,9 @@ void main() {
     ]);
   });
 
-  test('gates the native path to iOS', () {
-    expect(
-      supportsPiliNativeGlassTabBar(
-        platform: TargetPlatform.android,
-      ),
-      isFalse,
-    );
-    expect(
-      supportsPiliNativeGlassTabBar(
-        platform: TargetPlatform.iOS,
-      ),
-      isTrue,
-    );
+  test('requires a portrait phone layout', () {
     expect(
       usesPiliNativeGlassTabBar(
-        platform: TargetPlatform.iOS,
         isPortrait: true,
         isTablet: false,
         hasRequiredDestinations: true,
@@ -57,7 +44,6 @@ void main() {
     );
     expect(
       usesPiliNativeGlassTabBar(
-        platform: TargetPlatform.iOS,
         isPortrait: false,
         isTablet: false,
         hasRequiredDestinations: true,

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io' show File, Platform;
+import 'dart:io' show File;
 import 'dart:math' as math;
 import 'dart:typed_data' show Uint8List;
 
@@ -48,9 +48,7 @@ abstract final class ImageUtils {
 
   // 获取存储权限
   static Future<bool> requestPer() async {
-    final status = Platform.isAndroid
-        ? await Permission.storage.request()
-        : await Permission.photos.request();
+    final status = await Permission.photos.request();
     if (status == PermissionStatus.denied ||
         status == PermissionStatus.permanentlyDenied) {
       SmartDialog.show(
@@ -96,32 +94,22 @@ abstract final class ImageUtils {
       final res = await Request().downloadFile(liveUrl.http2https, videoPath);
       if (res.statusCode != 200) throw '${res.statusCode}';
 
-      if (Platform.isIOS) {
-        final imageFile = await CacheManager.manager.getSingleFile(
-          url.http2https,
-        );
-        if (!silentDownImg) SmartDialog.showLoading(msg: '正在保存');
-        bool success = await LivePhotoMaker.create(
-          coverImage: imageFile.path,
-          imagePath: null,
-          voicePath: videoPath,
-          width: width,
-          height: height,
-        ).whenComplete(File(videoPath).tryDel);
-        if (success) {
-          SmartDialog.showToast(' 已保存 ');
-        } else {
-          SmartDialog.showToast('保存失败');
-          return false;
-        }
+      final imageFile = await CacheManager.manager.getSingleFile(
+        url.http2https,
+      );
+      if (!silentDownImg) SmartDialog.showLoading(msg: '正在保存');
+      bool success = await LivePhotoMaker.create(
+        coverImage: imageFile.path,
+        imagePath: null,
+        voicePath: videoPath,
+        width: width,
+        height: height,
+      ).whenComplete(File(videoPath).tryDel);
+      if (success) {
+        SmartDialog.showToast(' 已保存 ');
       } else {
-        if (!silentDownImg) SmartDialog.showLoading(msg: '正在保存');
-        await saveFileImg(
-          filePath: videoPath,
-          fileName: videoName,
-          type: FileType.video,
-          needToast: true,
-        );
+        SmartDialog.showToast('保存失败');
+        return false;
       }
       return true;
     } catch (err) {

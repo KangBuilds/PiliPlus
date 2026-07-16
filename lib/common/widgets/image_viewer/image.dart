@@ -128,12 +128,7 @@ class Image extends StatefulWidget {
     required this.doubleTapGestureRecognizer,
     required this.horizontalDragGestureRecognizer,
     required this.onChangePage,
-  }) : assert(
-         !kIsWeb,
-         'Image.file is not supported on Flutter Web. '
-         'Consider using either Image.asset or Image.network instead.',
-       ),
-       image = ResizeImage.resizeIfNeeded(
+  }) : image = ResizeImage.resizeIfNeeded(
          cacheWidth,
          cacheHeight,
          FileImage(file, scale: scale),

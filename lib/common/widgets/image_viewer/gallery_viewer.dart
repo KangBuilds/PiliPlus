@@ -15,7 +15,7 @@
  * along with PiliPlus.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'dart:io' show File, Platform;
+import 'dart:io' show File;
 
 import 'package:PiliPlus/common/widgets/colored_box_transition.dart';
 import 'package:PiliPlus/common/widgets/dialog/simple_dialog_option.dart';
@@ -28,11 +28,9 @@ import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/main.dart' show tmpPadding;
 import 'package:PiliPlus/models/common/image_preview_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
-import 'package:PiliPlus/utils/device_utils.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
-import 'package:PiliPlus/utils/max_screen_size.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
@@ -178,21 +176,7 @@ class _GalleryViewerState extends State<GalleryViewer>
   late final bool _hideSystemBar;
 
   void _initHideSystemBar() {
-    if (Platform.isAndroid) {
-      if (showSystemBar_) {
-        final size = DeviceUtils.size;
-        _hideSystemBar = !MaxScreenSize.isWindowMode(
-          width: size.width,
-          height: size.height,
-        );
-      } else {
-        _hideSystemBar = false;
-      }
-    } else if (Platform.isIOS) {
-      _hideSystemBar = showSystemBar_;
-    } else {
-      _hideSystemBar = false;
-    }
+    _hideSystemBar = showSystemBar_;
   }
 
   @override
@@ -591,7 +575,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                 );
               },
               child: Text(
-                '保存${Platform.isIOS ? ' Live Photo' : '视频'}',
+                '保存 Live Photo',
                 style: const TextStyle(fontSize: 14),
               ),
             ),

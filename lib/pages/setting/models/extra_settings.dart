@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'dart:math' show max;
 
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
-import 'package:PiliPlus/common/widgets/dialog/simple_dialog_option.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
 import 'package:PiliPlus/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart'
     show deviceTouchSlop, touchSlopH;
@@ -12,7 +10,6 @@ import 'package:PiliPlus/common/widgets/pendant_avatar.dart';
 import 'package:PiliPlus/grpc/reply.dart';
 import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/models/common/audio_normalization.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/common/member/tab_type.dart';
 import 'package:PiliPlus/models/common/reply/reply_sort_type.dart';
@@ -25,49 +22,22 @@ import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
 import 'package:PiliPlus/pages/video/reply/widgets/reply_item_grpc.dart';
-import 'package:PiliPlus/plugin/pl_player/controller.dart';
-import 'package:PiliPlus/services/download/download_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/filtering_text.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
-import 'package:PiliPlus/utils/path_utils.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
-import 'package:PiliPlus/utils/utils.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart' hide RefreshIndicator;
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 List<SettingsModel> get extraSettings => [
-  if (PlatformUtils.isDesktop) ...[
-    SwitchModel(
-      title: '退出时最小化',
-      leading: const Icon(Icons.exit_to_app),
-      setKey: SettingBoxKey.minimizeOnExit,
-      defaultVal: true,
-      onChanged: (value) {
-        try {
-          Get.find<MainController>().minimizeOnExit = value;
-        } catch (_) {}
-      },
-    ),
-    NormalModel(
-      title: '缓存路径',
-      getSubtitle: () => downloadPath,
-      leading: const Icon(Icons.storage),
-      onTap: _showDownPathDialog,
-    ),
-  ],
   SplitModel(
     normalModel: const NormalModel.split(
       title: '空降助手',
@@ -256,25 +226,6 @@ List<SettingsModel> get extraSettings => [
     defaultVal: false,
     needReboot: true,
   ),
-  if (kDebugMode || Platform.isAndroid)
-    NormalModel(
-      title: '音量均衡',
-      leading: const Icon(Icons.multitrack_audio),
-      getSubtitle: () {
-        final audioNormalization = AudioNormalization.getTitleFromConfig(
-          Pref.audioNormalization,
-        );
-        String fallback = Pref.fallbackNormalization;
-        if (fallback == '0') {
-          fallback = '';
-        } else {
-          fallback =
-              '，无参数时:「${AudioNormalization.getTitleFromConfig(fallback)}」';
-        }
-        return '当前:「$audioNormalization」$fallback';
-      },
-      onTap: audioNormalization,
-    ),
   const SwitchModel(
     title: '提前初始化播放器',
     subtitle: '相对减少手动播放加载时间',
@@ -336,16 +287,6 @@ List<SettingsModel> get extraSettings => [
     setKey: SettingBoxKey.enableCommAntifraud,
     defaultVal: false,
   ),
-  if (Platform.isAndroid)
-    const SwitchModel(
-      title: '使用「哔哩发评反诈」检查评论',
-      leading: Icon(
-        FontAwesomeIcons.b,
-        size: 22,
-      ),
-      setKey: SettingBoxKey.biliSendCommAntifraud,
-      defaultVal: false,
-    ),
   const SwitchModel(
     title: '发布/转发动态反诈',
     subtitle: '发布/转发动态后检查动态是否可见',
@@ -371,7 +312,7 @@ List<SettingsModel> get extraSettings => [
     title: '侧滑关闭二级页面',
     leading: const Icon(CustomIcons.touch_app_rotate_270),
     setKey: SettingBoxKey.slideDismissReplyPage,
-    defaultVal: Platform.isIOS,
+    defaultVal: true,
     onChanged: (value) => CommonSlideMixin.slideDismissReplyPage = value,
   ),
   const SwitchModel(
@@ -557,142 +498,6 @@ List<SettingsModel> get extraSettings => [
     onTap: _showCacheDialog,
   ),
 ];
-
-Future<void> audioNormalization(
-  BuildContext context,
-  VoidCallback setState, {
-  bool fallback = false,
-}) async {
-  final key = fallback
-      ? SettingBoxKey.fallbackNormalization
-      : SettingBoxKey.audioNormalization;
-  final res = await showDialog<String>(
-    context: context,
-    builder: (context) {
-      String audioNormalization = fallback
-          ? Pref.fallbackNormalization
-          : Pref.audioNormalization;
-      Set<String> values = {
-        '0',
-        '1',
-        if (!fallback) '2',
-        audioNormalization,
-        '3',
-      };
-      return SelectDialog<String>(
-        title: fallback ? '服务器无loudnorm配置时使用' : '音量均衡',
-        toggleable: true,
-        value: audioNormalization,
-        values: values
-            .map(
-              (e) => (
-                e,
-                switch (e) {
-                  '0' => AudioNormalization.disable.title,
-                  '1' => AudioNormalization.dynaudnorm.title,
-                  '2' => AudioNormalization.loudnorm.title,
-                  '3' => AudioNormalization.custom.title,
-                  _ => e,
-                },
-              ),
-            )
-            .toList(),
-      );
-    },
-  );
-  if (res != null && context.mounted) {
-    if (res == '3') {
-      String param = '';
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('自定义参数'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 16,
-            children: [
-              const Text('等同于 --lavfi-complex="[aid1] 参数 [ao]"'),
-              TextField(
-                autofocus: true,
-                onChanged: (value) => param = value,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: Get.back,
-              child: Text(
-                '取消',
-                style: TextStyle(color: ColorScheme.of(context).outline),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Get.back();
-                GStorage.setting.put(key, param);
-                if (!fallback &&
-                    PlPlayerController.loudnormRegExp.hasMatch(param)) {
-                  audioNormalization(context, setState, fallback: true);
-                }
-                setState();
-              },
-              child: const Text('确定'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      GStorage.setting.put(key, res);
-      if (res == '2') {
-        audioNormalization(context, setState, fallback: true);
-      }
-      setState();
-    }
-  }
-}
-
-void _showDownPathDialog(BuildContext context, VoidCallback setState) {
-  showDialog(
-    context: context,
-    builder: (context) => SimpleDialog(
-      clipBehavior: Clip.hardEdge,
-      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-      children: [
-        DialogOption(
-          onPressed: () {
-            Get.back();
-            Utils.copyText(downloadPath);
-          },
-          child: const Text('复制', style: TextStyle(fontSize: 14)),
-        ),
-        DialogOption(
-          onPressed: () {
-            Get.back();
-            final defPath = defDownloadPath;
-            if (downloadPath == defPath) return;
-            downloadPath = defPath;
-            setState();
-            Get.find<DownloadService>().initDownloadList();
-            GStorage.setting.delete(SettingBoxKey.downloadPath);
-          },
-          child: const Text('重置', style: TextStyle(fontSize: 14)),
-        ),
-        DialogOption(
-          onPressed: () async {
-            Get.back();
-            final path = await FilePicker.getDirectoryPath();
-            if (path == null || path == downloadPath) return;
-            downloadPath = path;
-            setState();
-            Get.find<DownloadService>().initDownloadList();
-            GStorage.setting.put(SettingBoxKey.downloadPath, path);
-          },
-          child: const Text('设置新路径', style: TextStyle(fontSize: 14)),
-        ),
-      ],
-    ),
-  );
-}
 
 void _showDynDialog(BuildContext context) {
   String dynamicPeriod = Pref.dynamicPeriod.toString();

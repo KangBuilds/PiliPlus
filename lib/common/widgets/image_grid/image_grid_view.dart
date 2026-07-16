@@ -15,8 +15,6 @@
  * along with PiliPlus.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'dart:io' show Platform;
-
 import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
@@ -180,7 +178,7 @@ class ImageGridView extends StatelessWidget {
               height: item.height.toInt(),
             ),
             child: Text(
-              '保存${Platform.isIOS ? '实况' : '视频'}',
+              '保存实况',
               style: const TextStyle(fontSize: 14),
             ),
           ),

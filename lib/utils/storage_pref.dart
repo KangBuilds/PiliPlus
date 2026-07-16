@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:PiliPlus/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart'
     show deviceTouchSlop;
 import 'package:PiliPlus/common/widgets/pair.dart';
@@ -269,9 +267,7 @@ abstract final class Pref {
 
   static String get hardwareDecoding => _setting.get(
     SettingBoxKey.hardwareDecoding,
-    defaultValue: Platform.isAndroid
-        ? HwDecType.androidDefault
-        : HwDecType.auto.hwdec,
+    defaultValue: HwDecType.auto.hwdec,
   );
 
   static String get videoSync =>
@@ -279,7 +275,7 @@ abstract final class Pref {
 
   static String get autosync => _setting.get(
     SettingBoxKey.autosync,
-    defaultValue: Platform.isAndroid ? '30' : '0',
+    defaultValue: '0',
   );
 
   static CDNService get defaultCDNService {
@@ -497,9 +493,7 @@ abstract final class Pref {
   static bool get enableCommAntifraud =>
       _setting.get(SettingBoxKey.enableCommAntifraud, defaultValue: false);
 
-  static bool get biliSendCommAntifraud =>
-      Platform.isAndroid &&
-      _setting.get(SettingBoxKey.biliSendCommAntifraud, defaultValue: false);
+  static bool get biliSendCommAntifraud => false;
 
   static bool get enableCreateDynAntifraud =>
       _setting.get(SettingBoxKey.enableCreateDynAntifraud, defaultValue: false);
@@ -518,7 +512,7 @@ abstract final class Pref {
 
   static bool get slideDismissReplyPage => _setting.get(
     SettingBoxKey.slideDismissReplyPage,
-    defaultValue: Platform.isIOS,
+    defaultValue: true,
   );
 
   static bool get showFSActionItem =>
@@ -666,9 +660,7 @@ abstract final class Pref {
   static int get customColor =>
       _setting.get(SettingBoxKey.customColor, defaultValue: 0);
 
-  static bool get dynamicColor =>
-      !Platform.isIOS &&
-      _setting.get(SettingBoxKey.dynamicColor, defaultValue: true);
+  static bool get dynamicColor => false;
 
   static bool get enableSystemProxy =>
       _setting.get(SettingBoxKey.enableSystemProxy, defaultValue: false);

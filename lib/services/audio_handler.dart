@@ -1,6 +1,5 @@
 import 'dart:io' show File;
 
-import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/grpc/bilibili/app/listener/v1.pb.dart' show DetailItem;
 import 'package:PiliPlus/models_new/download/bili_download_entry_info.dart';
 import 'package:PiliPlus/models_new/pugv/season_info/episode.dart';
@@ -19,14 +18,8 @@ Future<VideoPlayerServiceHandler> initAudioService() {
   return AudioService.init(
     builder: VideoPlayerServiceHandler.new,
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.example.piliplus.audio',
-      androidNotificationChannelName: 'Audio Service ${Constants.appName}',
-      androidNotificationOngoing: true,
-      androidStopForegroundOnPause: true,
       fastForwardInterval: Duration(seconds: 10),
       rewindInterval: Duration(seconds: 10),
-      androidNotificationChannelDescription: 'Media notification channel',
-      androidNotificationIcon: 'drawable/ic_notification_icon',
     ),
   );
 }
@@ -103,24 +96,24 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
             : processingState,
         controls: [
           const MediaControl(
-            androidIcon: 'drawable/ic_player_rewind_10s',
+            androidIcon: '',
             label: 'Rewind',
             action: MediaAction.rewind,
           ),
           if (playing)
             const MediaControl(
-              androidIcon: 'drawable/ic_player_pause',
+              androidIcon: '',
               label: 'Pause',
               action: MediaAction.pause,
             )
           else
             const MediaControl(
-              androidIcon: 'drawable/ic_player_play',
+              androidIcon: '',
               label: 'Play',
               action: MediaAction.play,
             ),
           const MediaControl(
-            androidIcon: 'drawable/ic_player_fast_forward_10s',
+            androidIcon: '',
             label: 'Fast Forward',
             action: MediaAction.fastForward,
           ),

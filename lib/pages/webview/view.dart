@@ -1,14 +1,10 @@
-import 'dart:io';
-
 import 'package:PiliPlus/http/browser_ua.dart';
 import 'package:PiliPlus/main.dart';
 import 'package:PiliPlus/models/common/webview_menu_type.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
-import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/login_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -73,18 +69,6 @@ class _WebviewPageState extends State<WebviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (Platform.isLinux) {
-      return Scaffold(
-        appBar: AppBar(),
-        resizeToAvoidBottomInset: false,
-        body: Center(
-          child: TextButton(
-            onPressed: () => PageUtils.launchURL(_url),
-            child: const Text('unsupported'),
-          ),
-        ),
-      );
-    }
     return Scaffold(
       appBar: widget.url != null
           ? null
@@ -239,53 +223,6 @@ class _WebviewPageState extends State<WebviewPage> {
             //   ''',
             // );
           },
-          onDownloadStartRequest: Platform.isAndroid
-              ? (controller, request) {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      String suggestedFilename = request.suggestedFilename
-                          .toString();
-                      String fileSize = CacheManager.formatSize(
-                        request.contentLength.toDouble(),
-                      );
-                      try {
-                        suggestedFilename = Uri.decodeComponent(
-                          suggestedFilename,
-                        );
-                      } catch (e) {
-                        if (kDebugMode) debugPrint(e.toString());
-                      }
-                      return AlertDialog(
-                        title: Text(
-                          '下载文件: $suggestedFilename ?',
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                        content: SelectableText(request.url.toString()),
-                        actions: [
-                          TextButton(
-                            onPressed: Get.back,
-                            child: Text(
-                              '取消',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Get.back();
-                              PageUtils.launchURL(request.url.toString());
-                            },
-                            child: Text('确定 ($fileSize)'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                  progress.value = 1;
-                }
-              : null,
           shouldInterceptAjaxRequest: (controller, ajaxRequest) async {
             String url = ajaxRequest.url.toString();
             if (url.startsWith('//api.bilibili.com/x/note/add') &&

@@ -1,6 +1,4 @@
 import 'dart:async' show FutureOr;
-import 'dart:io' show Platform;
-
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/main.dart';
@@ -19,20 +17,14 @@ import 'package:get/get.dart';
 
 abstract final class LoginUtils {
   static FutureOr setWebCookie([Account? account]) {
-    if (Platform.isLinux) {
-      return null;
-    }
     final cookies = (account ?? Accounts.main).cookieJar.toList();
     final webManager = web.CookieManager.instance(
       webViewEnvironment: webViewEnvironment,
     );
-    final isWindows = Platform.isWindows;
     return Future.wait(
       cookies.map(
         (cookie) => webManager.setCookie(
-          url: web.WebUri(
-            '${isWindows ? 'https://' : ''} ${cookie.domain}',
-          ),
+          url: web.WebUri(' ${cookie.domain}'),
           name: cookie.name,
           value: cookie.value,
           path: cookie.path ?? '/',
@@ -86,10 +78,9 @@ abstract final class LoginUtils {
       ..isLogin.value = false;
 
     return Future.wait([
-      if (!Platform.isLinux)
-        web.CookieManager.instance(
-          webViewEnvironment: webViewEnvironment,
-        ).deleteAllCookies(),
+      web.CookieManager.instance(
+        webViewEnvironment: webViewEnvironment,
+      ).deleteAllCookies(),
       GStorage.userInfo.delete('userInfoCache'),
     ]);
   }

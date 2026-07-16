@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:PiliPlus/common/widgets/color_palette.dart';
@@ -22,12 +21,10 @@ import 'package:PiliPlus/pages/setting/widgets/multi_select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
-import 'package:PiliPlus/utils/extension/file_ext.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
-import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -38,26 +35,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:path/path.dart' as path;
 
 List<SettingsModel> get styleSettings => [
-  if (PlatformUtils.isDesktop) ...[
-    const SwitchModel(
-      title: '显示窗口标题栏',
-      leading: Icon(Icons.window),
-      setKey: SettingBoxKey.showWindowTitleBar,
-      defaultVal: true,
-      needReboot: true,
-    ),
-    const SwitchModel(
-      title: '显示托盘图标',
-      leading: Icon(Icons.donut_large_rounded),
-      setKey: SettingBoxKey.showTrayIcon,
-      defaultVal: true,
-      needReboot: true,
-    ),
-  ],
-  if (Platform.isLinux) _useSSDModel(),
   SwitchModel(
     title: '横屏适配',
     subtitle: '启用横屏布局与逻辑，平板、折叠屏等可开启；建议全屏方向设为【不改变当前方向】',
@@ -881,32 +860,4 @@ Future<void> _showDefHomeDialog(
     SmartDialog.showToast('设置成功，重启生效');
     setState();
   }
-}
-
-NormalModel _useSSDModel() {
-  final file = File(path.join(appSupportDirPath, 'use_ssd'));
-  void onChanged(BuildContext context, VoidCallback setState) {
-    (file.existsSync() ? file.tryDel() : file.create()).whenComplete(() {
-      if (context.mounted) {
-        setState();
-      }
-    });
-  }
-
-  return NormalModel(
-    title: '使用SSD（Server-Side Decoration）',
-    leading: const Icon(Icons.web_asset),
-    onTap: onChanged,
-    getTrailing: (theme) => Builder(
-      builder: (context) => Transform.scale(
-        scale: 0.8,
-        alignment: .centerRight,
-        child: Switch(
-          value: file.existsSync(),
-          onChanged: (_) =>
-              onChanged(context, (context as Element).markNeedsBuild),
-        ),
-      ),
-    ),
-  );
 }

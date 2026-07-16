@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
@@ -49,7 +48,6 @@ import 'package:PiliPlus/services/shutdown_timer_service.dart'
     show shutdownTimerService;
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
-import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/max_screen_size.dart';
 import 'package:PiliPlus/utils/mobile_observer.dart';
@@ -61,11 +59,9 @@ import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
 
 class VideoDetailPageV extends StatefulWidget {
   const VideoDetailPageV({super.key});
@@ -361,10 +357,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
 
     removeObserverMobile(this);
 
-    if (Platform.isAndroid && !videoDetailController.setSystemBrightness) {
-      ScreenBrightnessPlatform.instance.resetApplicationScreenBrightness();
-    }
-
     introController.cancelTimer();
 
     videoDetailController
@@ -402,24 +394,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     PlPlayerController.setPlayCallBack(playCallBack);
 
     introController.startTimer();
-
-    if (mounted &&
-        Platform.isAndroid &&
-        !videoDetailController.setSystemBrightness) {
-      if (videoDetailController.brightness != null) {
-        plPlayerController?.brightness.value =
-            videoDetailController.brightness!;
-        if (videoDetailController.brightness != -1.0) {
-          ScreenBrightnessPlatform.instance.setApplicationScreenBrightness(
-            videoDetailController.brightness!,
-          );
-        } else {
-          ScreenBrightnessPlatform.instance.resetApplicationScreenBrightness();
-        }
-      } else {
-        ScreenBrightnessPlatform.instance.resetApplicationScreenBrightness();
-      }
-    }
 
     plPlayerController
       ?..addStatusLister(playerListener)
@@ -496,16 +470,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                                 scrollRatio,
                               )
                             : Colors.black,
-                        systemOverlayStyle: Platform.isAndroid
-                            ? SystemUiOverlayStyle(
-                                statusBarIconBrightness:
-                                    isPortrait && scrollRatio >= 0.5
-                                    ? themeData.brightness.reverse
-                                    : .light,
-                                systemNavigationBarIconBrightness:
-                                    themeData.brightness.reverse,
-                              )
-                            : null,
                       );
                     },
                   ),

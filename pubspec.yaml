@@ -9,13 +9,9 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # followed by an optional build number separated by a +.
 # Both the version and the builder number may be overridden in flutter
 # build by specifying --build-name and --build-number, respectively.
-# In Android, build-name is used as versionName while build-number used as versionCode.
-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
 # In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
 # update when release
 version: 2.1.0+1
 
@@ -122,7 +118,7 @@ dependencies:
       ref: const
   material_new_shapes: ^1.0.0
   media_kit: 1.1.11
-  media_kit_libs_video: 1.0.5
+  media_kit_libs_ios_video: 1.0.5
   media_kit_video: 1.2.5
   mime: ^2.0.0
   native_device_orientation:
@@ -163,11 +159,6 @@ dependency_overrides:
       url: https://github.com/My-Responsitories/media-kit.git
       path: libs/ios/media_kit_libs_ios_video
       ref: version_1.2.5
-  media_kit_libs_video:
-    git:
-      url: https://github.com/My-Responsitories/media-kit.git
-      path: libs/universal/media_kit_libs_video
-      ref: version_1.2.5
   media_kit_native_event_loop:
     git:
       url: https://github.com/My-Responsitories/media-kit.git
@@ -198,7 +189,6 @@ flutter_launcher_icons:
   image_path_ios: assets/images/logo/logo.png
 
 flutter_native_splash:
-  android: false
   ios: true
   color: "#ffffff"
   color_dark: "#212121"

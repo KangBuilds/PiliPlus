@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:PiliPlus/common/widgets/gesture/tap_gesture_recognizer.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/image_grid/image_grid_view.dart';
@@ -311,11 +309,7 @@ TextSpan? richNode(
 
                       DynamicsHttp.dynPic(i.rid).then((res) {
                         if (res case Success(:final response)) {
-                          if (Platform.isAndroid) {
-                            i.pics = response;
-                          } else {
-                            i.dynPic = response;
-                          }
+                          i.dynPic = response;
                           if (response != null && response.isNotEmpty) {
                             onView(response);
                           }

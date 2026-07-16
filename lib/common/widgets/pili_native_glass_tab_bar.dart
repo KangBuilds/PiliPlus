@@ -1,12 +1,11 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 const piliNativeGlassTabBarViewType = 'pili/native_glass_tab_bar';
 const piliNativeGlassTabBarItems = <({String symbol, String selectedSymbol})>[
-  (symbol: 'home', selectedSymbol: 'home.fill'),
+  (symbol: 'house', selectedSymbol: 'house.fill'),
   (symbol: 'square.stack', selectedSymbol: 'square.stack.fill'),
   (
     symbol: 'person.crop.circle',
@@ -14,20 +13,11 @@ const piliNativeGlassTabBarItems = <({String symbol, String selectedSymbol})>[
   ),
 ];
 
-bool supportsPiliNativeGlassTabBar({
-  TargetPlatform? platform,
-}) => !kIsWeb && (platform ?? defaultTargetPlatform) == TargetPlatform.iOS;
-
 bool usesPiliNativeGlassTabBar({
   required bool isPortrait,
   required bool isTablet,
   required bool hasRequiredDestinations,
-  TargetPlatform? platform,
-}) =>
-    isPortrait &&
-    !isTablet &&
-    hasRequiredDestinations &&
-    supportsPiliNativeGlassTabBar(platform: platform);
+}) => isPortrait && !isTablet && hasRequiredDestinations;
 
 Map<String, Object> piliNativeGlassTabBarCreationParams({
   required int selectedIndex,

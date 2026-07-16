@@ -1,6 +1,5 @@
 import 'dart:async' show StreamSubscription, Timer;
 import 'dart:convert' show ascii;
-import 'dart:io' show Platform;
 import 'dart:math' show max, min;
 import 'dart:ui' as ui;
 
@@ -10,11 +9,9 @@ import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
-import 'package:PiliPlus/models/common/audio_normalization.dart';
 import 'package:PiliPlus/models/common/super_resolution_type.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/user/danmaku_rule.dart';
-import 'package:PiliPlus/models/video/play/url.dart';
 import 'package:PiliPlus/models_new/video/video_shot/data.dart';
 import 'package:PiliPlus/pages/danmaku/danmaku_model.dart';
 import 'package:PiliPlus/pages/setting/models/play_settings.dart'
@@ -387,8 +384,6 @@ class PlPlayerController with BlockConfigMixin {
 
   bool visible = true;
 
-  DeviceOrientation? _orientation;
-  late final checkIsAutoRotate = Platform.isAndroid && mode != .gravity;
   StreamSubscription<OrientationParams>? _orientationListener;
 
   void _stopOrientationListener() {
@@ -397,18 +392,9 @@ class PlPlayerController with BlockConfigMixin {
   }
 
   void _onOrientationChanged(OrientationParams param) {
-    _orientation = param.orientation;
-    if (Platform.isIOS && !visible) return;
+    if (!visible) return;
     final orientation = param.orientation;
     final isFullScreen = this.isFullScreen.value;
-    if (checkIsAutoRotate &&
-        param.isAutoRotate != true &&
-        (!isFullScreen ||
-            _isVertical ||
-            orientation == .portraitUp ||
-            orientation == .portraitDown)) {
-      return;
-    }
     switch (orientation) {
       case .portraitUp:
         if (!_isVertical && controlsLock.value) return;
@@ -441,7 +427,7 @@ class PlPlayerController with BlockConfigMixin {
   // 添加一个私有构造函数
   PlPlayerController._() {
     _orientationListener = NativeDeviceOrientationPlatform.instance
-        .onOrientationChanged(checkIsAutoRotate: checkIsAutoRotate)
+        .onOrientationChanged(checkIsAutoRotate: false)
         .listen(_onOrientationChanged);
 
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
@@ -460,12 +446,6 @@ class PlPlayerController with BlockConfigMixin {
 
   // offline
   bool get isFileSource => dataSource is FileSource;
-
-  late final _audioNormalization = Pref.audioNormalization;
-  late final enableAudioNormalization =
-      Platform.isAndroid && _audioNormalization != '0';
-  late final String _audioNormalizationParam =
-      AudioNormalization.getParamFromConfig(_audioNormalization);
 
   // 初始化资源
   Future<void> setDataSource(
@@ -488,7 +468,6 @@ class PlPlayerController with BlockConfigMixin {
     int? seasonId,
     VideoType? videoType,
     VoidCallback? onInit,
-    Volume? volume,
     bool autoFullScreenFlag = false,
   }) async {
     try {
@@ -523,7 +502,7 @@ class PlPlayerController with BlockConfigMixin {
         return;
       }
       // 配置Player 音轨、字幕等等
-      await _createVideoController(dataSource, seekTo, volume);
+      await _createVideoController(dataSource, seekTo);
 
       if (_playerCount == 0) {
         _removeListeners();
@@ -603,17 +582,12 @@ class PlPlayerController with BlockConfigMixin {
     }
   }
 
-  static final loudnormRegExp = RegExp('loudnorm=([^,]+)');
-
   Future<Player> _initPlayer() async {
     assert(_videoPlayerController == null);
     await setupServiceLocator();
     final opt = {
       'video-sync': Pref.videoSync,
-      if (Platform.isAndroid) 'ao': Pref.audioOutput,
-      'volume':
-          (PlatformUtils.isMobile ? Pref.playerVolume : volume.value * 100)
-              .toString(),
+      'volume': Pref.playerVolume.toString(),
       'volume-max': kMaxVolume.toString(),
     };
     final autosync = Pref.autosync;
@@ -634,7 +608,6 @@ class PlPlayerController with BlockConfigMixin {
       player,
       configuration: VideoControllerConfiguration(
         enableHardwareAcceleration: hwdec != null,
-        androidAttachSurfaceAfterVideoParameters: false,
         hwdec: hwdec,
       ),
     );
@@ -653,7 +626,6 @@ class PlPlayerController with BlockConfigMixin {
   Future<void> _createVideoController(
     DataSource dataSource,
     Duration? seekTo,
-    Volume? volume,
   ) async {
     isBuffering.value = false;
     _heartDuration = 0;
@@ -689,33 +661,7 @@ class PlPlayerController with BlockConfigMixin {
       if (onlyPlayAudio.value) {
         video = audio;
       } else {
-        extras['audio-files'] =
-            '"${Platform.isWindows ? audio.replaceAll(';', r'\;') : audio.replaceAll(':', r'\:')}"';
-      }
-      if (enableAudioNormalization) {
-        final String audioNormalization;
-        if (volume != null && volume.isNotEmpty) {
-          audioNormalization = _audioNormalizationParam.replaceFirstMapped(
-            loudnormRegExp,
-            (i) =>
-                'loudnorm=${volume.format(
-                  Map.fromEntries(
-                    i.group(1)!.split(':').map((item) {
-                      final parts = item.split('=');
-                      return MapEntry(parts[0].toLowerCase(), num.parse(parts[1]));
-                    }),
-                  ),
-                )}',
-          );
-        } else {
-          audioNormalization = _audioNormalizationParam.replaceFirst(
-            loudnormRegExp,
-            AudioNormalization.getParamFromConfig(Pref.fallbackNormalization),
-          );
-        }
-        if (audioNormalization.isNotEmpty) {
-          extras['lavfi-complex'] = '"[aid1] $audioNormalization [ao]"';
-        }
+        extras['audio-files'] = '"${audio.replaceAll(':', r'\:')}"';
       }
     }
 
@@ -1222,18 +1168,10 @@ class PlPlayerController with BlockConfigMixin {
     } else {
       // https://github.com/flutter/flutter/issues/73651
       // https://github.com/flutter/flutter/issues/183708
-      if (Platform.isAndroid) {
-        if ((orientation ?? _orientation) == .landscapeRight) {
-          return landscapeRightMode();
-        } else {
-          return landscapeLeftMode();
-        }
+      if (orientation == .landscapeLeft) {
+        return landscapeLeftMode();
       } else {
-        if (orientation == .landscapeLeft) {
-          return landscapeLeftMode();
-        } else {
-          return landscapeRightMode();
-        }
+        return landscapeRightMode();
       }
     }
   }

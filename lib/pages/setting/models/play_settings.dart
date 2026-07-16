@@ -1,8 +1,5 @@
-import 'dart:io' show Platform;
-
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/models/common/video/subtitle_pref_type.dart';
-import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
@@ -10,13 +7,10 @@ import 'package:PiliPlus/plugin/pl_player/models/bottom_progress_behavior.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/services/service_locator.dart';
-import 'package:PiliPlus/utils/extension/num_ext.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
@@ -28,27 +22,19 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.enableShowDanmaku,
     defaultVal: true,
   ),
-  if (PlatformUtils.isMobile)
-    const SwitchModel(
-      title: '启用点击弹幕',
-      subtitle: '点击弹幕悬停，支持点赞、复制、举报操作',
-      leading: Icon(Icons.touch_app_outlined),
-      setKey: SettingBoxKey.enableTapDm,
-      defaultVal: true,
-    ),
+  const SwitchModel(
+    title: '启用点击弹幕',
+    subtitle: '点击弹幕悬停，支持点赞、复制、举报操作',
+    leading: Icon(Icons.touch_app_outlined),
+    setKey: SettingBoxKey.enableTapDm,
+    defaultVal: true,
+  ),
   NormalModel(
     onTap: (context, setState) => Get.toNamed('/playSpeedSet'),
     leading: const Icon(Icons.speed_outlined),
     title: '倍速设置',
     subtitle: '设置视频播放速度',
   ),
-  if (Platform.isAndroid)
-    NormalModel(
-      onTap: _showAngleDegreesDialog,
-      leading: const Icon(MdiIcons.angleAcute),
-      title: '倾斜角度阈值',
-      getSubtitle: () => '当前:「${Pref.angleDegrees}°」',
-    ),
   const SwitchModel(
     title: '自动播放',
     subtitle: '进入详情页自动播放',
@@ -72,7 +58,7 @@ List<SettingsModel> get playSettings => [
     title: '全屏显示电池电量',
     leading: const Icon(Icons.battery_3_bar),
     setKey: SettingBoxKey.showBatteryLevel,
-    defaultVal: PlatformUtils.isMobile,
+    defaultVal: true,
   ),
   const SwitchModel(
     title: '双击快退/快进',
@@ -87,33 +73,18 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.enableSlideVolumeBrightness,
     defaultVal: true,
   ),
-  if (Platform.isAndroid)
-    const SwitchModel(
-      title: '调节系统亮度',
-      leading: Icon(Icons.brightness_6_outlined),
-      setKey: SettingBoxKey.setSystemBrightness,
-      defaultVal: false,
-    ),
   const SwitchModel(
     title: '中间滑动进入/退出全屏',
     leading: Icon(MdiIcons.panVertical),
     setKey: SettingBoxKey.enableSlideFS,
     defaultVal: true,
   ),
-  if (PlatformUtils.isMobile)
-    NormalModel(
-      title: '播放器音量',
-      leading: const Icon(Icons.volume_up),
-      getSubtitle: () => '当前:「${Pref.playerVolume.toStringAsFixed(0)}%」',
-      onTap: showPlayerVolumeDialog,
-    )
-  else
-    NormalModel(
-      title: '最高音量',
-      leading: const Icon(Icons.volume_up),
-      getSubtitle: () => '当前:「${(Pref.maxVolume * 100).toStringAsFixed(0)}%」',
-      onTap: _showMaxVolumeDialog,
-    ),
+  NormalModel(
+    title: '播放器音量',
+    leading: const Icon(Icons.volume_up),
+    getSubtitle: () => '当前:「${Pref.playerVolume.toStringAsFixed(0)}%」',
+    onTap: showPlayerVolumeDialog,
+  ),
   getVideoFilterSelectModel(
     title: '双击快进/快退时长',
     suffix: 's',
@@ -143,18 +114,6 @@ List<SettingsModel> get playSettings => [
     getSubtitle: () => '当前选择偏好：${Pref.subtitlePreferenceV2.desc}',
     onTap: _showSubtitleDialog,
   ),
-  if (PlatformUtils.isDesktop)
-    SwitchModel(
-      title: '最小化时暂停/还原时播放',
-      leading: const Icon(Icons.pause_circle_outline),
-      setKey: SettingBoxKey.pauseOnMinimize,
-      defaultVal: false,
-      onChanged: (value) {
-        try {
-          Get.find<MainController>().pauseOnMinimize = value;
-        } catch (_) {}
-      },
-    ),
   const SwitchModel(
     title: '启用键盘控制',
     leading: Icon(Icons.keyboard_alt_outlined),
@@ -189,35 +148,13 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.enableLongShowControl,
     defaultVal: false,
   ),
-  if (PlatformUtils.isMobile)
-    const SwitchModel(
-      title: '后台播放',
-      subtitle: '进入后台时继续播放',
-      leading: Icon(Icons.motion_photos_pause_outlined),
-      setKey: SettingBoxKey.continuePlayInBackground,
-      defaultVal: false,
-    ),
-  if (Platform.isAndroid) ...[
-    SwitchModel(
-      title: '后台画中画',
-      subtitle: '进入后台时以小窗形式（PiP）播放',
-      leading: const Icon(Icons.picture_in_picture_outlined),
-      setKey: SettingBoxKey.autoPiP,
-      defaultVal: false,
-      onChanged: (val) {
-        if (val && !Pref.enableBackgroundPlay) {
-          SmartDialog.showToast('建议开启后台音频服务');
-        }
-      },
-    ),
-    const SwitchModel(
-      title: '画中画不加载弹幕',
-      subtitle: '当弹幕开关开启时，小窗屏蔽弹幕以获得较好的体验',
-      leading: Icon(CustomIcons.dm_off),
-      setKey: SettingBoxKey.pipNoDanmaku,
-      defaultVal: false,
-    ),
-  ],
+  const SwitchModel(
+    title: '后台播放',
+    subtitle: '进入后台时继续播放',
+    leading: Icon(Icons.motion_photos_pause_outlined),
+    setKey: SettingBoxKey.continuePlayInBackground,
+    defaultVal: false,
+  ),
   const SwitchModel(
     title: '全屏手势反向',
     subtitle: '默认播放器中部向上滑动进入全屏，向下退出\n开启后向下全屏，向上退出',
@@ -250,16 +187,15 @@ List<SettingsModel> get playSettings => [
     getSubtitle: () => '当前展示方式：${Pref.btmProgressBehavior.desc}',
     onTap: _showProgressBehaviorDialog,
   ),
-  if (PlatformUtils.isMobile)
-    SwitchModel(
-      title: '后台音频服务',
-      subtitle: '避免画中画没有播放暂停功能',
-      leading: const Icon(Icons.volume_up_outlined),
-      setKey: SettingBoxKey.enableBackgroundPlay,
-      defaultVal: true,
-      onChanged: (value) =>
-          videoPlayerServiceHandler?.enableBackgroundPlay = value,
-    ),
+  SwitchModel(
+    title: '后台音频服务',
+    subtitle: '避免画中画没有播放暂停功能',
+    leading: const Icon(Icons.volume_up_outlined),
+    setKey: SettingBoxKey.enableBackgroundPlay,
+    defaultVal: true,
+    onChanged: (value) =>
+        videoPlayerServiceHandler?.enableBackgroundPlay = value,
+  ),
   PopupModel(
     title: '播放顺序',
     leading: const Icon(Icons.repeat),
@@ -338,28 +274,6 @@ Future<void> _showProgressBehaviorDialog(
   }
 }
 
-Future<void> _showAngleDegreesDialog(
-  BuildContext context,
-  VoidCallback setState,
-) async {
-  final res = await showDialog<double>(
-    context: context,
-    builder: (context) => SliderDialog(
-      title: const Text('倾斜角度阈值'),
-      min: 10.0,
-      max: 90.0,
-      divisions: 90,
-      precise: 0,
-      value: Pref.angleDegrees.toDouble(),
-      suffix: '°',
-    ),
-  );
-  if (res != null) {
-    await GStorage.setting.put(SettingBoxKey.angleDegrees, res.toInt());
-    setState();
-  }
-}
-
 Future<void> showPlayerVolumeDialog(
   BuildContext context,
   VoidCallback setState, {
@@ -375,26 +289,6 @@ Future<void> showPlayerVolumeDialog(
           setState();
           onChanged?.call(value);
         }),
-  );
-}
-
-Future<void> _showMaxVolumeDialog(
-  BuildContext context,
-  VoidCallback setState,
-) {
-  return showVolumeDialog(
-    context,
-    title: const Text('最高音量'),
-    value: Pref.maxVolume * 100,
-    onChanged: (rawValue) {
-      final maxVolume = (rawValue / 100).toPrecision(2);
-      if (Pref.desktopVolume > maxVolume) {
-        GStorage.setting.put(SettingBoxKey.desktopVolume, maxVolume);
-      }
-      GStorage.setting
-          .put(SettingBoxKey.maxVolume, maxVolume)
-          .whenComplete(setState);
-    },
   );
 }
 

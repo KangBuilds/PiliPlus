@@ -17,7 +17,6 @@ import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/extension/file_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
-import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
@@ -197,16 +196,9 @@ abstract class CommonRichTextPubPageState<T extends CommonRichTextPubPage>
         await SmartDialog.dismiss();
     }
     if (!mounted || path.isEmpty) return;
-    late final colorScheme = ColorScheme.of(context);
     final croppedFile = await ImageCropper.platform.cropImage(
       sourcePath: path,
       uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: '裁剪',
-          toolbarColor: colorScheme.secondaryContainer,
-          toolbarWidgetColor: colorScheme.onSecondaryContainer,
-          statusBarLight: colorScheme.isLight,
-        ),
         IOSUiSettings(title: '裁剪'),
       ],
     );

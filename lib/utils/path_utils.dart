@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:path/path.dart' as path;
 
 late final String tmpDirPath;
@@ -24,8 +22,6 @@ abstract final class PathUtils {
     String baseDirectory,
     List<String> shaders,
   ) {
-    return shaders
-        .map((shader) => path.join(baseDirectory, shader))
-        .join(Platform.isWindows ? ';' : ':');
+    return shaders.map((shader) => path.join(baseDirectory, shader)).join(':');
   }
 }

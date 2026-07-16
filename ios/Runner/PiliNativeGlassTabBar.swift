@@ -131,8 +131,8 @@ final class PiliNativeGlassTabBarPlatformView: NSObject,
       let selectedSymbol = arguments["selectedSymbol"] as? String ?? ""
       let item = UITabBarItem(
         title: label,
-        image: systemImage(named: symbol),
-        selectedImage: systemImage(named: selectedSymbol)
+        image: UIImage(systemName: symbol)?.withRenderingMode(.alwaysTemplate),
+        selectedImage: UIImage(systemName: selectedSymbol)?.withRenderingMode(.alwaysTemplate)
       )
       item.tag = index
       return item
@@ -158,29 +158,4 @@ final class PiliNativeGlassTabBarPlatformView: NSObject,
     tabBar.selectedItem = items[index]
   }
 
-  private func systemImage(named name: String) -> UIImage? {
-    if let image = UIImage(systemName: name) {
-      return image.withRenderingMode(.alwaysTemplate)
-    }
-
-    let fallbackName: String?
-    switch name {
-    case "home": fallbackName = "house"
-    case "home.fill": fallbackName = "house.fill"
-    default: fallbackName = nil
-    }
-
-    guard let fallbackName,
-          let image = UIImage(systemName: fallbackName)
-    else {
-      NSLog("PiliNativeGlassTabBar: SF Symbol '%@' is unavailable", name)
-      return nil
-    }
-    NSLog(
-      "PiliNativeGlassTabBar: SF Symbol '%@' is unavailable; temporarily using '%@'",
-      name,
-      fallbackName
-    )
-    return image.withRenderingMode(.alwaysTemplate)
-  }
 }

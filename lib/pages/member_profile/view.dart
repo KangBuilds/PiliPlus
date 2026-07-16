@@ -15,7 +15,6 @@ import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/app_sign.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/extension/file_ext.dart';
-import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
@@ -490,17 +489,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           final croppedFile = await ImageCropper.platform.cropImage(
             sourcePath: imagePath,
             uiSettings: [
-              AndroidUiSettings(
-                toolbarTitle: '裁剪',
-                toolbarColor: theme.colorScheme.secondaryContainer,
-                toolbarWidgetColor: theme.colorScheme.onSecondaryContainer,
-                statusBarLight: theme.isLight,
-                aspectRatioPresets: const [CropAspectRatioPresetCustom()],
-                lockAspectRatio: true,
-                hideBottomControls: true,
-                cropStyle: CropStyle.circle,
-                initAspectRatio: const CropAspectRatioPresetCustom(),
-              ),
               IOSUiSettings(
                 title: '裁剪',
                 aspectRatioPresets: const [CropAspectRatioPresetCustom()],

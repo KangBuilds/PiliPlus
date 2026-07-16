@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 
@@ -87,13 +85,7 @@ extension PermissionActions on Permission {
   ///
   /// This is only implemented on Android, calling this on iOS always returns
   /// [false].
-  FutureOr<bool> get shouldShowRequestRationale {
-    if (!Platform.isAndroid) {
-      return false;
-    }
-
-    return _handler.shouldShowRequestPermissionRationale(this);
-  }
+  FutureOr<bool> get shouldShowRequestRationale => false;
 
   /// Request the user for access to this [Permission], if access hasn't already
   /// been grant access before.

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' show max;
 
 import 'package:PiliPlus/models/common/publish_panel_type.dart';
@@ -25,9 +24,7 @@ abstract class CommonPublishPage<T> extends StatefulWidget {
 }
 
 abstract class CommonPublishPageState<T extends CommonPublishPage>
-    extends State<T>
-    with WidgetsBindingObserver {
-  late bool _paused = false;
+    extends State<T> {
   final FocusNode focusNode = FocusNode();
   late final controller = ChatBottomPanelContainerController<PanelType>(
     uiScale: Pref.uiScale,
@@ -43,15 +40,9 @@ abstract class CommonPublishPageState<T extends CommonPublishPage>
   bool hasPub = false;
   void initPubState();
 
-  bool get handleKeyboard => Platform.isAndroid && widget.autofocus;
-
   @override
   void initState() {
     super.initState();
-    if (handleKeyboard) {
-      WidgetsBinding.instance.addObserver(this);
-    }
-
     initPubState();
 
     if (widget.autofocus) {
@@ -66,9 +57,6 @@ abstract class CommonPublishPageState<T extends CommonPublishPage>
     }
     focusNode.dispose();
     editController.dispose();
-    if (handleKeyboard) {
-      WidgetsBinding.instance.removeObserver(this);
-    }
     super.dispose();
   }
 
@@ -80,31 +68,6 @@ abstract class CommonPublishPageState<T extends CommonPublishPage>
 
   void _requestFocus({Duration duration = const Duration(microseconds: 200)}) {
     Future.delayed(duration, _safeRequestFocus);
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == .resumed) {
-      if (_paused) {
-        _paused = false;
-        final panelType = this.panelType.value;
-        if (panelType == .keyboard || panelType == .none) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (focusNode.hasFocus) {
-              focusNode.unfocus();
-              _requestFocus();
-            } else {
-              _requestFocus();
-            }
-          });
-        }
-      }
-    } else if (state == .paused) {
-      _paused = true;
-      if (focusNode.hasFocus) {
-        focusNode.unfocus();
-      }
-    }
   }
 
   void updatePanelType(PanelType type) {
