@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:PiliPlus/common/assets.dart';
-import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
@@ -189,13 +188,6 @@ class _MediaPageState extends CommonPageState<MinePage>
   }
 
   Widget _buildUserInfo(ThemeData theme, Color secondary) {
-    final style = TextStyle(
-      fontSize: theme.textTheme.titleMedium!.fontSize,
-      fontWeight: FontWeight.bold,
-    );
-    final labelStyle = theme.textTheme.labelMedium!.copyWith(
-      color: theme.colorScheme.outline,
-    );
     final coinLabelStyle = TextStyle(
       fontSize: theme.textTheme.labelMedium!.fontSize,
       color: theme.colorScheme.outline,
@@ -293,18 +285,31 @@ class _MediaPageState extends CommonPageState<MinePage>
                       Text.rich(
                         TextSpan(
                           children: [
-                            TextSpan(
-                              text: '硬币 ',
-                              style: coinLabelStyle,
+                            WidgetSpan(
+                              alignment: .middle,
+                              child: Icon(
+                                Icons.paid,
+                                size: 14,
+                                color: theme.colorScheme.outline,
+                                semanticLabel: '硬币',
+                              ),
                             ),
+                            const TextSpan(text: ' '),
                             TextSpan(
                               text: userInfo.money?.toString() ?? '-',
                               style: coinValStyle,
                             ),
-                            TextSpan(
-                              text: "      经验 ",
-                              style: coinLabelStyle,
+                            const WidgetSpan(child: SizedBox(width: 8)),
+                            WidgetSpan(
+                              alignment: .middle,
+                              child: Icon(
+                                Icons.star_rounded,
+                                size: 14,
+                                color: theme.colorScheme.outline,
+                                semanticLabel: '经验',
+                              ),
                             ),
+                            const TextSpan(text: ' '),
                             TextSpan(
                               text: levelInfo?.currentExp?.toString() ?? '-',
                               style: coinValStyle,
@@ -312,6 +317,52 @@ class _MediaPageState extends CommonPageState<MinePage>
                             TextSpan(
                               text: "/${levelInfo?.nextExp ?? '-'}",
                               style: coinLabelStyle,
+                            ),
+                            const WidgetSpan(child: SizedBox(width: 8)),
+                            WidgetSpan(
+                              alignment: .middle,
+                              child: InkWell(
+                                onTap: () => controller.push('follow'),
+                                child: Row(
+                                  mainAxisSize: .min,
+                                  spacing: 4,
+                                  children: [
+                                    Icon(
+                                      Icons.person_add_alt_1_rounded,
+                                      size: 14,
+                                      color: theme.colorScheme.outline,
+                                      semanticLabel: '关注',
+                                    ),
+                                    Text(
+                                      userStat.following?.toString() ?? '-',
+                                      style: coinValStyle,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const WidgetSpan(child: SizedBox(width: 8)),
+                            WidgetSpan(
+                              alignment: .middle,
+                              child: InkWell(
+                                onTap: () => controller.push('fan'),
+                                child: Row(
+                                  mainAxisSize: .min,
+                                  spacing: 4,
+                                  children: [
+                                    Icon(
+                                      Icons.people_rounded,
+                                      size: 14,
+                                      color: theme.colorScheme.outline,
+                                      semanticLabel: '粉丝',
+                                    ),
+                                    Text(
+                                      userStat.follower?.toString() ?? '-',
+                                      style: coinValStyle,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -338,72 +389,9 @@ class _MediaPageState extends CommonPageState<MinePage>
               ],
             ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: .spaceEvenly,
-            children: [
-              _btn(
-                count: userStat.dynamicCount,
-                countStyle: style,
-                name: '动态',
-                labelStyle: labelStyle,
-                onTap: () => controller.push('memberDynamics'),
-              ),
-              _btn(
-                count: userStat.following,
-                countStyle: style,
-                name: '关注',
-                labelStyle: labelStyle,
-                onTap: () => controller.push('follow'),
-              ),
-              _btn(
-                count: userStat.follower,
-                countStyle: style,
-                name: '粉丝',
-                labelStyle: labelStyle,
-                onTap: () => controller.push('fan'),
-              ),
-            ],
-          ),
         ],
       );
     });
-  }
-
-  Widget _btn({
-    required int? count,
-    required TextStyle countStyle,
-    required String name,
-    required TextStyle? labelStyle,
-    required VoidCallback onTap,
-  }) {
-    return Flexible(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: Style.mdRadius,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 80),
-          child: AspectRatio(
-            aspectRatio: 1,
-            child: Column(
-              spacing: 4,
-              mainAxisSize: .min,
-              mainAxisAlignment: .center,
-              children: [
-                Text(
-                  count?.toString() ?? '-',
-                  style: countStyle,
-                ),
-                Text(
-                  name,
-                  style: labelStyle,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   void _autoRefresh() => Future.delayed(
