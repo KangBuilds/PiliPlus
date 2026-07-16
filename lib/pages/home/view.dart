@@ -1,13 +1,11 @@
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
-import 'package:PiliPlus/common/widgets/pili_native_glass_tab_bar.dart';
 import 'package:PiliPlus/common/widgets/pili_native_segmented_control.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/pages/common/common_page.dart';
 import 'package:PiliPlus/pages/home/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
-import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:flutter/material.dart';
@@ -28,12 +26,7 @@ class _HomePageState extends CommonPageState<HomePage>
   final _homeController = Get.putOrFind(HomeController.new);
   final _mainController = Get.find<MainController>();
 
-  bool get _usesNativeGlassTabBar =>
-      widget.isMainPage &&
-      usesPiliNativeGlassTabBar(
-        isTablet: context.isTablet,
-        hasRequiredDestinations: _mainController.hasPiliNativeGlassDestinations,
-      );
+  bool get _usesNativeGlassTabBar => widget.isMainPage;
 
   @override
   bool get wantKeepAlive => true;

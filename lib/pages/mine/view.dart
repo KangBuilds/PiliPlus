@@ -6,7 +6,6 @@ import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/models_new/fav/fav_folder/list.dart';
 import 'package:PiliPlus/pages/common/common_page.dart';
 import 'package:PiliPlus/pages/home/view.dart';
@@ -25,9 +24,7 @@ import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class MinePage extends StatefulWidget {
-  const MinePage({super.key, this.showBackBtn = false});
-
-  final bool showBackBtn;
+  const MinePage({super.key});
 
   @override
   State<MinePage> createState() => _MediaPageState();
@@ -41,9 +38,7 @@ class _MediaPageState extends CommonPageState<MinePage>
   @override
   bool get wantKeepAlive => true;
 
-  bool get checkPage =>
-      _mainController.navigationBars[0] != NavigationBarType.mine &&
-      _mainController.selectedIndex.value == 0;
+  bool get checkPage => _mainController.selectedIndex.value == 0;
 
   @override
   bool onUserScrollNotification(UserScrollNotification notification) {
@@ -130,26 +125,6 @@ class _MediaPageState extends CommonPageState<MinePage>
       spacing: 5,
       mainAxisAlignment: .end,
       children: [
-        if (widget.showBackBtn)
-          const Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: EdgeInsets.only(left: 8),
-                child: BackButton(),
-              ),
-            ),
-          ),
-        if (!_mainController.hasHome) ...[
-          IconButton(
-            iconSize: iconSize,
-            padding: padding,
-            style: style,
-            tooltip: '搜索',
-            onPressed: () => Get.toNamed('/search'),
-            icon: const Icon(Icons.search),
-          ),
-        ],
         msgBadge(_mainController),
         Obx(
           () {

@@ -1,4 +1,3 @@
-import 'package:PiliPlus/common/widgets/view_safe_area.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/msg.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamic_badge_mode.dart';
@@ -6,13 +5,9 @@ import 'package:PiliPlus/models/common/msg/msg_unread_type.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/pages/dynamics/controller.dart';
 import 'package:PiliPlus/pages/home/controller.dart';
-import 'package:PiliPlus/pages/mine/view.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
-import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
-import 'package:PiliPlus/utils/storage.dart';
-import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:collection/collection.dart';
 import 'package:easy_debounce/easy_throttle.dart';
@@ -22,29 +17,20 @@ import 'package:get/get.dart';
 class MainController extends GetxController with GetSingleTickerProviderStateMixin {
   final AccountService accountService = Get.find<AccountService>();
 
-  List<NavigationBarType> navigationBars = <NavigationBarType>[];
+  final navigationBars = NavigationBarType.values;
 
   late dynamic controller;
-  final RxInt selectedIndex = 0.obs;
+  final RxInt selectedIndex = Pref.defaultHomePage.index.obs;
 
   late final dynamicController = Get.putOrFind(DynamicsController.new);
 
-  late bool hasHome = false;
   late final homeController = Get.putOrFind(HomeController.new);
-
-  bool get hasPiliNativeGlassDestinations =>
-      navigationBars.length == 3 &&
-      navigationBars[0] == NavigationBarType.home &&
-      navigationBars[1] == NavigationBarType.dynamics &&
-      navigationBars[2] == NavigationBarType.mine;
 
   late DynamicBadgeMode msgBadgeMode = Pref.msgBadgeMode;
   late Set<MsgUnReadType> msgUnReadTypes = Pref.msgUnReadTypeV2;
   late final RxString msgUnReadCount = ''.obs;
   late int lastCheckUnreadAt = 0;
 
-  final enableMYBar = Pref.enableMYBar;
-  final floatingNavBar = Pref.floatingNavBar;
   final mainTabBarView = Pref.mainTabBarView;
 
   late bool directExitOnBack = Pref.directExitOnBack;
@@ -59,8 +45,6 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
   @override
   void onInit() {
     super.onInit();
-    setNavBarConfig();
-
     controller = mainTabBarView
         ? TabController(
             vsync: this,
@@ -69,12 +53,9 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
           )
         : PageController(initialPage: selectedIndex.value);
 
-    hasHome = navigationBars.contains(NavigationBarType.home);
     if (msgBadgeMode != DynamicBadgeMode.hidden) {
-      if (hasHome) {
-        lastCheckUnreadAt = DateTime.now().millisecondsSinceEpoch;
-        queryUnreadMsg();
-      }
+      lastCheckUnreadAt = DateTime.now().millisecondsSinceEpoch;
+      queryUnreadMsg();
     }
   }
 
@@ -125,7 +106,6 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
 
   Future<void> queryUnreadMsg([bool isChangeType = false]) async {
     if (!accountService.isLogin.value ||
-        !hasHome ||
         msgUnReadTypes.isEmpty ||
         msgBadgeMode == DynamicBadgeMode.hidden) {
       msgUnReadCount.value = '';
@@ -150,24 +130,8 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
     }
   }
 
-  void setNavBarConfig() {
-    List<int>? navBarSort =
-        (GStorage.setting.get(SettingBoxKey.navBarSort) as List?)?.fromCast();
-    late final List<NavigationBarType> navigationBars;
-    if (navBarSort == null || navBarSort.isEmpty) {
-      navigationBars = NavigationBarType.values;
-    } else {
-      navigationBars = navBarSort
-          .map((i) => NavigationBarType.values[i])
-          .toList();
-    }
-    this.navigationBars = navigationBars;
-    final defPage = Pref.defaultHomePage;
-    selectedIndex.value = navigationBars.indexOf(defPage);
-  }
-
   void checkDefaultSearch([bool shouldCheck = false]) {
-    if (hasHome && homeController.enableSearchWord) {
+    if (homeController.enableSearchWord) {
       if (shouldCheck &&
           navigationBars[selectedIndex.value] != NavigationBarType.home) {
         return;
@@ -190,9 +154,10 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
     );
   }
 
+  void toMinePage() => setIndex(NavigationBarType.mine.index);
+
   void checkUnread([bool shouldCheck = false]) {
     if (accountService.isLogin.value &&
-        hasHome &&
         msgBadgeMode != DynamicBadgeMode.hidden) {
       if (shouldCheck &&
           navigationBars[selectedIndex.value] != NavigationBarType.home) {
@@ -203,23 +168,6 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
         lastCheckUnreadAt = now;
         queryUnreadMsg();
       }
-    }
-  }
-
-  int? _mineIndex;
-  void toMinePage() {
-    _mineIndex ??= navigationBars.indexOf(NavigationBarType.mine);
-    if (_mineIndex != -1) {
-      setIndex(_mineIndex!);
-    } else {
-      Get.to(
-        const Material(
-          child: ViewSafeArea(
-            top: true,
-            child: MinePage(showBackBtn: true),
-          ),
-        ),
-      );
     }
   }
 
@@ -263,11 +211,7 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
     }
   }
 
-  void setSearchBar() {
-    if (hasHome) {
-      homeController.showTopBar?.value = true;
-    }
-  }
+  void setSearchBar() => homeController.showTopBar?.value = true;
 
   @override
   void onClose() {

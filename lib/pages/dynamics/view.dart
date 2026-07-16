@@ -93,9 +93,7 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
     };
   }
 
-  bool get checkPage =>
-      _mainController.navigationBars[0] != .dynamics &&
-      _mainController.selectedIndex.value == 0;
+  bool get checkPage => _mainController.selectedIndex.value == 0;
 
   @override
   bool onUserScrollNotification(UserScrollNotification notification) {

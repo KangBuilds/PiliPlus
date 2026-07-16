@@ -13,11 +13,6 @@ const piliNativeGlassTabBarItems = <({String symbol, String selectedSymbol})>[
   ),
 ];
 
-bool usesPiliNativeGlassTabBar({
-  required bool isTablet,
-  required bool hasRequiredDestinations,
-}) => !isTablet && hasRequiredDestinations;
-
 Map<String, Object> piliNativeGlassTabBarCreationParams({
   required int selectedIndex,
   required List<String> labels,

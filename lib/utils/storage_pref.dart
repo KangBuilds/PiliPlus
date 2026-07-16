@@ -36,7 +36,6 @@ import 'package:crypto/crypto.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart' show FlexSchemeVariant;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:hive_ce/hive.dart';
 
 abstract final class Pref {
@@ -638,15 +637,6 @@ abstract final class Pref {
         defaultValue: ReplySortType.hot.index,
       )];
 
-  static bool get enableMYBar =>
-      _setting.get(SettingBoxKey.enableMYBar, defaultValue: true);
-
-  static Transition get pageTransition =>
-      Transition.values[_setting.get(
-        SettingBoxKey.pageTransition,
-        defaultValue: Transition.native.index,
-      )];
-
   static bool get enableQuickDouble =>
       _setting.get(SettingBoxKey.enableQuickDouble, defaultValue: true);
 
@@ -867,9 +857,6 @@ abstract final class Pref {
     SettingBoxKey.touchSlopH,
     defaultValue: deviceTouchSlop + 6.0,
   );
-
-  static bool get floatingNavBar =>
-      _setting.get(SettingBoxKey.floatingNavBar, defaultValue: false);
 
   static bool get removeSafeArea =>
       _setting.get(SettingBoxKey.removeSafeArea, defaultValue: false);

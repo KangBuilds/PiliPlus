@@ -114,7 +114,6 @@ abstract final class SettingBoxKey {
       appFontWeight = 'appFontWeight',
       fastForBackwardDuration = 'fastForBackwardDuration',
       recordSearchHistory = 'recordSearchHistory',
-      pageTransition = 'pageTransition',
       banWordForDyn = 'banWordForDyn',
       enableLog = 'enableLog',
       memberTab = 'memberTab',
@@ -133,7 +132,6 @@ abstract final class SettingBoxKey {
       enableImgMenu = 'enableImgMenu',
       showDynDispute = 'showDynDispute',
       touchSlopH = 'touchSlopH',
-      floatingNavBar = 'floatingNavBar',
       removeSafeArea = 'removeSafeArea',
       angleDegrees = 'angleDegrees';
 
@@ -197,12 +195,10 @@ abstract final class SettingBoxKey {
       dynamicsWaterfallFlow = 'dynamicsWaterfallFlow',
       upPanelPosition = 'upPanelPosition',
       dynamicsShowAllFollowedUp = 'dynamicsShowAllFollowedUp',
-      enableMYBar = 'enableMYBar',
       hideTopBar = 'hideSearchBar',
       tabBarSort = 'tabBarSortV3',
       msgBadgeMode = 'msgBadgeMode',
       msgUnReadTypeV2 = 'msgUnReadTypeV2',
-      navBarSort = 'navBarSort',
       tempPlayerConf = 'tempPlayerConf',
       reduceLuxColor = 'reduceLuxColor';
 }

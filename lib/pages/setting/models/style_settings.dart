@@ -56,27 +56,6 @@ List<SettingsModel> get styleSettings => [
     onTap: _showUiScaleDialog,
   ),
   NormalModel(
-    title: '页面过渡动画',
-    leading: const Icon(Icons.animation),
-    getSubtitle: () => '当前：${Pref.pageTransition.name}',
-    onTap: _showTransitionDialog,
-  ),
-  const SwitchModel(
-    title: 'MD3样式底栏',
-    subtitle: 'Material You设计规范底栏，关闭可变窄',
-    leading: Icon(Icons.design_services_outlined),
-    setKey: SettingBoxKey.enableMYBar,
-    defaultVal: true,
-    needReboot: true,
-  ),
-  const SwitchModel(
-    title: '悬浮底栏',
-    leading: Icon(MdiIcons.soundbar),
-    setKey: SettingBoxKey.floatingNavBar,
-    defaultVal: false,
-    needReboot: true,
-  ),
-  NormalModel(
     leading: const Icon(Icons.calendar_view_week_outlined),
     title: '列表宽度（dp）限制',
     getSubtitle: () =>
@@ -268,19 +247,6 @@ List<SettingsModel> get styleSettings => [
     ),
     title: '首页标签页',
     subtitle: '删除或调换首页标签页',
-    leading: const Icon(Icons.toc_outlined),
-  ),
-  NormalModel(
-    onTap: (context, setState) => Get.toNamed(
-      '/barSetting',
-      arguments: {
-        'key': SettingBoxKey.navBarSort,
-        'defaultBars': NavigationBarType.values,
-        'title': 'Navbar',
-      },
-    ),
-    title: 'Navbar编辑',
-    subtitle: '删除或调换Navbar',
     leading: const Icon(Icons.toc_outlined),
   ),
   SwitchModel(
@@ -559,25 +525,6 @@ Future<void> _showFontWeightDialog(BuildContext context) async {
   if (res != null) {
     await GStorage.setting.put(SettingBoxKey.appFontWeight, res.toInt() - 1);
     Get.updateMyAppTheme();
-  }
-}
-
-Future<void> _showTransitionDialog(
-  BuildContext context,
-  VoidCallback setState,
-) async {
-  final res = await showDialog<Transition>(
-    context: context,
-    builder: (context) => SelectDialog<Transition>(
-      title: '页面过渡动画',
-      value: Pref.pageTransition,
-      values: Transition.values.map((e) => (e, e.name)).toList(),
-    ),
-  );
-  if (res != null) {
-    Get.rootController.defaultTransition = res;
-    await GStorage.setting.put(SettingBoxKey.pageTransition, res.index);
-    setState();
   }
 }
 

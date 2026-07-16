@@ -33,30 +33,6 @@ void main() {
     ]);
   });
 
-  test('requires a phone layout with the expected destinations', () {
-    expect(
-      usesPiliNativeGlassTabBar(
-        isTablet: false,
-        hasRequiredDestinations: true,
-      ),
-      isTrue,
-    );
-    expect(
-      usesPiliNativeGlassTabBar(
-        isTablet: true,
-        hasRequiredDestinations: true,
-      ),
-      isFalse,
-    );
-    expect(
-      usesPiliNativeGlassTabBar(
-        isTablet: false,
-        hasRequiredDestinations: false,
-      ),
-      isFalse,
-    );
-  });
-
   test(
     'forwards repeat taps and deduplicates selected-index updates',
     () async {

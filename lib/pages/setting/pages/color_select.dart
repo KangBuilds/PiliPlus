@@ -1,6 +1,5 @@
 import 'package:PiliPlus/common/widgets/animated_height.dart';
 import 'package:PiliPlus/common/widgets/color_palette.dart';
-import 'package:PiliPlus/models/common/nav_bar_config.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/models/common/theme/theme_type.dart';
 import 'package:PiliPlus/pages/home/view.dart';
@@ -159,20 +158,6 @@ class _ColorSelectPageState extends State<ColorSelectPage> {
                   color: theme.colorScheme.surface,
                   child: const HomePage(),
                 ),
-              ),
-            ),
-          ),
-          ExcludeFocus(
-            child: IgnorePointer(
-              child: NavigationBar(
-                destinations: NavigationBarType.values
-                    .map(
-                      (item) => NavigationDestination(
-                        icon: item.icon,
-                        label: item.label,
-                      ),
-                    )
-                    .toList(),
               ),
             ),
           ),
