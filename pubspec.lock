@@ -1090,7 +1090,7 @@ packages:
     description:
       path: media_kit_video
       ref: ios-build
-      resolved-ref: a9cc4193f908d9efb2db9badc52320f01b094a1e
+      resolved-ref: "3bec8595a4973c59d0147c93ac25500504ce9f9e"
       url: "https://github.com/KangBuilds/media-kit.git"
     source: git
     version: "1.2.5"
