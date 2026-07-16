@@ -579,9 +579,7 @@ class PlPlayerController with BlockConfigMixin {
     _pictureInPictureEventChannel.setMethodCallHandler(
       _handleNativePictureInPictureEvent,
     );
-    // The audio session remains available for PiP controls, while native
-    // lifecycle state decides whether the player may continue in background.
-    videoPlayerServiceHandler?.enableBackgroundPlay = true;
+    videoPlayerServiceHandler?.enableBackgroundPlay = Pref.enableBackgroundPlay;
 
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
