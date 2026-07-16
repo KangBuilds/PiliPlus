@@ -132,16 +132,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   final _playerKey = GlobalKey();
   final _videoKey = GlobalKey();
-  ui.Rect? _pictureInPictureRect;
-
   void _syncPictureInPictureRect() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final box = _playerKey.currentContext?.findRenderObject();
       if (box is! RenderBox || !box.hasSize) return;
       final rect = box.localToGlobal(Offset.zero) & box.size;
-      if (rect == _pictureInPictureRect) return;
-      _pictureInPictureRect = rect;
       plPlayerController.updatePictureInPictureRect(rect);
     });
   }
