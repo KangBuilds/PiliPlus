@@ -196,6 +196,7 @@ class PlPlayerController with BlockConfigMixin {
   );
   PictureInPictureState _pictureInPictureTransitionState =
       PictureInPictureState.inline;
+  final RxBool isRestoringPictureInPicture = false.obs;
   bool _applicationInBackground = false;
   bool _pictureInPictureDisposed = false;
   int _pictureInPictureSession = 0;
@@ -290,6 +291,9 @@ class PlPlayerController with BlockConfigMixin {
       'restoringInline' => PictureInPictureState.restoringInline,
       _ => PictureInPictureState.inline,
     };
+    isRestoringPictureInPicture.value =
+        _pictureInPictureTransitionState ==
+        PictureInPictureState.restoringInline;
     _applicationInBackground = args['background'] == true;
     if (kDebugMode) {
       debugPrint(

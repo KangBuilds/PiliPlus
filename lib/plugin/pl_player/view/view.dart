@@ -1928,6 +1928,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 )
               : const SizedBox.shrink();
         }),
+
+        Obx(
+          () => plPlayerController.isRestoringPictureInPicture.value
+              ? const Positioned.fill(child: ColoredBox(color: Colors.black))
+              : const SizedBox.shrink(),
+        ),
       ],
     );
     if (PlatformUtils.isDesktop) {
