@@ -41,22 +41,12 @@ Future<void>? portraitUpMode() {
   return _setPreferredOrientations(const [.portraitUp]);
 }
 
-Future<void>? portraitDownMode() {
-  return _setPreferredOrientations(const [.portraitDown]);
-}
-
 Future<void>? landscapeLeftMode() {
   return _setPreferredOrientations(const [.landscapeLeft]);
 }
 
 Future<void>? landscapeRightMode() {
   return _setPreferredOrientations(const [.landscapeRight]);
-}
-
-Future<void>? fullMode() {
-  return _setPreferredOrientations(
-    const [.portraitUp, .portraitDown, .landscapeLeft, .landscapeRight],
-  );
 }
 
 bool _showSystemBar = true;

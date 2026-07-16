@@ -33,10 +33,9 @@ void main() {
     ]);
   });
 
-  test('requires a portrait phone layout', () {
+  test('requires a phone layout with the expected destinations', () {
     expect(
       usesPiliNativeGlassTabBar(
-        isPortrait: true,
         isTablet: false,
         hasRequiredDestinations: true,
       ),
@@ -44,9 +43,15 @@ void main() {
     );
     expect(
       usesPiliNativeGlassTabBar(
-        isPortrait: false,
-        isTablet: false,
+        isTablet: true,
         hasRequiredDestinations: true,
+      ),
+      isFalse,
+    );
+    expect(
+      usesPiliNativeGlassTabBar(
+        isTablet: false,
+        hasRequiredDestinations: false,
       ),
       isFalse,
     );

@@ -81,7 +81,6 @@ mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
 
   bool get isPortrait;
   bool get isFullScreen;
-  bool get horizontalScreen;
 
   Timer? _clock;
   RxString now = ''.obs;
@@ -115,7 +114,7 @@ mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
 
   bool _showCurrTime = false;
   void showCurrTimeIfNeeded(bool isFullScreen) {
-    _showCurrTime = !isPortrait && (isFullScreen || !horizontalScreen);
+    _showCurrTime = !isPortrait;
     if (!_showCurrTime) {
       stopClock();
     }
@@ -299,9 +298,6 @@ class HeaderControlState extends State<HeaderControl>
 
   @override
   bool get isPortrait => widget.isPortrait;
-  @override
-  late final horizontalScreen = videoDetailCtr.horizontalScreen;
-
   Box setting = GStorage.setting;
 
   @override
@@ -1493,9 +1489,7 @@ class HeaderControlState extends State<HeaderControl>
     showCurrTimeIfNeeded(isFullScreen);
     Widget title;
     if (introController.videoDetail.value.title != null &&
-        (isFullScreen ||
-            ((!horizontalScreen || plPlayerController.isDesktopPip) &&
-                !isPortrait))) {
+        (isFullScreen || !isPortrait)) {
       title = Padding(
         key: titleKey,
         padding: isPortrait

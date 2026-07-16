@@ -14,10 +14,9 @@ const piliNativeGlassTabBarItems = <({String symbol, String selectedSymbol})>[
 ];
 
 bool usesPiliNativeGlassTabBar({
-  required bool isPortrait,
   required bool isTablet,
   required bool hasRequiredDestinations,
-}) => isPortrait && !isTablet && hasRequiredDestinations;
+}) => !isTablet && hasRequiredDestinations;
 
 Map<String, Object> piliNativeGlassTabBarCreationParams({
   required int selectedIndex,

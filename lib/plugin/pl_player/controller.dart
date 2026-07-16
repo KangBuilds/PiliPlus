@@ -547,7 +547,7 @@ class PlPlayerController with BlockConfigMixin {
     switch (orientation) {
       case .portraitUp:
         if (!_isVertical && controlsLock.value) return;
-        if (!horizontalScreen && !_isVertical && isFullScreen) {
+        if (!_isVertical && isFullScreen) {
           if (!isManualFS) {
             triggerFullScreen(status: false, orientation: orientation);
           }
@@ -555,17 +555,15 @@ class PlPlayerController with BlockConfigMixin {
           portraitUpMode();
         }
       case .portraitDown:
-        if (!horizontalScreen) return;
-        if (!_isVertical && controlsLock.value) return;
-        portraitDownMode();
+        return;
       case .landscapeLeft:
-        if (!horizontalScreen && !isFullScreen) {
+        if (!isFullScreen) {
           triggerFullScreen(orientation: orientation, isManualFS: false);
         } else {
           landscapeLeftMode();
         }
       case .landscapeRight:
-        if (!horizontalScreen && !isFullScreen) {
+        if (!isFullScreen) {
           triggerFullScreen(orientation: orientation, isManualFS: false);
         } else {
           landscapeRightMode();
@@ -1313,7 +1311,6 @@ class PlPlayerController with BlockConfigMixin {
   double screenRatio = 0.0;
   bool isManualFS = true;
   late final FullScreenMode mode = Pref.fullScreenMode;
-  late final horizontalScreen = Pref.horizontalScreen;
   late final removeSafeArea = Pref.removeSafeArea;
 
   Future<void>? changeOrientation({
@@ -1468,13 +1465,7 @@ class PlPlayerController with BlockConfigMixin {
   bool _isCloseAll = false;
   bool get isCloseAll => _isCloseAll;
 
-  Future<void>? resetScreenRotation() {
-    if (horizontalScreen) {
-      return fullMode();
-    } else {
-      return portraitUpMode();
-    }
-  }
+  Future<void>? resetScreenRotation() => portraitUpMode();
 
   void onCloseAll() {
     _isCloseAll = true;

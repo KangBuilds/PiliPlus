@@ -87,9 +87,7 @@ void main() async {
 
   await _traceInit(
     'orientation',
-    () async {
-      await (Pref.horizontalScreen ? fullMode() : portraitUpMode());
-    },
+    () async => portraitUpMode(),
   );
 
   Request();

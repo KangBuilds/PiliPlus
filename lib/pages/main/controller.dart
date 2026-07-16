@@ -24,7 +24,6 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
 
   List<NavigationBarType> navigationBars = <NavigationBarType>[];
 
-  bool useBottomNav = false;
   late dynamic controller;
   final RxInt selectedIndex = 0.obs;
 
@@ -46,9 +45,7 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
 
   final enableMYBar = Pref.enableMYBar;
   final floatingNavBar = Pref.floatingNavBar;
-  final useSideBar = Pref.useSideBar;
   final mainTabBarView = Pref.mainTabBarView;
-  late final optTabletNav = Pref.optTabletNav;
 
   late bool directExitOnBack = Pref.directExitOnBack;
   late bool showTrayIcon = Pref.showTrayIcon;

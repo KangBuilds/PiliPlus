@@ -5,11 +5,9 @@ import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/pili_native_glass_tab_bar.dart';
 import 'package:PiliPlus/common/widgets/route_aware_mixin.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
-import 'package:PiliPlus/pages/home/view.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
-import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/mobile_observer.dart';
 import 'package:PiliPlus/utils/storage.dart';
@@ -49,9 +47,6 @@ class _MainAppState extends PopScopeState<MainApp>
     final brightness = theme.brightness;
     NetworkImgLayer.reduce =
         NetworkImgLayer.reduceLuxColor != null && brightness.isDark;
-    if (!_mainController.useSideBar) {
-      _mainController.useBottomNav = MediaQuery.sizeOf(context).isPortrait;
-    }
   }
 
   @override
@@ -59,7 +54,7 @@ class _MainAppState extends PopScopeState<MainApp>
     addObserverMobile(this);
     _mainController
       ..checkDefaultSearch(true)
-      ..checkUnread(_mainController.useBottomNav);
+      ..checkUnread(true);
     super.didPopNext();
   }
 
@@ -74,7 +69,7 @@ class _MainAppState extends PopScopeState<MainApp>
     if (state == AppLifecycleState.resumed) {
       _mainController
         ..checkDefaultSearch(true)
-        ..checkUnread(_mainController.useBottomNav);
+        ..checkUnread(true);
     }
   }
 
@@ -101,7 +96,6 @@ class _MainAppState extends PopScopeState<MainApp>
     if (_mainController.navigationBars.length > 1) {
       final navigationBars = _mainController.navigationBars;
       if (usesPiliNativeGlassTabBar(
-        isPortrait: MediaQuery.orientationOf(context) == Orientation.portrait,
         isTablet: context.isTablet,
         hasRequiredDestinations: _mainController.hasPiliNativeGlassDestinations,
       )) {
@@ -174,79 +168,12 @@ class _MainAppState extends PopScopeState<MainApp>
     return bottomNav;
   }
 
-  Widget _sideBar(ThemeData theme) {
-    return _mainController.navigationBars.length > 1
-        ? context.isTablet && _mainController.optTabletNav
-              ? Column(
-                  children: [
-                    const SizedBox(height: 25),
-                    userAndSearchVertical(theme),
-                    const Spacer(flex: 2),
-                    Expanded(
-                      flex: 5,
-                      child: SizedBox(
-                        width: 130,
-                        child: Obx(
-                          () => NavigationDrawer(
-                            backgroundColor: Colors.transparent,
-                            tilePadding: const .symmetric(
-                              vertical: 5,
-                              horizontal: 12,
-                            ),
-                            indicatorShape: const RoundedRectangleBorder(
-                              borderRadius: .all(.circular(16)),
-                            ),
-                            onDestinationSelected: _mainController.setIndex,
-                            selectedIndex: _mainController.selectedIndex.value,
-                            children: _mainController.navigationBars
-                                .map(
-                                  (e) => NavigationDrawerDestination(
-                                    label: Text(e.label),
-                                    icon: _buildIcon(type: e),
-                                    selectedIcon: _buildIcon(
-                                      type: e,
-                                      selected: true,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : Obx(
-                  () => NavigationRail(
-                    groupAlignment: 0.5,
-                    selectedIndex: _mainController.selectedIndex.value,
-                    onDestinationSelected: _mainController.setIndex,
-                    labelType: .selected,
-                    leading: userAndSearchVertical(theme),
-                    destinations: _mainController.navigationBars
-                        .map(
-                          (e) => NavigationRailDestination(
-                            label: Text(e.label),
-                            icon: _buildIcon(type: e),
-                            selectedIcon: _buildIcon(type: e, selected: true),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                )
-        : Container(
-            width: 80,
-            padding: const .only(top: 10),
-            child: userAndSearchVertical(theme),
-          );
-  }
-
   @override
   Widget build(BuildContext context) {
     Widget child;
     if (_mainController.mainTabBarView) {
       child = CustomTabBarView(
-        scrollDirection: _mainController.useBottomNav ? .horizontal : .vertical,
+        scrollDirection: .horizontal,
         physics: const NeverScrollableScrollPhysics(),
         controller: _mainController.controller,
         children: _mainController.navigationBars.map((i) => i.page).toList(),
@@ -259,23 +186,8 @@ class _MainAppState extends PopScopeState<MainApp>
       );
     }
 
-    Widget? bottomNav;
-    if (_mainController.useBottomNav) {
-      bottomNav = _bottomNav;
-      child = Row(children: [Expanded(child: child)]);
-    } else {
-      child = Row(
-        children: [
-          _sideBar(theme),
-          VerticalDivider(
-            width: 1,
-            endIndent: _padding.bottom,
-            color: theme.colorScheme.outline.withValues(alpha: 0.06),
-          ),
-          Expanded(child: child),
-        ],
-      );
-    }
+    final bottomNav = _bottomNav;
+    child = Row(children: [Expanded(child: child)]);
 
     child = Scaffold(
       extendBody: true,
@@ -283,7 +195,7 @@ class _MainAppState extends PopScopeState<MainApp>
       appBar: AppBar(toolbarHeight: 0),
       body: Padding(
         padding: EdgeInsets.only(
-          left: _mainController.useBottomNav ? _padding.left : 0.0,
+          left: _padding.left,
           right: _padding.right,
         ),
         child: child,
@@ -304,22 +216,4 @@ class _MainAppState extends PopScopeState<MainApp>
 
   Widget _buildIcon({required NavigationBarType type, bool selected = false}) =>
       selected ? type.selectIcon : type.icon;
-
-  Widget userAndSearchVertical(ThemeData theme) {
-    return Column(
-      children: [
-        userAvatar(theme: theme, mainController: _mainController),
-        const SizedBox(height: 8),
-        msgBadge(_mainController),
-        IconButton(
-          tooltip: '搜索',
-          icon: const Icon(
-            Icons.search_outlined,
-            semanticLabel: '搜索',
-          ),
-          onPressed: () => Get.toNamed('/search'),
-        ),
-      ],
-    );
-  }
 }

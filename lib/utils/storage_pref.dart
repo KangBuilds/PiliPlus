@@ -25,7 +25,6 @@ import 'package:PiliPlus/plugin/pl_player/models/bottom_progress_behavior.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/hwdec_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
-import 'package:PiliPlus/utils/device_utils.dart';
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/login_utils.dart';
@@ -184,9 +183,7 @@ abstract final class Pref {
   static FullScreenMode get fullScreenMode {
     int? index = _setting.get(SettingBoxKey.fullScreenMode);
     if (index == null) {
-      final FullScreenMode mode = horizontalScreen && DeviceUtils.isTablet
-          ? .none
-          : .auto;
+      const FullScreenMode mode = .auto;
       _setting.put(SettingBoxKey.fullScreenMode, mode.index);
       return mode;
     }
@@ -384,12 +381,12 @@ abstract final class Pref {
 
   static bool get horizontalSeasonPanel => _setting.get(
     SettingBoxKey.horizontalSeasonPanel,
-    defaultValue: horizontalScreen,
+    defaultValue: false,
   );
 
   static bool get horizontalMemberPage => _setting.get(
     SettingBoxKey.horizontalMemberPage,
-    defaultValue: horizontalScreen,
+    defaultValue: false,
   );
 
   static int? get replyLengthLimit {
@@ -544,19 +541,6 @@ abstract final class Pref {
   static num get maxCacheSize =>
       _setting.get(SettingBoxKey.maxCacheSize) ?? 1 << 30;
 
-  static bool get optTabletNav =>
-      _setting.get(SettingBoxKey.optTabletNav, defaultValue: true);
-
-  static bool get horizontalScreen {
-    bool? horizontalScreen = _setting.get(SettingBoxKey.horizontalScreen);
-    if (horizontalScreen == null) {
-      final isTablet = DeviceUtils.isTablet;
-      _setting.put(SettingBoxKey.horizontalScreen, isTablet);
-      return isTablet;
-    }
-    return horizontalScreen;
-  }
-
   static String get banWordForDyn =>
       _setting.get(SettingBoxKey.banWordForDyn, defaultValue: '');
 
@@ -612,7 +596,7 @@ abstract final class Pref {
 
   static bool get dynamicsWaterfallFlow => _setting.get(
     SettingBoxKey.dynamicsWaterfallFlow,
-    defaultValue: horizontalScreen,
+    defaultValue: false,
   );
 
   static bool get hideTopBar => _setting.get(
@@ -622,9 +606,6 @@ abstract final class Pref {
 
   static bool get enableSearchWord =>
       _setting.get(SettingBoxKey.enableSearchWord, defaultValue: false);
-
-  static bool get useSideBar =>
-      _setting.get(SettingBoxKey.useSideBar, defaultValue: false);
 
   static bool get dynamicsShowAllFollowedUp => _setting.get(
     SettingBoxKey.dynamicsShowAllFollowedUp,

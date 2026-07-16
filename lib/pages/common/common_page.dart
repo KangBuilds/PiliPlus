@@ -1,11 +1,9 @@
 import 'package:PiliPlus/pages/home/controller.dart';
-import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 abstract class CommonPageState<T extends StatefulWidget> extends State<T> {
   RxBool? _showTopBar;
-  final _mainController = Get.find<MainController>();
 
   @override
   void initState() {
@@ -26,7 +24,6 @@ abstract class CommonPageState<T extends StatefulWidget> extends State<T> {
   }
 
   bool onUserScrollNotification(UserScrollNotification notification) {
-    if (!_mainController.useBottomNav) return false;
     if (notification.metrics.axis == .horizontal) return false;
     switch (notification.direction) {
       case .forward:
