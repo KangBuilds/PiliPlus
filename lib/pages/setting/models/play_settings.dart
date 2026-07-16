@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/models/common/video/subtitle_pref_type.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
@@ -155,15 +157,6 @@ List<SettingsModel> get playSettings => [
       leading: Icon(Icons.motion_photos_pause_outlined),
       setKey: SettingBoxKey.continuePlayInBackground,
       defaultVal: false,
-    ),
-  if (Platform.isIOS)
-    SwitchModel(
-      title: '自动开启画中画',
-      subtitle: '离开 PiliPlus 时继续以画中画播放',
-      leading: const Icon(Icons.picture_in_picture_outlined),
-      setKey: SettingBoxKey.autoPictureInPicture,
-      defaultVal: false,
-      onChanged: (_) => PlPlayerController.syncAutoPictureInPictureSetting(),
     ),
   const SwitchModel(
     title: '全屏手势反向',

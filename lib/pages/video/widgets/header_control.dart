@@ -1,6 +1,6 @@
 import 'dart:async' show Timer;
 import 'dart:convert' show jsonDecode, utf8;
-import 'dart:io' show File;
+import 'dart:io' show File, Platform;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:PiliPlus/common/constants.dart';
