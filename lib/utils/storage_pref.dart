@@ -695,9 +695,6 @@ abstract final class Pref {
   static bool get fullScreenGestureReverse =>
       _setting.get(SettingBoxKey.fullScreenGestureReverse, defaultValue: false);
 
-  static bool get autoPiP =>
-      _setting.get(SettingBoxKey.autoPiP, defaultValue: false);
-
   static bool get enableSponsorBlock =>
       _setting.get(SettingBoxKey.enableSponsorBlock, defaultValue: false);
 
@@ -805,9 +802,6 @@ abstract final class Pref {
 
   static int get cacheVideoFit =>
       _video.get(VideoBoxKey.cacheVideoFit, defaultValue: 1);
-
-  static bool get continuePlayInBackground =>
-      _setting.get(SettingBoxKey.continuePlayInBackground, defaultValue: false);
 
   static bool get directExitOnBack =>
       _setting.get(SettingBoxKey.directExitOnBack, defaultValue: false);

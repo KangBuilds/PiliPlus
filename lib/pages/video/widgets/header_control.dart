@@ -533,18 +533,6 @@ class HeaderControlState extends State<HeaderControl>
                             );
                           },
                         ),
-                      if (PlatformUtils.isMobile)
-                        Obx(
-                          () => ActionRowLineItem(
-                            iconData: Icons.play_circle_outline,
-                            onTap:
-                                plPlayerController.setContinuePlayInBackground,
-                            text: " 后台播放 ",
-                            selectStatus: plPlayerController
-                                .continuePlayInBackground
-                                .value,
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -1752,6 +1740,20 @@ class HeaderControlState extends State<HeaderControl>
                   icon: const Icon(
                     size: 20,
                     CustomIcons.dm_settings,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: btnWidth,
+                height: btnHeight,
+                child: IconButton(
+                  tooltip: '画中画',
+                  style: btnStyle,
+                  onPressed: plPlayerController.enterPictureInPicture,
+                  icon: const Icon(
+                    Icons.picture_in_picture_outlined,
+                    size: 20,
                     color: Colors.white,
                   ),
                 ),

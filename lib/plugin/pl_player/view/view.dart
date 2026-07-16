@@ -59,6 +59,7 @@ import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:collection/collection.dart';
@@ -131,6 +132,15 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   final _playerKey = GlobalKey();
   final _videoKey = GlobalKey();
+  void _syncPictureInPictureRect() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final box = _playerKey.currentContext?.findRenderObject();
+      if (box is! RenderBox || !box.hasSize) return;
+      final rect = box.localToGlobal(Offset.zero) & box.size;
+      plPlayerController.updatePictureInPictureRect(rect);
+    });
+  }
 
   final RxDouble _brightnessValue = 0.0.obs;
   final RxBool _brightnessIndicator = false.obs;
@@ -142,8 +152,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   GestureType? _gestureType;
   Offset? _initialFocalPoint;
-
-  bool _pauseDueToPauseUponEnteringBackgroundMode = false;
 
   StreamSubscription? _brightnessListener;
   void _onBrightnessChanged(double value) {
@@ -307,18 +315,17 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!plPlayerController.continuePlayInBackground.value) {
-      late final player = plPlayerController.videoPlayerController;
-      if (const <AppLifecycleState>[.paused, .detached].contains(state)) {
-        if (player != null && player.state.playing) {
-          _pauseDueToPauseUponEnteringBackgroundMode = true;
-          player.pause();
-        }
-      } else {
-        if (_pauseDueToPauseUponEnteringBackgroundMode) {
-          _pauseDueToPauseUponEnteringBackgroundMode = false;
-          player?.play();
-        }
+    final isInBackground = const <AppLifecycleState>[
+      .paused,
+      .detached,
+    ].contains(state);
+    plPlayerController.setApplicationInBackground(isInBackground);
+    if (isInBackground &&
+        !plPlayerController.isPictureInPictureTransitioning &&
+        !Pref.enableBackgroundPlay) {
+      final player = plPlayerController.videoPlayerController;
+      if (player != null && player.state.playing) {
+        player.pause();
       }
     }
   }
@@ -1288,6 +1295,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   Widget build(BuildContext context) {
+    _syncPictureInPictureRect();
     maxWidth = widget.maxWidth;
     maxHeight = widget.maxHeight;
     final isFullScreen = this.isFullScreen;
@@ -1916,6 +1924,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                 )
               : const SizedBox.shrink();
         }),
+
+        Obx(
+          () => plPlayerController.isRestoringPictureInPicture.value
+              ? const Positioned.fill(child: ColoredBox(color: Colors.black))
+              : const SizedBox.shrink(),
+        ),
       ],
     );
     if (PlatformUtils.isDesktop) {

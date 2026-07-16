@@ -1089,9 +1089,9 @@ packages:
     dependency: "direct main"
     description:
       path: media_kit_video
-      ref: "version_1.2.5"
-      resolved-ref: deac6b62569584b6a5e28e6c60c187a0a7281b3a
-      url: "https://github.com/My-Responsitories/media-kit.git"
+      ref: ios-build
+      resolved-ref: "3ff9f53763e06f5f9bfc749bdb9e35de7234c3ec"
+      url: "https://github.com/KangBuilds/media-kit.git"
     source: git
     version: "1.2.5"
   meta:
