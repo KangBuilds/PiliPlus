@@ -4,7 +4,6 @@ import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:PiliPlus/common/constants.dart';
-import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/dialog/report.dart';
 import 'package:PiliPlus/common/widgets/dialog/simple_dialog_option.dart';
@@ -55,7 +54,6 @@ import 'package:PiliPlus/utils/subtitle_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
 import 'package:battery_plus/battery_plus.dart';
-import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_debounce/easy_throttle.dart';
@@ -607,15 +605,6 @@ class HeaderControlState extends State<HeaderControl>
                   },
                   descPosType: .subtitle,
                   descFontSize: 12,
-                ),
-                ListTile(
-                  dense: true,
-                  onTap: () {
-                    Get.back();
-                    showDanmakuPool();
-                  },
-                  leading: const Icon(CustomIcons.dm_on, size: 20),
-                  title: const Text('弹幕列表', style: titleStyle),
                 ),
                 ListTile(
                   dense: true,
@@ -1503,142 +1492,6 @@ class HeaderControlState extends State<HeaderControl>
         );
       },
     )?.whenComplete(plPlayerController.putSubtitleSettings);
-  }
-
-  void showDanmakuPool() {
-    final ctr = plPlayerController.danmakuController;
-    if (ctr == null) return;
-    showBottomSheet((context, setState) {
-      final theme = Theme.of(context);
-      return Container(
-        margin: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.all(Radius.circular(12)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              height: 45,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                  ),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('弹幕列表'),
-                  iconButton(
-                    onPressed: () => setState(() {}),
-                    icon: const Icon(Icons.refresh),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Material(
-                type: .transparency,
-                clipBehavior: .hardEdge,
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(12),
-                ),
-                child: CustomScrollView(
-                  slivers: [
-                    ?_buildDanmakuList(ctr.staticDanmaku.nonNulls.toList()),
-                    ?_buildDanmakuList(
-                      ctr.scrollDanmaku.expand((e) => e).toList(),
-                    ),
-                    ?_buildDanmakuList(ctr.specialDanmaku.toList()),
-                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget? _buildDanmakuList(List<DanmakuItem<DanmakuExtra>> list) {
-    if (list.isEmpty) return null;
-
-    return SliverList.builder(
-      itemCount: list.length,
-      itemBuilder: (context, index) {
-        final item = list[index];
-        final extra = item.content.extra! as VideoDanmaku;
-        return ListTile(
-          dense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-          onLongPress: () => Utils.copyText(item.content.text),
-          title: Text(
-            item.content.text,
-            style: const TextStyle(fontSize: 14),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Builder(
-                builder: (context) => Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    iconButton(
-                      onPressed: () async {
-                        if (await HeaderControl.likeDanmaku(
-                              extra,
-                              plPlayerController.cid!,
-                            ) &&
-                            context.mounted) {
-                          (context as Element).markNeedsBuild();
-                        }
-                      },
-                      icon: extra.isLike
-                          ? const Icon(CustomIcons.player_dm_tip_like_solid)
-                          : const Icon(CustomIcons.player_dm_tip_like),
-                    ),
-                    if (extra.like > 0)
-                      Positioned(
-                        left: 24.5,
-                        top: 1.5,
-                        child: Text(
-                          extra.like.toString(),
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            letterSpacing: 0,
-                            // fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              if (item.content.selfSend)
-                iconButton(
-                  onPressed: () => HeaderControl.deleteDanmaku(
-                    extra.id,
-                    plPlayerController.cid!,
-                  ).then((_) => item.expired = true),
-                  icon: const Icon(CustomIcons.player_dm_tip_recall),
-                )
-              else
-                iconButton(
-                  onPressed: () => HeaderControl.reportDanmaku(
-                    context,
-                    extra: extra,
-                    ctr: plPlayerController,
-                  ),
-                  icon: const Icon(CustomIcons.player_dm_tip_back),
-                ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   late final isFileSource = videoDetailCtr.isFileSource;
