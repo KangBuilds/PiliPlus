@@ -198,7 +198,6 @@ class PlPlayerController with BlockConfigMixin {
       PictureInPictureState.inline;
   final RxBool isRestoringPictureInPicture = false.obs;
   bool _applicationInBackground = false;
-  bool _pictureInPictureDisposed = false;
   int _pictureInPictureSession = 0;
   ui.Rect _pictureInPictureRect = ui.Rect.zero;
 
@@ -258,7 +257,6 @@ class PlPlayerController with BlockConfigMixin {
   }
 
   Future<void> _handleNativePictureInPictureEvent(MethodCall call) async {
-    if (_pictureInPictureDisposed) return;
     final args = Map<Object?, Object?>.from(call.arguments as Map);
     final player = videoPlayerController;
     if (player == null ||
@@ -309,7 +307,8 @@ class PlPlayerController with BlockConfigMixin {
   }
 
   Future<void> _syncNativePictureInPicture() async {
-    if (_pictureInPictureDisposed || videoPlayerController == null) {
+    if (!isPictureInPictureTransitioning ||
+        videoPlayerController == null) {
       return;
     }
     try {
@@ -637,9 +636,7 @@ class PlPlayerController with BlockConfigMixin {
       // _playbackSpeed.value = speed;
       // 初始化数据加载状态
       dataStatus.value = DataStatus.loading;
-      if (isPictureInPictureTransitioning) {
-        unawaited(_syncNativePictureInPicture());
-      }
+      unawaited(_syncNativePictureInPicture());
       // 初始化全屏方向
       _isVertical = isVertical ?? false;
       _aid = aid;
@@ -675,9 +672,7 @@ class PlPlayerController with BlockConfigMixin {
       position.value = buffered.value = seekTo?.inSeconds ?? 0;
 
       dataStatus.value = .loaded;
-      if (isPictureInPictureTransitioning) {
-        unawaited(_syncNativePictureInPicture());
-      }
+      unawaited(_syncNativePictureInPicture());
 
       if (autoFullScreenFlag && autoEnterFullScreen) {
         triggerFullScreen(status: true);
@@ -902,9 +897,7 @@ class PlPlayerController with BlockConfigMixin {
         }
 
         final seconds = videoPlayerController!.state.position.inSeconds;
-        if (isPictureInPictureTransitioning) {
-          unawaited(_syncNativePictureInPicture());
-        }
+        unawaited(_syncNativePictureInPicture());
         if (seconds != 0) {
           makeHeartBeat(seconds, type: .status);
         }
@@ -920,9 +913,7 @@ class PlPlayerController with BlockConfigMixin {
           }
 
           makeHeartBeat(-1, type: .completed);
-          if (isPictureInPictureTransitioning) {
-            unawaited(_syncNativePictureInPicture());
-          }
+          unawaited(_syncNativePictureInPicture());
         }
       }),
 
@@ -938,9 +929,7 @@ class PlPlayerController with BlockConfigMixin {
           videoPlayerServiceHandler?.onPositionChange(position);
 
           makeHeartBeat(posInSeconds);
-          if (isPictureInPictureTransitioning) {
-            unawaited(_syncNativePictureInPicture());
-          }
+          unawaited(_syncNativePictureInPicture());
         }
 
         for (final element in _positionListeners) {
@@ -949,9 +938,7 @@ class PlPlayerController with BlockConfigMixin {
       }),
       stream.duration.listen((value) {
         updateDuration(value);
-        if (isPictureInPictureTransitioning) {
-          unawaited(_syncNativePictureInPicture());
-        }
+        unawaited(_syncNativePictureInPicture());
       }),
       stream.buffer.listen((Duration buffer) {
         buffered.value = buffer.inSeconds;
@@ -1540,7 +1527,6 @@ class PlPlayerController with BlockConfigMixin {
     if (kDebugMode) {
       debugPrint('dispose player');
     }
-    _pictureInPictureDisposed = true;
     _pictureInPictureEventChannel.setMethodCallHandler(null);
     _videoPlayerController?.dispose();
     _videoPlayerController = null;
@@ -1562,9 +1548,7 @@ class PlPlayerController with BlockConfigMixin {
     videoPlayerController?.setVideoTrack(
       onlyPlayAudio.value ? VideoTrack.no() : VideoTrack.auto(),
     );
-    if (isPictureInPictureTransitioning) {
-      unawaited(_syncNativePictureInPicture());
-    }
+    unawaited(_syncNativePictureInPicture());
   }
 
   late final Map<String, ui.Image?> previewCache = {};
