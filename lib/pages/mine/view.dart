@@ -79,21 +79,6 @@ class _MediaPageState extends CommonPageState<MinePage>
                       () => _buildVideoSection(
                         theme: theme,
                         secondary: secondary,
-                        title: '稍后再看',
-                        route: '/later',
-                        items: controller.laterList,
-                        itemBuilder: (item) => _MineVideoItem(
-                          cover: item.pic,
-                          title: item.title,
-                          subtitle: item.owner?.name,
-                          onTap: () => controller.openLater(item),
-                        ),
-                      ),
-                    ),
-                    Obx(
-                      () => _buildVideoSection(
-                        theme: theme,
-                        secondary: secondary,
                         title: '观看记录',
                         route: '/history',
                         items: controller.historyList,
@@ -104,6 +89,21 @@ class _MediaPageState extends CommonPageState<MinePage>
                           title: item.title,
                           subtitle: item.authorName,
                           onTap: () => controller.openHistory(item),
+                        ),
+                      ),
+                    ),
+                    Obx(
+                      () => _buildVideoSection(
+                        theme: theme,
+                        secondary: secondary,
+                        title: '稍后再看',
+                        route: '/later',
+                        items: controller.laterList,
+                        itemBuilder: (item) => _MineVideoItem(
+                          cover: item.pic,
+                          title: item.title,
+                          subtitle: item.owner?.name,
+                          onTap: () => controller.openLater(item),
                         ),
                       ),
                     ),
