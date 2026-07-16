@@ -130,6 +130,19 @@ void main() async {
       const MyApp(),
       logger: logger,
       customParameters: customParameters,
+      filterFunction: (report) {
+        final error = report.error.toString();
+        final stackTrace = report.stackTrace.toString();
+        return error.startsWith(
+              "LateInitializationError: Field '_register@",
+            ) &&
+            error.endsWith("' has not been initialized.") &&
+            stackTrace.contains(
+              'InitializerNativeEventLoop.create '
+              '(package:media_kit/src/player/native/core/'
+              'initializer_native_event_loop.dart)',
+            );
+      },
     );
   } else {
     runApp(const MyApp());
