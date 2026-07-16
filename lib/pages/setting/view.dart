@@ -39,11 +39,6 @@ class _SettingPageState extends State<SettingPage> {
 
   static const List<_SettingsModel> _items = [
     _SettingsModel(
-      type: SettingType.privacySetting,
-      subtitle: '黑名单',
-      icon: Icon(Icons.privacy_tip_outlined),
-    ),
-    _SettingsModel(
       type: SettingType.recommendSetting,
       subtitle: '推荐来源（web/app）、刷新保留内容、过滤器',
       icon: Icon(Icons.explore_outlined),
@@ -67,6 +62,11 @@ class _SettingPageState extends State<SettingPage> {
       type: SettingType.extraSetting,
       subtitle: '震动、搜索、收藏、ai、评论、动态、代理等',
       icon: Icon(Icons.extension_outlined),
+    ),
+    _SettingsModel(
+      type: SettingType.privacySetting,
+      subtitle: '黑名单',
+      icon: Icon(Icons.privacy_tip_outlined),
     ),
     _SettingsModel(
       type: SettingType.about,
