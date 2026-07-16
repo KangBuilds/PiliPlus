@@ -1803,20 +1803,6 @@ class HeaderControlState extends State<HeaderControl>
                         ),
                       ),
                     ),
-                  SizedBox(
-                    width: btnWidth,
-                    height: btnHeight,
-                    child: IconButton(
-                      tooltip: '投屏',
-                      style: btnStyle,
-                      onPressed: videoDetailCtr.onCast,
-                      icon: const Icon(
-                        Icons.cast,
-                        size: 19,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
                 ],
                 if (plPlayerController.enableSponsorBlock)
                   SizedBox(

@@ -75,7 +75,6 @@ abstract final class ApiType {
     AccountType.video: {
       Api.ugcUrl,
       Api.pugvUrl,
-      Api.tvPlayUrl,
       Api.videoshot,
     },
   };

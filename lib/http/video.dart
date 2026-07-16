@@ -26,7 +26,6 @@ import 'package:PiliPlus/models_new/video/video_play_info/data.dart';
 import 'package:PiliPlus/models_new/video/video_relation/data.dart';
 import 'package:PiliPlus/models_new/video/video_shot/data.dart';
 import 'package:PiliPlus/utils/accounts.dart';
-import 'package:PiliPlus/utils/app_sign.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
@@ -848,36 +847,6 @@ abstract final class VideoHttp {
     );
     if (res.data['code'] == 0) {
       return Success(PopularPreciousData.fromJson(res.data['data']));
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<PlayUrlModel>> tvPlayUrl({
-    required int cid,
-    required int objectId,
-    required int playurlType,
-    int? qn,
-  }) async {
-    final accessKey = Accounts.get(AccountType.video).accessKey;
-    final params = {
-      'access_key': ?accessKey,
-      'actionKey': 'appkey',
-      'cid': cid,
-      'fourk': 1,
-      'is_proj': 1,
-      'mobile_access_key': ?accessKey,
-      'object_id': objectId,
-      'mobi_app': 'android',
-      'platform': 'android',
-      'playurl_type': playurlType,
-      'protocol': 0,
-      'qn': qn ?? 80,
-    };
-    AppSign.appSign(params);
-    final res = await Request().get(Api.tvPlayUrl, queryParameters: params);
-    if (res.data['code'] == 0) {
-      return Success(PlayUrlModel.fromJson(res.data['data']));
     } else {
       return Error(res.data['message']);
     }
