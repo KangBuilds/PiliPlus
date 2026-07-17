@@ -34,6 +34,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:archive/archive.dart' show getCrc32;
 import 'package:canvas_danmaku/canvas_danmaku.dart';
+import 'package:collection/collection.dart' show lowerBound;
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -1486,7 +1487,7 @@ class PlPlayerController with BlockConfigMixin {
       showPreview.value = true;
       previewIndex.value = max(
         0,
-        (response.index.where((item) => item <= seconds).length - 2),
+        lowerBound(response.index, seconds + 1) - 2,
       );
     }
   }
