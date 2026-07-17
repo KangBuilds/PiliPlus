@@ -1977,6 +1977,39 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               ? const Positioned.fill(child: ColoredBox(color: Colors.black))
               : const SizedBox.shrink(),
         ),
+
+        Obx(() {
+          final player = plPlayerController.videoPlayerController;
+          if (!plPlayerController.showPlayerInfo.value || player == null) {
+            return const SizedBox.shrink();
+          }
+          return Positioned.fill(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final portrait =
+                    MediaQuery.orientationOf(context) == Orientation.portrait;
+                final panelWidth = portrait
+                    ? constraints.maxWidth
+                    : math.min(constraints.maxWidth * 0.48, 520.0);
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: panelWidth,
+                      maxWidth: panelWidth,
+                      maxHeight: constraints.maxHeight,
+                    ),
+                    child: HeaderControlState.playerInfoPanel(
+                      player: player,
+                      onClose: () =>
+                          plPlayerController.showPlayerInfo.value = false,
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }),
       ],
     );
     if (PlatformUtils.isDesktop) {

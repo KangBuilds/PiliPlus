@@ -112,6 +112,8 @@ class PlPlayerController with BlockConfigMixin {
 
   final RxBool showControls = false.obs;
 
+  final RxBool showPlayerInfo = false.obs;
+
   final RxBool showBrightnessStatus = false.obs;
 
   final RxBool longPressStatus = false.obs;
@@ -624,6 +626,7 @@ class PlPlayerController with BlockConfigMixin {
   }) async {
     try {
       _processing = true;
+      showPlayerInfo.value = false;
       _videoType = videoType ?? VideoType.ugc;
       this.width = width;
       this.height = height;

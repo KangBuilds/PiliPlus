@@ -675,12 +675,17 @@ class HeaderControlState extends State<HeaderControl>
                     leading: const Icon(Icons.download_outlined, size: 20),
                     title: const Text('保存字幕', style: titleStyle),
                   ),
-                if (plPlayerController.videoPlayerController case final player?)
+                if (plPlayerController.videoPlayerController != null)
                   ListTile(
                     dense: true,
                     title: const Text('播放信息', style: titleStyle),
                     leading: const Icon(Icons.info_outline, size: 20),
-                    onTap: () => showPlayerInfo(context, player: player),
+                    onTap: () {
+                      Get.back();
+                      plPlayerController
+                        ..controls = false
+                        ..showPlayerInfo.value = true;
+                    },
                   ),
                 ListTile(
                   dense: true,
@@ -707,99 +712,171 @@ class HeaderControlState extends State<HeaderControl>
     BuildContext context, {
     required NativePlayer player,
   }) {
-    final hwdec = player.getProperty('hwdec-current');
-    final volume = player.getProperty('volume').subLength(3);
-    showDialog(
+    showGeneralDialog<void>(
       context: context,
-      builder: (context) {
-        final state = player.state;
-        final colorScheme = ColorScheme.of(context);
-        return AlertDialog(
-          title: const Text('播放信息'),
-          contentPadding: const EdgeInsets.only(top: 16),
-          content: Material(
-            type: MaterialType.transparency,
-            child: ListTileTheme(
-              contentPadding: const .symmetric(horizontal: 24),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    ListTile(
-                      dense: true,
-                      title: const Text("Resolution"),
-                      subtitle: Text('${state.width}x${state.height}'),
-                      onTap: () => Utils.copyText(
-                        'Resolution\n${state.width}x${state.height}',
-                      ),
-                    ),
-                    ListTile(
-                      dense: true,
-                      title: const Text("VideoParams"),
-                      subtitle: Text(state.videoParams.toString()),
-                      onTap: () =>
-                          Utils.copyText('VideoParams\n${state.videoParams}'),
-                    ),
-                    ListTile(
-                      dense: true,
-                      title: const Text("AudioParams"),
-                      subtitle: Text(state.audioParams.toString()),
-                      onTap: () =>
-                          Utils.copyText('AudioParams\n${state.audioParams}'),
-                    ),
-                    ListTile(
-                      dense: true,
-                      title: const Text("Media"),
-                      subtitle: Text(state.playlist.toString()),
-                      onTap: () => Utils.copyText('Media\n${state.playlist}'),
-                    ),
-                    ListTile(
-                      dense: true,
-                      title: const Text("AudioTrack"),
-                      subtitle: Text(state.track.audio.toString()),
-                      onTap: () =>
-                          Utils.copyText('AudioTrack\n${state.track.audio}'),
-                    ),
-                    ListTile(
-                      dense: true,
-                      title: const Text("VideoTrack"),
-                      subtitle: Text(state.track.video.toString()),
-                      onTap: () =>
-                          Utils.copyText('VideoTrack\n${state.track.audio}'),
-                    ),
-                    ListTile(
-                      dense: true,
-                      title: const Text("rate"),
-                      subtitle: Text(state.rate.toString()),
-                      onTap: () => Utils.copyText('rate\n${state.rate}'),
-                    ),
-                    ListTile(
-                      dense: true,
-                      title: const Text("Volume"),
-                      subtitle: Text(volume.toString()),
-                      onTap: () => Utils.copyText('Volume\n$volume'),
-                    ),
-                    ListTile(
-                      dense: true,
-                      title: const Text('hwdec'),
-                      subtitle: Text(hwdec),
-                      onTap: () => Utils.copyText('hwdec\n$hwdec'),
-                    ),
-                  ],
-                ),
+      barrierDismissible: true,
+      barrierLabel: '关闭播放信息',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 150),
+      transitionBuilder: (context, animation, _, child) => FadeTransition(
+        opacity: animation,
+        child: child,
+      ),
+      pageBuilder: (context, _, _) => SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) => Align(
+            alignment: Alignment.topLeft,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: constraints.maxWidth > 520
+                    ? 520
+                    : constraints.maxWidth,
+                maxWidth: constraints.maxWidth > 520
+                    ? 520
+                    : constraints.maxWidth,
+                maxHeight: constraints.maxHeight,
+              ),
+              child: playerInfoPanel(
+                player: player,
+                onClose: () => Navigator.pop(context),
               ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: Get.back,
-              child: Text(
-                '确定',
-                style: TextStyle(color: colorScheme.outline),
+        ),
+      ),
+    );
+  }
+
+  static Widget playerInfoPanel({
+    required NativePlayer player,
+    required VoidCallback onClose,
+  }) {
+    final hwdec = player.getProperty('hwdec-current');
+    final videoCodec = player.getProperty('current-tracks/video/codec');
+    final audioCodec = player.getProperty('current-tracks/audio/codec');
+    final videoPath = player.getProperty('path');
+    final audioPath = player.getProperty(
+      'current-tracks/audio/external-filename',
+    );
+    final videoBitrate = VideoUtils.formatBitrate(
+      player.getProperty('video-bitrate'),
+    );
+    final audioBitrate = VideoUtils.formatBitrate(
+      player.getProperty('audio-bitrate'),
+    );
+    final frameRate = VideoUtils.formatFrameRate(
+      player.getProperty('current-tracks/video/demux-fps'),
+    );
+    final videoHost = videoCodec.isEmpty ? '' : VideoUtils.hostOf(videoPath);
+    final audioHost = audioCodec.isEmpty
+        ? ''
+        : VideoUtils.hostOf(audioPath.isEmpty ? videoPath : audioPath);
+    final state = player.state;
+    final rows = <(String, String)>[
+      ('Resolution:', '${state.width} x ${state.height}$frameRate'),
+      (
+        'Video DataRate:',
+        '$videoBitrate${videoCodec.isEmpty ? '' : ' [${videoCodec.toUpperCase()}]'}',
+      ),
+      ('Audio DataRate:', audioBitrate),
+      ('Video Host:', videoHost),
+      ('Audio Host:', audioHost),
+      ('HW Decode:', hwdec),
+    ];
+    const labelStyle = TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      height: 1.3,
+    );
+    const valueStyle = TextStyle(
+      color: Colors.white60,
+      fontSize: 14,
+      height: 1.3,
+    );
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(bottomRight: Radius.circular(10)),
+      child: Material(
+        color: const Color(0xDB171717),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 44,
+              child: Row(
+                children: [
+                  const SizedBox(width: 44),
+                  const Expanded(
+                    child: Text(
+                      '播放信息',
+                      textAlign: TextAlign.center,
+                      style: labelStyle,
+                    ),
+                  ),
+                  SizedBox.square(
+                    dimension: 44,
+                    child: IconButton(
+                      tooltip: '关闭',
+                      padding: EdgeInsets.zero,
+                      onPressed: onClose,
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Colors.white12),
+            Flexible(
+              fit: FlexFit.loose,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
+                child: Table(
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  columnWidths: const {
+                    0: IntrinsicColumnWidth(),
+                    1: FlexColumnWidth(),
+                  },
+                  children: rows.map((row) {
+                    void copy() => Utils.copyText('${row.$1}\n${row.$2}');
+                    return TableRow(
+                      children: [
+                        InkWell(
+                          onTap: copy,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Text(
+                              row.$1,
+                              textAlign: TextAlign.end,
+                              style: labelStyle,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: copy,
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              left: 14,
+                              top: 2,
+                              bottom: 2,
+                            ),
+                            child: Text(
+                              row.$2.isEmpty ? '—' : row.$2,
+                              style: valueStyle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
               ),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 

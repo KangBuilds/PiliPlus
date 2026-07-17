@@ -6,6 +6,19 @@ abstract final class VideoUtils {
   static CDNService cdnService = Pref.defaultCDNService;
   static bool disableAudioCDN = Pref.disableAudioCDN;
 
+  static String hostOf(String url) =>
+      Uri.tryParse(url)?.host.toLowerCase() ?? '';
+
+  static String formatBitrate(String value) {
+    final bitrate = double.tryParse(value);
+    return bitrate == null ? '—' : '${(bitrate / 1000).round()} Kbps';
+  }
+
+  static String formatFrameRate(String value) {
+    final frameRate = double.tryParse(value);
+    return frameRate == null ? '' : '@${frameRate.toStringAsFixed(3)}';
+  }
+
   static String getCdnUrl(
     Iterable<String> urls, {
     CDNService? defaultCDNService,
@@ -19,7 +32,6 @@ abstract final class VideoUtils {
         .toList();
     if (candidates.isEmpty) return '';
 
-    String hostOf(String url) => Uri.tryParse(url)?.host.toLowerCase() ?? '';
     bool isMcdn(String url) =>
         hostOf(url).contains('mcdn') && hostOf(url).contains('bilivideo');
     bool isBilivideo(String url) =>
