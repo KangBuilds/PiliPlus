@@ -3,13 +3,11 @@ import 'dart:convert' show ascii;
 import 'dart:math' show max, min;
 import 'dart:ui' as ui;
 
-import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/http/browser_ua.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
-import 'package:PiliPlus/models/common/super_resolution_type.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/user/danmaku_rule.dart';
 import 'package:PiliPlus/models_new/video/video_shot/data.dart';
@@ -29,13 +27,11 @@ import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
-import 'package:PiliPlus/utils/asset_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension/box_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
-import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -55,7 +51,6 @@ import 'package:hive_ce/hive.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
-import 'package:path/path.dart' as path;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 typedef PlayCallback = Future<void>? Function();
@@ -692,54 +687,6 @@ class PlPlayerController with BlockConfigMixin {
     }
   }
 
-  String? shadersDirPath;
-  Future<String> get copyShadersToExternalDirectory async {
-    if (shadersDirPath != null) {
-      return shadersDirPath!;
-    }
-
-    return shadersDirPath = await AssetUtils.getOrCopy(
-      'assets/shaders',
-      Assets.mpvAnime4KShaders.followedBy(Assets.mpvAnime4KShadersLite),
-      path.join(appSupportDirPath, 'anime_shaders'),
-    );
-  }
-
-  late final Rx<SuperResolutionType> superResolutionType =
-      SuperResolutionType.disable.obs;
-  Future<void> setShader([SuperResolutionType? type, NativePlayer? pp]) async {
-    if (type == null) {
-      type = superResolutionType.value;
-    } else {
-      superResolutionType.value = type;
-    }
-    pp ??= _videoPlayerController!;
-    switch (type) {
-      case SuperResolutionType.disable:
-        return pp.command(const ['change-list', 'glsl-shaders', 'clr', '']);
-      case SuperResolutionType.efficiency:
-        return pp.command([
-          'change-list',
-          'glsl-shaders',
-          'set',
-          PathUtils.buildShadersAbsolutePath(
-            await copyShadersToExternalDirectory,
-            Assets.mpvAnime4KShadersLite,
-          ),
-        ]);
-      case SuperResolutionType.quality:
-        return pp.command([
-          'change-list',
-          'glsl-shaders',
-          'set',
-          PathUtils.buildShadersAbsolutePath(
-            await copyShadersToExternalDirectory,
-            Assets.mpvAnime4KShaders,
-          ),
-        ]);
-    }
-  }
-
   Future<Player> _initPlayer() async {
     assert(_videoPlayerController == null);
     await setupServiceLocator();
@@ -801,9 +748,6 @@ class PlPlayerController with BlockConfigMixin {
         return;
       }
       _videoPlayerController = player;
-      if (superResolutionType.value != .disable) {
-        await setShader();
-      }
     }
 
     final Map<String, String> extras = {};
