@@ -27,7 +27,6 @@ import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension/box_ext.dart';
-import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -96,9 +95,7 @@ class PlPlayerController with BlockConfigMixin {
   final RxDouble _playbackSpeed = Pref.playSpeedDefault.obs;
   late final RxDouble _longPressSpeed = Pref.longPressSpeedDefault.obs;
 
-  final RxDouble volume = RxDouble(
-    PlatformUtils.isDesktop ? Pref.desktopVolume : 1.0,
-  );
+  final RxDouble volume = RxDouble(1.0);
   final setSystemBrightness = Pref.setSystemBrightness;
 
   final RxDouble brightness = (-1.0).obs;
@@ -302,8 +299,7 @@ class PlPlayerController with BlockConfigMixin {
   }
 
   Future<void> _syncNativePictureInPicture() async {
-    if (!isPictureInPictureTransitioning ||
-        videoPlayerController == null) {
+    if (!isPictureInPictureTransitioning || videoPlayerController == null) {
       return;
     }
     try {
@@ -377,12 +373,10 @@ class PlPlayerController with BlockConfigMixin {
     seconds: Pref.fastForBackwardDuration,
   );
 
-  late final horizontalSeasonPanel = Pref.horizontalSeasonPanel;
   late final preInitPlayer = Pref.preInitPlayer;
   late final showRelatedVideo = Pref.showRelatedVideo;
   late final showVideoReply = Pref.showVideoReply;
   late final reverseFromFirst = Pref.reverseFromFirst;
-  late final horizontalPreview = Pref.horizontalPreview;
   late final showDmChart = Pref.showDmChart;
   late final showViewPoints = Pref.showViewPoints;
   late final showFsScreenshotBtn = Pref.showFsScreenshotBtn;
@@ -688,13 +682,7 @@ class PlPlayerController with BlockConfigMixin {
   Future<Player> _initPlayer() async {
     assert(_videoPlayerController == null);
     await setupServiceLocator();
-    final opt = {
-      'video-sync': Pref.videoSync,
-      if (PlatformUtils.isDesktop) ...{
-        'volume': (volume.value * 100).toString(),
-        'volume-max': (Pref.maxVolume * 100).toString(),
-      },
-    };
+    final opt = {'video-sync': Pref.videoSync};
     final autosync = Pref.autosync;
     if (autosync != '0') {
       opt['autosync'] = autosync;
@@ -1090,17 +1078,12 @@ class PlPlayerController with BlockConfigMixin {
   Timer? volumeTimer;
   bool volumeInterceptEventStream = false;
 
-  final double maxVolume = PlatformUtils.isDesktop ? Pref.maxVolume : 1.0;
   Future<void> setVolume(double volume, {bool showIndicator = true}) async {
     if (this.volume.value != volume) {
       this.volume.value = volume;
       try {
-        if (PlatformUtils.isDesktop) {
-          await _videoPlayerController!.setVolume(volume * 100);
-        } else {
-          FlutterVolumeController.updateShowSystemUI(false);
-          await FlutterVolumeController.setVolume(volume);
-        }
+        FlutterVolumeController.updateShowSystemUI(false);
+        await FlutterVolumeController.setVolume(volume);
       } catch (err) {
         if (kDebugMode) debugPrint(err.toString());
       }
@@ -1113,9 +1096,6 @@ class PlPlayerController with BlockConfigMixin {
     volumeTimer = Timer(const Duration(milliseconds: 200), () {
       volumeIndicator.value = false;
       volumeInterceptEventStream = false;
-      if (PlatformUtils.isDesktop) {
-        setting.put(SettingBoxKey.desktopVolume, volume.toPrecision(3));
-      }
     });
   }
 

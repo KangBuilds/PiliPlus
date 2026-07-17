@@ -7,7 +7,6 @@ import 'package:PiliPlus/pages/setting/common_setting.dart';
 import 'package:PiliPlus/pages/setting/widgets/multi_select_dialog.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
-import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:flutter/material.dart' hide ListTile;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
@@ -32,9 +31,7 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  late SettingType _type = SettingType.privacySetting;
   final RxBool _noAccount = Accounts.account.isEmpty.obs;
-  late bool _isPortrait;
   late ThemeData theme;
 
   static const List<_SettingsModel> _items = [
@@ -60,7 +57,7 @@ class _SettingPageState extends State<SettingPage> {
     ),
     _SettingsModel(
       type: SettingType.extraSetting,
-      subtitle: '震动、搜索、收藏、ai、评论、动态、代理等',
+      subtitle: '震动、搜索、收藏、ai、评论、动态等',
       icon: Icon(Icons.extension_outlined),
     ),
     _SettingsModel(
@@ -79,7 +76,6 @@ class _SettingPageState extends State<SettingPage> {
     super.didChangeDependencies();
 
     theme = Theme.of(context);
-    _isPortrait = MediaQuery.sizeOf(context).isPortrait;
   }
 
   @override
@@ -87,39 +83,10 @@ class _SettingPageState extends State<SettingPage> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: _isPortrait ? const Text('设置') : Text(_type.title),
+        title: const Text('设置'),
       ),
       body: ViewSafeArea(
-        child: _isPortrait
-            ? _buildList(theme)
-            : Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 4,
-                    child: _buildList(theme),
-                  ),
-                  VerticalDivider(
-                    width: 1,
-                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                  ),
-                  Expanded(
-                    flex: 6,
-                    child: switch (_type) {
-                      .privacySetting ||
-                      .recommendSetting ||
-                      .videoSetting ||
-                      .playSetting ||
-                      .styleSetting ||
-                      .extraSetting => CommonSetting(
-                        settingType: _type,
-                        showAppBar: false,
-                      ),
-                      .about => const AboutPage(showAppBar: false),
-                    },
-                  ),
-                ],
-              ),
+        child: _buildList(theme),
       ),
     );
   }
@@ -131,30 +98,17 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   void _toPage(SettingType type) {
-    if (_isPortrait) {
-      Get.to(
-        () => switch (type) {
-          .privacySetting ||
-          .recommendSetting ||
-          .videoSetting ||
-          .playSetting ||
-          .styleSetting ||
-          .extraSetting => CommonSetting(settingType: type),
-          .about => const AboutPage(),
-        },
-      );
-    } else {
-      _type = type;
-      setState(() {});
-    }
-  }
-
-  Color? _getTileColor(ThemeData theme, SettingType type) {
-    if (_isPortrait) {
-      return null;
-    } else {
-      return type == _type ? theme.colorScheme.onInverseSurface : null;
-    }
+    Get.to(
+      () => switch (type) {
+        .privacySetting ||
+        .recommendSetting ||
+        .videoSetting ||
+        .playSetting ||
+        .styleSetting ||
+        .extraSetting => CommonSetting(settingType: type),
+        .about => const AboutPage(),
+      },
+    );
   }
 
   Widget _buildList(ThemeData theme) {
@@ -171,7 +125,6 @@ class _SettingPageState extends State<SettingPage> {
             .take(_items.length - 1)
             .map(
               (item) => ListTile(
-                tileColor: _getTileColor(theme, item.type),
                 onTap: () => _toPage(item.type),
                 leading: item.icon,
                 title: Text(item.type.title, style: titleStyle),
@@ -190,7 +143,6 @@ class _SettingPageState extends State<SettingPage> {
                 ),
         ),
         ListTile(
-          tileColor: _getTileColor(theme, _items.last.type),
           onTap: () => _toPage(_items.last.type),
           leading: _items.last.icon,
           title: Text(_items.last.type.title, style: titleStyle),

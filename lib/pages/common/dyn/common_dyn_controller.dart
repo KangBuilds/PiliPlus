@@ -13,7 +13,6 @@ abstract class CommonDynController extends ReplyController<MainListReply>
 
   late final RxBool showTitle = false.obs;
 
-  late final horizontalPreview = Pref.horizontalPreview;
   late final List<double> ratio = Pref.dynamicDetailRatio;
 
   late final showDynActionBar = Pref.showDynActionBar;

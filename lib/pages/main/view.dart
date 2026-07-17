@@ -80,8 +80,7 @@ class _MainAppState extends PopScopeState<MainApp>
 
   @override
   void onPopInvokedWithResult(bool didPop, Object? result) {
-    if (!_mainController.directExitOnBack &&
-        _mainController.selectedIndex.value != 0) {
+    if (_mainController.selectedIndex.value != 0) {
       _mainController
         ..setIndex(0)
         ..setSearchBar();

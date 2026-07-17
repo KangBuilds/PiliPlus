@@ -60,7 +60,7 @@ class PlayerFocus extends StatelessWidget {
   void _setVolume({required bool isIncrease}) {
     final volume = isIncrease
         ? math.min(
-            plPlayerController.maxVolume,
+            1.0,
             plPlayerController.volume.value + 0.1,
           )
         : math.max(0.0, plPlayerController.volume.value - 0.1);

@@ -26,9 +26,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
 class AboutPage extends StatefulWidget {
-  const AboutPage({super.key, this.showAppBar = true});
-
-  final bool showAppBar;
+  const AboutPage({super.key});
 
   @override
   State<AboutPage> createState() => _AboutPageState();
@@ -83,15 +81,14 @@ class _AboutPageState extends State<AboutPage> {
     const style = TextStyle(fontSize: 15);
     final outline = theme.colorScheme.outline;
     final subTitleStyle = TextStyle(fontSize: 13, color: outline);
-    final showAppBar = widget.showAppBar;
     final padding = MediaQuery.viewPaddingOf(context);
     return Scaffold(
-      appBar: showAppBar ? AppBar(title: const Text('关于')) : null,
+      appBar: AppBar(title: const Text('关于')),
       resizeToAvoidBottomInset: false,
       body: ListView(
         padding: EdgeInsets.only(
-          left: showAppBar ? padding.left : 0,
-          right: showAppBar ? padding.right : 0,
+          left: padding.left,
+          right: padding.right,
           bottom: padding.bottom + 100,
         ),
         children: [
@@ -153,9 +150,6 @@ Commit Hash: ${BuildConfig.commitHash}''',
               style: const TextStyle(fontSize: 14),
             ),
             leading: const Icon(Icons.info_outline),
-            onTap: () => PageUtils.launchURL(
-              '${Constants.sourceCodeUrl}/commit/${BuildConfig.commitHash}',
-            ),
             onLongPress: () => Utils.copyText(BuildConfig.commitHash),
             onSecondaryTap: PlatformUtils.isMobile
                 ? null

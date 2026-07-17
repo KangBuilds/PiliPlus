@@ -14,7 +14,8 @@ import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class MainController extends GetxController with GetSingleTickerProviderStateMixin {
+class MainController extends GetxController
+    with GetSingleTickerProviderStateMixin {
   final AccountService accountService = Get.find<AccountService>();
 
   final navigationBars = NavigationBarType.values;
@@ -33,10 +34,6 @@ class MainController extends GetxController with GetSingleTickerProviderStateMix
 
   final mainTabBarView = Pref.mainTabBarView;
 
-  late bool directExitOnBack = Pref.directExitOnBack;
-  late bool showTrayIcon = Pref.showTrayIcon;
-  late bool minimizeOnExit = Pref.minimizeOnExit;
-  late bool pauseOnMinimize = Pref.pauseOnMinimize;
   late bool isPlaying = false;
 
   static const _period = 5 * 60 * 1000;

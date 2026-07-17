@@ -90,7 +90,6 @@ Widget content(
                 ),
         if (pics != null && pics.isNotEmpty)
           ImageGridView(
-            fullScreen: true,
             picArr: pics
                 .map(
                   (item) => ImageModel(

@@ -25,7 +25,6 @@ import 'package:PiliPlus/plugin/pl_player/models/bottom_progress_behavior.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/hwdec_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
-import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/login_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -369,19 +368,6 @@ abstract final class Pref {
   static bool get alwaysExpandIntroPanel =>
       _setting.get(SettingBoxKey.alwaysExpandIntroPanel, defaultValue: false);
 
-  static bool get expandIntroPanelH =>
-      _setting.get(SettingBoxKey.expandIntroPanelH, defaultValue: false);
-
-  static bool get horizontalSeasonPanel => _setting.get(
-    SettingBoxKey.horizontalSeasonPanel,
-    defaultValue: false,
-  );
-
-  static bool get horizontalMemberPage => _setting.get(
-    SettingBoxKey.horizontalMemberPage,
-    defaultValue: false,
-  );
-
   static int? get replyLengthLimit {
     int length = _setting.get(SettingBoxKey.replyLengthLimit, defaultValue: 6);
     if (length <= 0) {
@@ -422,9 +408,6 @@ abstract final class Pref {
 
   static bool get continuePlayingPart =>
       _setting.get(SettingBoxKey.continuePlayingPart, defaultValue: true);
-
-  static bool get horizontalPreview =>
-      _setting.get(SettingBoxKey.horizontalPreview, defaultValue: false);
 
   static bool get openInBrowser =>
       _setting.get(SettingBoxKey.openInBrowser, defaultValue: false);
@@ -742,9 +725,6 @@ abstract final class Pref {
   static int get cacheVideoFit =>
       _video.get(VideoBoxKey.cacheVideoFit, defaultValue: 1);
 
-  static bool get directExitOnBack =>
-      _setting.get(SettingBoxKey.directExitOnBack, defaultValue: false);
-
   static bool get historyPause =>
       _localCache.get(LocalCacheKey.historyPause, defaultValue: false);
 
@@ -782,32 +762,8 @@ abstract final class Pref {
   static bool get showMemberShop =>
       _setting.get(SettingBoxKey.showMemberShop, defaultValue: false);
 
-  static bool get minimizeOnExit =>
-      _setting.get(SettingBoxKey.minimizeOnExit, defaultValue: true);
-
-  static Size get windowSize {
-    final List<double>? size = (_setting.get(SettingBoxKey.windowSize) as List?)
-        ?.fromCast<double>();
-    return size == null ? const Size(1180.0, 720.0) : Size(size[0], size[1]);
-  }
-
-  static List<double>? get windowPosition =>
-      (_setting.get(SettingBoxKey.windowPosition) as List?)?.fromCast<double>();
-
-  static bool get isWindowMaximized =>
-      _setting.get(SettingBoxKey.isWindowMaximized, defaultValue: false);
-
   static bool get keyboardControl =>
       _setting.get(SettingBoxKey.keyboardControl, defaultValue: true);
-
-  static bool get pauseOnMinimize =>
-      _setting.get(SettingBoxKey.pauseOnMinimize, defaultValue: false);
-
-  static bool get showWindowTitleBar =>
-      _setting.get(SettingBoxKey.showWindowTitleBar, defaultValue: true);
-
-  static double get desktopVolume =>
-      _setting.get(SettingBoxKey.desktopVolume, defaultValue: 1.0);
 
   static PlayRepeat get audioPlayMode =>
       PlayRepeat.values[_setting.get(SettingBoxKey.audioPlayMode) ??
@@ -818,9 +774,6 @@ abstract final class Pref {
 
   static bool get enableTapDm =>
       _setting.get(SettingBoxKey.enableTapDm, defaultValue: true);
-
-  static bool get showTrayIcon =>
-      _setting.get(SettingBoxKey.showTrayIcon, defaultValue: true);
 
   static bool get setSystemBrightness =>
       _setting.get(SettingBoxKey.setSystemBrightness, defaultValue: false);
@@ -854,7 +807,4 @@ abstract final class Pref {
 
   static int get angleDegrees =>
       _setting.get(SettingBoxKey.angleDegrees, defaultValue: 30);
-
-  static double get maxVolume => // desktop
-      _setting.get(SettingBoxKey.maxVolume, defaultValue: 2.0);
 }

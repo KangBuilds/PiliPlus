@@ -65,8 +65,6 @@ mixin CommonDynPageMixin<T extends StatefulWidget>
     on State<T>, TickerProvider, BaseFabMixin<T>, FabMixin<T> {
   CommonDynController get controller;
 
-  bool get horizontalPreview => !isPortrait && controller.horizontalPreview;
-
   dynamic get arguments;
 
   late ThemeData theme;
@@ -169,7 +167,6 @@ mixin CommonDynPageMixin<T extends StatefulWidget>
                   onDelete: (item, subIndex) =>
                       controller.onRemove(index, item, subIndex),
                   upMid: controller.upMid,
-                  onViewImage: hideFab,
                   onCheckReply: (item) =>
                       controller.onCheckReply(item, isManual: true),
                   onToggleTop: (item) => controller.onToggleTop(

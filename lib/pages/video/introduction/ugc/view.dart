@@ -38,7 +38,6 @@ import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
-import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -53,14 +52,12 @@ class UgcIntroPanel extends StatefulWidget {
     required this.heroTag,
     required this.showAiBottomSheet,
     required this.showEpisodes,
-    required this.onShowMemberPage,
     required this.isPortrait,
     required this.isHorizontal,
   });
   final String heroTag;
   final Function showAiBottomSheet;
   final Function showEpisodes;
-  final ValueChanged<int?> onShowMemberPage;
   final bool isPortrait;
   final bool isHorizontal;
 
@@ -137,20 +134,17 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                       const SizedBox(height: 2),
                       _buildArgueInfo(argueMsg),
                     ],
-                  if (isHorizontal && PlatformUtils.isDesktop)
-                    ..._infos(videoDetail)
-                  else
-                    Obx(
-                      () => AnimatedHeight(
-                        expand: introController.expand.value,
-                        duration: const Duration(milliseconds: 300),
-                        child: TranslucentColumn(
-                          mainAxisSize: .min,
-                          crossAxisAlignment: .start,
-                          children: _infos(videoDetail),
-                        ),
+                  Obx(
+                    () => AnimatedHeight(
+                      expand: introController.expand.value,
+                      duration: const Duration(milliseconds: 300),
+                      child: TranslucentColumn(
+                        mainAxisSize: .min,
+                        crossAxisAlignment: .start,
+                        children: _infos(videoDetail),
                       ),
                     ),
+                  ),
                   Obx(
                     () => introController.status.value
                         ? const SizedBox.shrink()
@@ -181,12 +175,7 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                     ),
                   ],
                   // 合集
-                  if (!isLoading &&
-                      videoDetail.ugcSeason != null &&
-                      (isPortrait ||
-                          !videoDetailCtr
-                              .plPlayerController
-                              .horizontalSeasonPanel))
+                  if (!isLoading && videoDetail.ugcSeason != null)
                     Obx(
                       () => SeasonPanel(
                         key: ValueKey(introController.videoDetail.value),
@@ -197,11 +186,7 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                     ),
                   if (!isLoading &&
                       videoDetail.pages != null &&
-                      videoDetail.pages!.length > 1 &&
-                      (isPortrait ||
-                          !videoDetailCtr
-                              .plPlayerController
-                              .horizontalSeasonPanel))
+                      videoDetail.pages!.length > 1)
                     Obx(
                       () => PagesPanel(
                         key: ValueKey(introController.videoDetail.value),
@@ -249,10 +234,6 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
   ) {
     if (isLoading) {
       return _buildVideoTitle(videoDetail);
-    } else if (isHorizontal && PlatformUtils.isDesktop) {
-      return SelectionArea(
-        child: _buildVideoTitle(videoDetail, isExpand: true),
-      );
     }
     return Obx(
       () => ExpandablePanel(
@@ -704,9 +685,7 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
               physics: ReloadScrollPhysics(controller: introController),
               child: Row(
                 spacing: 25,
-                children: staff
-                    .map((e) => _buildStaff(isPortrait, mid, e))
-                    .toList(),
+                children: staff.map(_buildStaff).toList(),
               ),
             ),
           )
@@ -718,13 +697,9 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                 () {
                   if (mid != null) {
                     feedBack();
-                    if (!isPortrait && introController.horizontalMemberPage) {
-                      widget.onShowMemberPage(mid);
-                    } else {
-                      Get.toNamed(
-                        '/member?mid=$mid&from_view_aid=${videoDetailCtr.aid}',
-                      );
-                    }
+                    Get.toNamed(
+                      '/member?mid=$mid&from_view_aid=${videoDetailCtr.aid}',
+                    );
                   }
                 },
               ),
@@ -747,29 +722,13 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
     );
   }
 
-  Widget _buildStaff(
-    bool isPortrait,
-    int? ownerMid,
-    Staff item,
-  ) {
+  Widget _buildStaff(Staff item) {
     void onTap() => Get.toNamed(
       '/member?mid=${item.mid}&from_view_aid=${videoDetailCtr.aid}',
     );
     return GestureDetector(
       behavior: .opaque,
-      onTap: () {
-        if (item.mid == ownerMid &&
-            !isPortrait &&
-            introController.horizontalMemberPage) {
-          widget.onShowMemberPage(ownerMid);
-        } else {
-          onTap();
-        }
-      },
-      onSecondaryTap:
-          PlatformUtils.isDesktop && introController.horizontalMemberPage
-          ? onTap
-          : null,
+      onTap: onTap,
       child: Row(
         children: [
           Stack(
@@ -878,12 +837,6 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
   ) => GestureDetector(
     onTap: onPushMember,
     behavior: .opaque,
-    onSecondaryTap:
-        PlatformUtils.isDesktop && introController.horizontalMemberPage
-        ? () => Get.toNamed(
-            '/member?mid=${introController.userStat.value.card?.mid}&from_view_aid=${videoDetailCtr.aid}',
-          )
-        : null,
     child: Obx(
       () {
         final userStat = introController.userStat.value;

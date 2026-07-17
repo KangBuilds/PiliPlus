@@ -1,25 +1,12 @@
 // 定时关闭服务
 import 'dart:async';
-import 'dart:io';
 
-import 'package:PiliPlus/models/common/enum_with_label.dart';
-import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-
-enum _ShutdownType with EnumWithLabel {
-  pause('暂停视频'),
-  exit('退出APP'),
-  ;
-
-  @override
-  final String label;
-  const _ShutdownType(this.label);
-}
 
 final shutdownTimerService = ShutdownTimerService._internal();
 
@@ -32,8 +19,6 @@ class ShutdownTimerService {
   Timer? _shutdownTimer;
   bool get isActive => _shutdownTimer?.isActive ?? false;
   int _durationInMinutes = 0;
-  _ShutdownType _shutdownType = .pause;
-
   bool _isWaiting = false;
   bool get isWaiting => _isWaiting;
   bool _waitUntilCompleted = false;
@@ -65,59 +50,24 @@ class ShutdownTimerService {
   }
 
   void _handleShutdown() {
-    switch (_shutdownType) {
-      case _ShutdownType.pause:
-        late final player = PlPlayerController.instance;
-        final isPlaying =
-            this.isPlaying?.call() ?? player?.playerStatus.isPlaying ?? false;
-        if (isPlaying) {
-          if (_waitUntilCompleted) {
-            _isWaiting = true;
-          } else {
-            _durationInMinutes = 0;
-            (onPause ?? player?.pause)?.call();
-            SmartDialog.showToast('定时时间已到，已暂停');
-          }
-        }
-      case _ShutdownType.exit:
-        if (_waitUntilCompleted) {
-          final isPlaying =
-              this.isPlaying?.call() ??
-              PlPlayerController.instance?.playerStatus.isPlaying ??
-              false;
-          if (isPlaying) {
-            _isWaiting = true;
-            return;
-          }
-        }
-        _syncProgressAndExit();
+    late final player = PlPlayerController.instance;
+    final isPlaying =
+        this.isPlaying?.call() ?? player?.playerStatus.isPlaying ?? false;
+    if (isPlaying) {
+      if (_waitUntilCompleted) {
+        _isWaiting = true;
+      } else {
+        _durationInMinutes = 0;
+        (onPause ?? player?.pause)?.call();
+        SmartDialog.showToast('定时时间已到，已暂停');
+      }
     }
   }
 
   void handleWaiting() {
-    switch (_shutdownType) {
-      case _ShutdownType.pause:
-        _isWaiting = false;
-        _durationInMinutes = 0;
-        SmartDialog.showToast('定时时间已到，已暂停');
-      case _ShutdownType.exit:
-        _syncProgressAndExit();
-    }
-  }
-
-  void _syncProgressAndExit() {
-    if (PlPlayerController.instance case final player?) {
-      final res = player.makeHeartBeat(
-        player.position.value,
-        type: .completed,
-        isManual: true,
-      );
-      if (res != null) {
-        res.whenComplete(() => exit(0));
-        return;
-      }
-    }
-    exit(0);
+    _isWaiting = false;
+    _durationInMinutes = 0;
+    SmartDialog.showToast('定时时间已到，已暂停');
   }
 
   static (int hour, int minute) _parseMinutes(int minutes) =>
@@ -231,30 +181,6 @@ class ShutdownTimerService {
                           ),
                         );
                       },
-                    ),
-                    const SizedBox(height: 5),
-                    Padding(
-                      padding: const .only(left: 18),
-                      child: Builder(
-                        builder: (context) {
-                          return Row(
-                            spacing: 12,
-                            children: [
-                              const Text('倒计时结束:', style: titleStyle),
-                              ..._ShutdownType.values.map(
-                                (e) => ActionRowLineItem(
-                                  onTap: () {
-                                    _shutdownType = e;
-                                    (context as Element).markNeedsBuild();
-                                  },
-                                  text: ' ${e.label} ',
-                                  selectStatus: _shutdownType == e,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
                     ),
                   ],
                 ),

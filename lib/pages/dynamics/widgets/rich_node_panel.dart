@@ -270,7 +270,6 @@ TextSpan? richNode(
                 ..add(
                   WidgetSpan(
                     child: ImageGridView(
-                      fullScreen: true,
                       picArr: i.pics!
                           .map(
                             (item) => ImageModel(

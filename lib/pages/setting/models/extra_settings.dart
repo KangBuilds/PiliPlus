@@ -73,31 +73,6 @@ List<SettingsModel> get extraSettings => [
     setKey: SettingBoxKey.alwaysExpandIntroPanel,
     defaultVal: false,
   ),
-  const SwitchModel(
-    title: '横屏自动展开视频简介',
-    leading: Icon(Icons.expand_more),
-    setKey: SettingBoxKey.expandIntroPanelH,
-    defaultVal: false,
-  ),
-  const SwitchModel(
-    title: '横屏分P/合集列表显示在Tab栏',
-    leading: Icon(Icons.format_list_numbered_rtl_sharp),
-    setKey: SettingBoxKey.horizontalSeasonPanel,
-    defaultVal: false,
-  ),
-  const SwitchModel(
-    title: '横屏播放页在侧栏打开UP主页',
-    leading: Icon(Icons.account_circle_outlined),
-    setKey: SettingBoxKey.horizontalMemberPage,
-    defaultVal: false,
-  ),
-  SwitchModel(
-    title: '横屏在侧栏打开图片预览',
-    leading: const Icon(Icons.photo_outlined),
-    setKey: SettingBoxKey.horizontalPreview,
-    defaultVal: false,
-    onChanged: (value) => ImageGridView.horizontalPreview = value,
-  ),
   NormalModel(
     title: '评论折叠行数',
     subtitle: '0行为不折叠',

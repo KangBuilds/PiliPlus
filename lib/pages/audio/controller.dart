@@ -23,7 +23,6 @@ import 'package:PiliPlus/pages/main_reply/view.dart';
 import 'package:PiliPlus/pages/sponsor_block/block_mixin.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/triple_mixin.dart';
-import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/services/service_locator.dart';
@@ -37,8 +36,6 @@ import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/share_utils.dart';
-import 'package:PiliPlus/utils/storage.dart';
-import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
@@ -96,34 +93,6 @@ class AudioController extends GetxController
   bool get reachStart => _prev == null;
 
   ListOrder order = ListOrder.ORDER_NORMAL;
-
-  double? _lastVolume;
-  late final RxDouble desktopVolume = RxDouble(Pref.desktopVolume);
-
-  void toggleVolume() {
-    if (_lastVolume == null) {
-      _lastVolume = desktopVolume.value;
-      setVolume(0, clearLastVolme: false);
-    } else {
-      setVolume(_lastVolume!);
-    }
-  }
-
-  void setVolume(double volume, {bool clearLastVolme = true}) {
-    if (clearLastVolme) {
-      _lastVolume = null;
-    }
-    desktopVolume.value = volume;
-    player?.setVolume(volume * 100);
-  }
-
-  void syncVolume([_]) {
-    final volume = desktopVolume.value;
-    PlPlayerController.instance
-      ?..volume.value = volume
-      ..videoPlayerController?.setVolume(volume * 100);
-    GStorage.setting.put(SettingBoxKey.desktopVolume, volume.toPrecision(3));
-  }
 
   @override
   void onInit() {
@@ -331,13 +300,7 @@ class AudioController extends GetxController
     assert(player == null, _subscriptions = null);
     player = await Player.create(
       configuration: PlayerConfiguration(
-        options: {
-          if (PlatformUtils.isDesktop) ...{
-            'volume': (desktopVolume.value * 100).toString(),
-            'volume-max': (Pref.maxVolume * 100).toString(),
-          },
-          ...Pref.initBuffer(),
-        },
+        options: Pref.initBuffer(),
       ),
     );
     if (isClosed) {

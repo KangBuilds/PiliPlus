@@ -249,14 +249,6 @@ List<SettingsModel> get styleSettings => [
     subtitle: '删除或调换首页标签页',
     leading: const Icon(Icons.toc_outlined),
   ),
-  SwitchModel(
-    title: '返回时直接退出',
-    subtitle: '开启后在主页任意tab按返回键都直接退出，关闭则先回到Navbar的第一个tab',
-    leading: const Icon(Icons.exit_to_app_outlined),
-    setKey: SettingBoxKey.directExitOnBack,
-    defaultVal: false,
-    onChanged: (value) => Get.find<MainController>().directExitOnBack = value,
-  ),
 ];
 
 void _showQualityDialog({

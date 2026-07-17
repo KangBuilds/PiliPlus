@@ -6,10 +6,8 @@ class CommonSetting extends StatefulWidget {
   const CommonSetting({
     super.key,
     required this.settingType,
-    this.showAppBar = true,
   });
 
-  final bool showAppBar;
   final SettingType settingType;
 
   @override
@@ -46,15 +44,14 @@ class _CommonSettingState extends State<CommonSetting> {
 
   @override
   Widget build(BuildContext context) {
-    final showAppBar = widget.showAppBar;
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: showAppBar ? AppBar(title: Text(widget.settingType.title)) : null,
+      appBar: AppBar(title: Text(widget.settingType.title)),
       body: ListView.builder(
         key: ValueKey(widget.settingType),
         padding: EdgeInsets.only(
-          left: showAppBar ? padding.left : 0,
-          right: showAppBar ? padding.right : 0,
+          left: padding.left,
+          right: padding.right,
           bottom: padding.bottom + 100,
         ),
         itemCount: settings.length,

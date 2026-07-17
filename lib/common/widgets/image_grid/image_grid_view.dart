@@ -21,17 +21,13 @@ import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/image_grid/image_grid_builder.dart';
 import 'package:PiliPlus/models/common/image_preview_type.dart';
-import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
-import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
 
 class ImageModel {
   ImageModel({
@@ -63,16 +59,9 @@ class ImageGridView extends StatelessWidget {
   const ImageGridView({
     super.key,
     required this.picArr,
-    this.onViewImage,
-    this.fullScreen = false,
   });
 
   final List<ImageModel> picArr;
-  final VoidCallback? onViewImage;
-  final bool fullScreen;
-
-  static bool horizontalPreview = Pref.horizontalPreview;
-  static final _regex = RegExp(r'/videoV|/dynamicDetail$|/articlePage');
 
   void _onTap(BuildContext context, int index) {
     final imgList = picArr.map(
@@ -88,21 +77,6 @@ class ImageGridView extends StatelessWidget {
         );
       },
     ).toList();
-    if (horizontalPreview &&
-        !fullScreen &&
-        Get.currentRoute.startsWith(_regex) &&
-        !context.mediaQuerySize.isPortrait) {
-      final scaffoldState = Scaffold.maybeOf(context);
-      if (scaffoldState != null) {
-        onViewImage?.call();
-        PageUtils.onHorizontalPreviewState(
-          scaffoldState,
-          imgList,
-          index,
-        );
-        return;
-      }
-    }
     PageUtils.imageView(
       initialPage: index,
       imgList: imgList,

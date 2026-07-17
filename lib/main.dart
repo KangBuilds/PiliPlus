@@ -23,7 +23,6 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
-import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
@@ -67,13 +66,7 @@ void main() async {
   ScaledWidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await _traceInit('appPath', _initAppPath);
-  try {
-    await _traceInit('storage', GStorage.init);
-  } catch (e) {
-    await Utils.copyText(e.toString());
-    if (kDebugMode) debugPrint('GStorage init error: $e');
-    exit(0);
-  }
+  await _traceInit('storage', GStorage.init);
   ScaledWidgetsFlutterBinding.instance.scaleFactor = Pref.uiScale;
   downloadPath = defDownloadPath;
   await Future.wait([

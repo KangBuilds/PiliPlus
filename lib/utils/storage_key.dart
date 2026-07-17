@@ -23,10 +23,8 @@ abstract final class SettingBoxKey {
       enableAutoExit = 'enableAutoExit',
       enableOnlineTotal = 'enableOnlineTotal',
       keyboardControl = 'keyboardControl',
-      pauseOnMinimize = 'pauseOnMinimize',
       audioPlayMode = 'audioPlayMode',
-      showBatteryLevel = 'showBatteryLevel',
-      maxVolume = 'maxVolume';
+      showBatteryLevel = 'showBatteryLevel';
 
   static const String enableVerticalExpand = 'enableVerticalExpand',
       feedBackEnable = 'feedBackEnable',
@@ -66,15 +64,11 @@ abstract final class SettingBoxKey {
       showRelatedVideo = 'showRelatedVideo',
       showVideoReply = 'showVideoReply',
       alwaysExpandIntroPanel = 'alwaysExapndIntroPanel',
-      expandIntroPanelH = 'exapndIntroPanelH',
-      horizontalSeasonPanel = 'horizontalSeasonPanel',
-      horizontalMemberPage = 'horizontalMemberPage',
       replyLengthLimit = 'replyLengthLimit',
       showArgueMsg = 'showArgueMsg',
       reverseFromFirst = 'reverseFromFirst',
       badCertificateCallback = 'badCertificateCallback',
       continuePlayingPart = 'continuePlayingPart',
-      horizontalPreview = 'horizontalPreview',
       banWordForReply = 'banWordForReply',
       banWordForZone = 'banWordForZone',
       savedRcmdTip = 'savedRcmdTip',
@@ -116,7 +110,6 @@ abstract final class SettingBoxKey {
       enableLog = 'enableLog',
       memberTab = 'memberTab',
       dynamicDetailRatio = 'dynamicDetailRatio',
-      directExitOnBack = 'directExitOnBack',
       quickFavId = 'quickFavId',
       showFsScreenshotBtn = 'showFsScreenshotBtn',
       showFsLockBtn = 'showFsLockBtn',
@@ -133,14 +126,7 @@ abstract final class SettingBoxKey {
       removeSafeArea = 'removeSafeArea',
       angleDegrees = 'angleDegrees';
 
-  static const String minimizeOnExit = 'minimizeOnExit',
-      windowSize = 'windowSize',
-      windowPosition = 'windowPosition',
-      isWindowMaximized = 'isWindowMaximized',
-      showWindowTitleBar = 'showWindowTitleBar',
-      desktopVolume = 'desktopVolume',
-      showTrayIcon = 'showTrayIcon',
-      uiScale = 'uiScale';
+  static const String uiScale = 'uiScale';
 
   static const String subtitlePreferenceV2 = 'subtitlePreferenceV2',
       enableDragSubtitle = 'enableDragSubtitle',
