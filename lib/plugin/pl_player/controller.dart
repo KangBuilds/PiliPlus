@@ -12,8 +12,6 @@ import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/models/user/danmaku_rule.dart';
 import 'package:PiliPlus/models_new/video/video_shot/data.dart';
 import 'package:PiliPlus/pages/danmaku/danmaku_model.dart';
-import 'package:PiliPlus/pages/setting/models/play_settings.dart'
-    show kMaxVolume;
 import 'package:PiliPlus/pages/sponsor_block/block_mixin.dart';
 import 'package:PiliPlus/plugin/pl_player/models/data_source.dart';
 import 'package:PiliPlus/plugin/pl_player/models/data_status.dart';
@@ -692,8 +690,10 @@ class PlPlayerController with BlockConfigMixin {
     await setupServiceLocator();
     final opt = {
       'video-sync': Pref.videoSync,
-      'volume': Pref.playerVolume.toString(),
-      'volume-max': kMaxVolume.toString(),
+      if (PlatformUtils.isDesktop) ...{
+        'volume': (volume.value * 100).toString(),
+        'volume-max': (Pref.maxVolume * 100).toString(),
+      },
     };
     final autosync = Pref.autosync;
     if (autosync != '0') {

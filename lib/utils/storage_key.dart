@@ -26,7 +26,6 @@ abstract final class SettingBoxKey {
       pauseOnMinimize = 'pauseOnMinimize',
       audioPlayMode = 'audioPlayMode',
       showBatteryLevel = 'showBatteryLevel',
-      playerVolume = 'playerVolume',
       maxVolume = 'maxVolume';
 
   static const String enableVerticalExpand = 'enableVerticalExpand',

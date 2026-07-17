@@ -14,8 +14,6 @@ import 'package:PiliPlus/models/common/image_preview_type.dart';
 import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/pages/audio/controller.dart';
 import 'package:PiliPlus/pages/audio/volume_button.dart';
-import 'package:PiliPlus/pages/setting/models/play_settings.dart'
-    show showPlayerVolumeDialog;
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/action_item.dart';
 import 'package:PiliPlus/pages/video/widgets/header_control.dart'
     show HeaderControlState;
@@ -638,23 +636,6 @@ class _AudioPageState extends State<AudioPage> {
                     HeaderControlState.showPlayerInfo(context, player: player);
                   },
                 ),
-                if (PlatformUtils.isMobile)
-                  ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.volume_up, size: 20),
-                    title: Text(
-                      '播放器音量: ${player.getProperty('volume').subLength(3)}%',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    onTap: () {
-                      Get.back();
-                      showPlayerVolumeDialog(
-                        context,
-                        () {},
-                        onChanged: player.setVolume,
-                      );
-                    },
-                  ),
               ],
             ],
           ),

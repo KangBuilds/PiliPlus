@@ -2,7 +2,6 @@ import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/models/common/video/subtitle_pref_type.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
-import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_progress_behavior.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
@@ -78,12 +77,6 @@ List<SettingsModel> get playSettings => [
     leading: Icon(MdiIcons.panVertical),
     setKey: SettingBoxKey.enableSlideFS,
     defaultVal: true,
-  ),
-  NormalModel(
-    title: '播放器音量',
-    leading: const Icon(Icons.volume_up),
-    getSubtitle: () => '当前:「${Pref.playerVolume.toStringAsFixed(0)}%」',
-    onTap: showPlayerVolumeDialog,
   ),
   getVideoFilterSelectModel(
     title: '双击快进/快退时长',
@@ -264,49 +257,5 @@ Future<void> _showProgressBehaviorDialog(
       res.index,
     );
     setState();
-  }
-}
-
-Future<void> showPlayerVolumeDialog(
-  BuildContext context,
-  VoidCallback setState, {
-  ValueChanged<double>? onChanged,
-}) {
-  return showVolumeDialog(
-    context,
-    title: const Text('播放器音量'),
-    value: Pref.playerVolume,
-    onChanged: (value) => GStorage.setting
-        .put(SettingBoxKey.playerVolume, value)
-        .whenComplete(() {
-          setState();
-          onChanged?.call(value);
-        }),
-  );
-}
-
-const kMinVolume = 100.0;
-const kMaxVolume = 300.0;
-
-Future<void> showVolumeDialog(
-  BuildContext context, {
-  required Widget title,
-  required double value,
-  required ValueChanged<double> onChanged,
-}) async {
-  final res = await showDialog<double>(
-    context: context,
-    builder: (context) => SliderDialog(
-      title: title,
-      min: kMinVolume,
-      max: kMaxVolume,
-      divisions: 40,
-      precise: 0,
-      value: value,
-      suffix: '%',
-    ),
-  );
-  if (res != null) {
-    onChanged(res);
   }
 }
