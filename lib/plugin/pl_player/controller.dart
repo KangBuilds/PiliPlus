@@ -709,9 +709,6 @@ class PlPlayerController with BlockConfigMixin {
     return player;
   }
 
-  Map<String, String>? _buffer;
-  Map<String, String> get buffer =>
-      _buffer ??= Pref.initBuffer(_playbackSpeed.value);
   // 配置播放器
   Future<void> _createVideoController(
     DataSource dataSource,
@@ -740,7 +737,7 @@ class PlPlayerController with BlockConfigMixin {
     if (dataSource is FileSource) {
       extras['cache'] = 'no';
     } else {
-      extras.addAll(buffer);
+      extras.addAll(Pref.initBuffer(_playbackSpeed.value));
     }
 
     String video = dataSource.videoSource;
@@ -992,6 +989,13 @@ class PlPlayerController with BlockConfigMixin {
       return;
     }
 
+    if (dataSource is! FileSource) {
+      for (final entry in Pref.initBuffer(speed).entries) {
+        if (entry.key != 'cache') {
+          _videoPlayerController?.setProperty(entry.key, entry.value);
+        }
+      }
+    }
     await _videoPlayerController?.setRate(speed);
     _playbackSpeed.value = speed;
     if (danmakuController != null) {

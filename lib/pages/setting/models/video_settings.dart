@@ -103,8 +103,7 @@ List<SettingsModel> get videoSettings => [
   NormalModel(
     title: '缓冲大小',
     leading: const Icon(Icons.storage_outlined),
-    getSubtitle: () =>
-        '当前：${Pref.bufferSize}MB（此选项即mpv的--demuxer-max-bytes，--demuxer-max-back-bytes）',
+    getSubtitle: () => '当前前向缓存：${Pref.bufferSize}MB，后向缓存固定为4MB',
     onTap: _showBufferSizeDialog,
   ),
   NormalModel(
