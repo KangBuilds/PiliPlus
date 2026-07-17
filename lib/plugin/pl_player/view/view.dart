@@ -47,6 +47,7 @@ import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/forward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/mpv_convert_webp.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/video_output_size.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/connectivity_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
@@ -132,6 +133,47 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   final _playerKey = GlobalKey();
   final _videoKey = GlobalKey();
+  StreamSubscription<(int, int)>? _videoSizeSubscription;
+  Size? _videoOutputSize;
+  bool _videoOutputSyncScheduled = false;
+
+  void _syncVideoOutputSize() {
+    if (_videoOutputSyncScheduled) return;
+    _videoOutputSyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _videoOutputSyncScheduled = false;
+      if (!mounted) return;
+
+      final box = _playerKey.currentContext?.findRenderObject();
+      final player = videoController.player;
+      final sourceWidth = player.state.width;
+      final sourceHeight = player.state.height;
+      if (box is! RenderBox ||
+          !box.hasSize ||
+          sourceWidth <= 0 ||
+          sourceHeight <= 0) {
+        return;
+      }
+
+      final fit = plPlayerController.videoFit.value;
+      final size = calculateVideoOutputSize(
+        viewport: box.size,
+        source: Size(sourceWidth.toDouble(), sourceHeight.toDouble()),
+        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+        fit: fit.boxFit,
+        aspectRatio: fit.aspectRatio,
+      );
+      if (size.isEmpty || size == _videoOutputSize) return;
+
+      _videoOutputSize = size;
+      final resize = videoController.setSize(
+        width: size.width.toInt(),
+        height: size.height.toInt(),
+      );
+      if (resize != null) unawaited(resize);
+    });
+  }
+
   void _syncPictureInPictureRect() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -259,6 +301,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       duration: const Duration(milliseconds: 100),
     );
     videoController = plPlayerController.videoController!;
+    _videoSizeSubscription = videoController.player.stream.size.listen(
+      (_) => _syncVideoOutputSize(),
+    );
 
     if (PlatformUtils.isMobile) {
       Future.microtask(() {
@@ -355,6 +400,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     _scaleGestureRecognizer.dispose();
     _brightnessListener?.cancel();
     _controlsListener?.cancel();
+    _videoSizeSubscription?.cancel();
     _animationController.dispose();
     _transformationController.dispose();
     _removeDmAction();
@@ -1296,6 +1342,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   @override
   Widget build(BuildContext context) {
     _syncPictureInPictureRect();
+    _syncVideoOutputSize();
     maxWidth = widget.maxWidth;
     maxHeight = widget.maxHeight;
     final isFullScreen = this.isFullScreen;
@@ -1981,6 +2028,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
             child: Obx(
               () {
                 final videoFit = plPlayerController.videoFit.value;
+                _syncVideoOutputSize();
                 return Transform.flip(
                   flipX: plPlayerController.flipX.value,
                   flipY: plPlayerController.flipY.value,
