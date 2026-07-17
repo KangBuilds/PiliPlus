@@ -958,25 +958,25 @@ class PlPlayerController with BlockConfigMixin {
     _heartDuration = position.inSeconds;
 
     Future<void> seek() async {
-      if (isSeek) {
-        /// 拖动进度条调节时，不等待第一帧，防止抖动
-        await _videoPlayerController?.stream.buffer.first;
-      }
+      final player = _videoPlayerController;
+      if (player == null) return;
+      final buffer = isSeek ? player.stream.buffer.first : null;
       danmakuController?.clear();
       try {
-        await _videoPlayerController?.seek(position);
+        await player.seek(position);
+        if (buffer != null) await buffer;
       } catch (e) {
         if (kDebugMode) debugPrint('seek failed: $e');
       }
     }
 
     if (duration.value != 0) {
-      seek();
+      await seek();
     } else {
       // if (kDebugMode) debugPrint('seek duration else');
       _subForSeek?.cancel();
       _subForSeek = duration.listen((_) {
-        seek();
+        unawaited(seek());
         _cancelSubForSeek();
       });
     }
