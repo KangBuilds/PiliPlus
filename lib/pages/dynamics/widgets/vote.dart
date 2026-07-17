@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:PiliPlus/common/widgets/avatars.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
-import 'package:PiliPlus/common/widgets/dialog/report.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/http/dynamics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -291,19 +290,23 @@ class _VotePanelState extends State<VotePanel> {
   Widget get _checkBoxes => Row(
     spacing: 16,
     children: [
-      CheckBoxText(
-        text: '显示比例',
+      FilterChip(
+        label: const Text('显示比例'),
         selected: _showPercentage,
-        onChanged: (value) {
+        onSelected: (value) {
           setState(() {
             _showPercentage = value;
           });
         },
       ),
-      CheckBoxText(
-        text: '匿名',
+      FilterChip(
+        label: const Text('匿名'),
         selected: anonymous,
-        onChanged: (val) => anonymous = val,
+        onSelected: (value) {
+          setState(() {
+            anonymous = value;
+          });
+        },
       ),
     ],
   );

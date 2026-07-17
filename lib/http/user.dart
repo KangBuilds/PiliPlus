@@ -391,32 +391,6 @@ abstract final class UserHttp {
     }
   }
 
-  static Future<LoadingState<void>> dynamicReport({
-    required Object mid,
-    required Object dynId,
-    required int reasonType,
-    String? reasonDesc,
-  }) async {
-    final res = await Request().post(
-      Api.dynamicReport,
-      queryParameters: {
-        'csrf': Accounts.main.csrf,
-      },
-      data: {
-        "accused_uid": mid,
-        "dynamic_id": dynId,
-        "reason_type": reasonType,
-        "reason_desc": reasonType == 0 ? reasonDesc : null,
-      },
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['code'] == 0) {
-      return const Success(null);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
   static Future<LoadingState<SpaceSettingData>> spaceSetting() async {
     final res = await Request().get(
       Api.spaceSetting,

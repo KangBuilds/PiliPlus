@@ -3,14 +3,12 @@ import 'dart:math';
 import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
-import 'package:PiliPlus/common/widgets/dialog/report.dart';
 import 'package:PiliPlus/common/widgets/extra_hit_test_widget.dart';
 import 'package:PiliPlus/common/widgets/pendant_avatar.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/reply.dart';
 import 'package:PiliPlus/http/user.dart';
-import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/dynamics/controller.dart';
 import 'package:PiliPlus/pages/save_panel/view.dart';
@@ -583,43 +581,6 @@ class AuthorPanel extends StatelessWidget {
                     ),
                   ),
               ],
-              if (Accounts.main.isLogin)
-                ListTile(
-                  title: Text(
-                    '举报',
-                    style: theme.textTheme.titleSmall!.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
-                  leading: Icon(
-                    Icons.error_outline_outlined,
-                    size: 19,
-                    color: theme.colorScheme.error,
-                  ),
-                  onTap: () {
-                    Get.back();
-                    autoWrapReportDialog(
-                      context,
-                      ReportOptions.dynamicReport,
-                      (reasonType, reasonDesc, banUid) {
-                        if (banUid) {
-                          VideoHttp.relationMod(
-                            mid: moduleAuthor.mid!,
-                            act: 5,
-                            reSrc: 11,
-                          );
-                        }
-                        return UserHttp.dynamicReport(
-                          mid: moduleAuthor.mid!,
-                          dynId: item.idStr,
-                          reasonType: reasonType,
-                          reasonDesc: reasonType == 0 ? reasonDesc : null,
-                        );
-                      },
-                    );
-                  },
-                  minLeadingWidth: 0,
-                ),
               const Divider(thickness: 0.1, height: 1),
               ListTile(
                 onTap: Get.back,

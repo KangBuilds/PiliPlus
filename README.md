@@ -40,7 +40,7 @@
 
 - [x] 编辑动态
 - [x] 离线缓存/播放
-- [x] 移动端支持点击弹幕悬停，点赞、复制、举报 by [@My-Responsitories](https://github.com/My-Responsitories)
+- [x] 移动端支持点击弹幕悬停，点赞、复制 by [@My-Responsitories](https://github.com/My-Responsitories)
 - [x] 播放音频
 - [x] 视频截取动图 by [@My-Responsitories](https://github.com/My-Responsitories)
 - [x] AI 原声翻译
@@ -95,7 +95,6 @@
 - [x] 转发动态
 - [x] 合集图片
 - [x] 删除/置顶/撤回私信
-- [x] 举报用户/评论/视频/动态
 - [x] 删除/发布/置顶文本/图片动态
 - [x] 其他
 

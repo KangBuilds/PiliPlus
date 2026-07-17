@@ -615,15 +615,6 @@ class _AudioPageState extends State<AudioPage> {
                   ),
                 ),
               ),
-              ListTile(
-                dense: true,
-                leading: const Icon(Icons.warning_amber_rounded, size: 20),
-                title: const Text('举报', style: TextStyle(fontSize: 14)),
-                onTap: () {
-                  Get.back();
-                  PageUtils.reportVideo(_controller.oid.toInt());
-                },
-              ),
               if (_controller.player case final player?) ...[
                 ListTile(
                   dense: true,

@@ -111,7 +111,6 @@ abstract final class SettingBoxKey {
       memberTab = 'memberTab',
       dynamicDetailRatio = 'dynamicDetailRatio',
       quickFavId = 'quickFavId',
-      showFsScreenshotBtn = 'showFsScreenshotBtn',
       showFsLockBtn = 'showFsLockBtn',
       silentDownImg = 'silentDownImg',
       showMemberShop = 'showMemberShop',

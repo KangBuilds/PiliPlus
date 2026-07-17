@@ -89,51 +89,6 @@ abstract final class DanmakuHttp {
     }
   }
 
-  static Future<LoadingState<void>> danmakuReport({
-    required int reason,
-    required int cid,
-    required int id,
-    bool block = false,
-    String? content,
-  }) async {
-    final data = {
-      'cid': cid,
-      'dmid': id,
-      'reason': reason,
-      'block': block,
-      'originCid': cid,
-      'content': ?content,
-      'polaris_app_id': 100,
-      'polaris_platform': 5,
-      'spmid': '333.788.0.0',
-      'from_spmid': '333.788.0.0',
-      'statistics': '{"appId":100,"platform":5,"abtest":"","version":""}',
-      'csrf': Accounts.main.csrf,
-    };
-    final res = await Request().post(
-      Api.danmakuReport,
-      data: data,
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-
-    if (res.data['code'] == 0) {
-      return const Success(null);
-    } else {
-      return Error(res.data['message']);
-    }
-
-    /// res.data['data']['block']
-    /// {
-    ///       0: "举报已提交",
-    ///       "-1": "举报失败，请先激活账号。",
-    ///       "-2": "举报失败，系统拒绝受理您的举报请求。",
-    ///       "-3": "举报失败，您已经被禁言。",
-    ///       "-4": "您的操作过于频繁，请稍后再试。",
-    ///       "-5": "您已经举报过这条弹幕了。",
-    ///       "-6": "举报失败，系统错误。"
-    /// }
-  }
-
   static Future<LoadingState<String?>> danmakuRecall({
     required int cid,
     required int id,

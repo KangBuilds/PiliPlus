@@ -23,7 +23,7 @@ List<SettingsModel> get playSettings => [
   ),
   const SwitchModel(
     title: '启用点击弹幕',
-    subtitle: '点击弹幕悬停，支持点赞、复制、举报操作',
+    subtitle: '点击弹幕悬停，支持点赞、复制操作',
     leading: Icon(Icons.touch_app_outlined),
     setKey: SettingBoxKey.enableTapDm,
     defaultVal: true,
@@ -45,12 +45,6 @@ List<SettingsModel> get playSettings => [
     title: '全屏显示锁定按钮',
     leading: Icon(Icons.lock_outline),
     setKey: SettingBoxKey.showFsLockBtn,
-    defaultVal: true,
-  ),
-  const SwitchModel(
-    title: '全屏显示截图按钮',
-    leading: Icon(Icons.photo_camera_outlined),
-    setKey: SettingBoxKey.showFsScreenshotBtn,
     defaultVal: true,
   ),
   SwitchModel(

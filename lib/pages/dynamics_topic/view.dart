@@ -6,7 +6,6 @@ import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/pair.dart';
 import 'package:PiliPlus/common/widgets/sliver/sliver_pinned_header.dart';
-import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_topic_feed/fold_card_item.dart';
@@ -17,12 +16,9 @@ import 'package:PiliPlus/pages/dynamics/widgets/dynamic_panel.dart';
 import 'package:PiliPlus/pages/dynamics_create/view.dart';
 import 'package:PiliPlus/pages/dynamics_topic/controller.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
-import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
-import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/share_utils.dart';
-import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/waterfall.dart';
 import 'package:flutter/material.dart';
@@ -345,18 +341,6 @@ class _DynTopicPageState extends State<DynTopicPage>
                   child: Text(
                     '${_controller.isFav.value ? '取消' : ''}收藏',
                   ),
-                ),
-                PopupMenuItem(
-                  child: const Text('举报'),
-                  onTap: () {
-                    if (!_controller.isLogin) {
-                      SmartDialog.showToast('账号未登录');
-                      return;
-                    }
-                    PageUtils.inAppWebview(
-                      '${HttpString.baseUrl}/h5/topic-active/topic-report?topic_id=${_controller.topicId}&topic_name=${_controller.topicName}&${ThemeUtils.themeUrl(colorScheme.isDark)}',
-                    );
-                  },
                 ),
               ];
             },

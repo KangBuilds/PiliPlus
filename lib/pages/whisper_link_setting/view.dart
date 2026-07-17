@@ -74,16 +74,6 @@ class _WhisperLinkSettingPageState extends State<WhisperLinkSettingPage> {
               return const SizedBox.shrink();
             },
           ),
-          divider2,
-          ListTile(
-            dense: true,
-            onTap: _controller.report,
-            title: const Text('举报', style: TextStyle(fontSize: 14)),
-            trailing: Icon(
-              Icons.keyboard_arrow_right,
-              color: theme.colorScheme.outline,
-            ),
-          ),
           divider,
         ],
       ),

@@ -199,12 +199,6 @@ class PlayerFocus extends StatelessWidget {
           }
           return true;
 
-        case LogicalKeyboardKey.keyS:
-          if (hasPlayer && isFullScreen) {
-            plPlayerController.takeScreenshot();
-          }
-          return true;
-
         case LogicalKeyboardKey.keyL:
           if (isFullScreen || plPlayerController.isDesktopPip) {
             plPlayerController.onLockControl(

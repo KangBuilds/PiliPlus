@@ -5,11 +5,9 @@ import 'dart:typed_data' show Uint8List;
 
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
-import 'package:PiliPlus/common/widgets/dialog/report.dart';
 import 'package:PiliPlus/common/widgets/dialog/simple_dialog_option.dart';
 import 'package:PiliPlus/common/widgets/marquee.dart';
 import 'package:PiliPlus/http/danmaku.dart';
-import 'package:PiliPlus/http/danmaku_block.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/video.dart';
@@ -41,7 +39,6 @@ import 'package:PiliPlus/utils/connectivity_utils.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
-import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -233,43 +230,6 @@ class HeaderControl extends StatefulWidget {
     } else {
       res.toast();
       return false;
-    }
-  }
-
-  static Future<void> reportDanmaku(
-    BuildContext context, {
-    required VideoDanmaku extra,
-    required PlPlayerController ctr,
-  }) {
-    if (Accounts.main.isLogin) {
-      return autoWrapReportDialog(
-        context,
-        ReportOptions.danmakuReport,
-        (reasonType, reasonDesc, banUid) {
-          if (banUid) {
-            final filter = ctr.filters;
-            if (filter.dmUid.add(extra.mid)) {
-              filter.count++;
-              GStorage.localCache.put(
-                LocalCacheKey.danmakuFilterRules,
-                filter,
-              );
-            }
-            DanmakuFilterHttp.danmakuFilterAdd(
-              filter: extra.mid,
-              type: 2,
-            );
-          }
-          return DanmakuHttp.danmakuReport(
-            reason: reasonType == 0 ? 11 : reasonType,
-            cid: ctr.cid!,
-            id: extra.id,
-            content: reasonType == 0 ? reasonDesc : null,
-          );
-        },
-      );
-    } else {
-      return SmartDialog.showToast('请先登录');
     }
   }
 }
@@ -645,19 +605,6 @@ class HeaderControlState extends State<HeaderControl>
                         ..showPlayerInfo.value = true;
                     },
                   ),
-                ListTile(
-                  dense: true,
-                  onTap: () {
-                    if (!Accounts.main.isLogin) {
-                      SmartDialog.showToast('账号未登录');
-                      return;
-                    }
-                    Get.back();
-                    PageUtils.reportVideo(videoDetailCtr.aid);
-                  },
-                  leading: const Icon(Icons.error_outline, size: 20),
-                  title: const Text('举报', style: titleStyle),
-                ),
               ],
             ),
           ),

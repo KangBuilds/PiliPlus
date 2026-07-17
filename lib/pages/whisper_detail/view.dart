@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io' show File;
 
-import 'package:PiliPlus/common/widgets/dialog/report.dart';
 import 'package:PiliPlus/common/widgets/flutter/chat_list_view.dart';
 import 'package:PiliPlus/common/widgets/flutter/text_field/text_field.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
@@ -162,10 +161,11 @@ class _WhisperDetailPageState
                   return ChatItem(
                     item: item,
                     eInfos: _whisperDetailController.eInfos,
-                    onLongPress: () => onLongPress(index, item, isOwner),
-                    onSecondaryTapUp: PlatformUtils.isDesktop
-                        ? (e) =>
-                              _showMenu(e.globalPosition, index, item, isOwner)
+                    onLongPress: isOwner
+                        ? () => onLongPress(index, item)
+                        : null,
+                    onSecondaryTapUp: PlatformUtils.isDesktop && isOwner
+                        ? (e) => _showMenu(e.globalPosition, index, item)
                         : null,
                     isOwner: isOwner,
                   );
@@ -181,85 +181,45 @@ class _WhisperDetailPageState
     };
   }
 
-  void _showMenu(Offset offset, int index, Msg item, bool isOwner) {
+  void _showMenu(Offset offset, int index, Msg item) {
     showMenu(
       context: context,
       position: PageUtils.menuPosition(offset),
       items: [
-        if (isOwner)
-          PopupMenuItem(
-            height: 42,
-            onTap: () => _whisperDetailController.sendMsg(
-              message: '${item.msgKey}',
-              onClearText: editController.clear,
-              msgType: 5,
-              index: index,
-            ),
-            child: const Text('撤回', style: TextStyle(fontSize: 14)),
-          )
-        else
-          PopupMenuItem(
-            height: 42,
-            onTap: () => autoWrapReportDialog(
-              context,
-              ban: false,
-              ReportOptions.imMsgReport,
-              (reasonType, reasonDesc, banUid) =>
-                  _whisperDetailController.onReport(
-                    item,
-                    reasonType,
-                    reasonType == 0
-                        ? reasonDesc!
-                        : ReportOptions.imMsgReport['']![reasonType]!,
-                  ),
-            ),
-            child: const Text('举报', style: TextStyle(fontSize: 14)),
+        PopupMenuItem(
+          height: 42,
+          onTap: () => _whisperDetailController.sendMsg(
+            message: '${item.msgKey}',
+            onClearText: editController.clear,
+            msgType: 5,
+            index: index,
           ),
+          child: const Text('撤回', style: TextStyle(fontSize: 14)),
+        ),
       ],
     );
   }
 
-  void onLongPress(int index, Msg item, bool isOwner) {
+  void onLongPress(int index, Msg item) {
     Feedback.forLongPress(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         clipBehavior: Clip.hardEdge,
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
-        content: isOwner
-            ? ListTile(
-                onTap: () {
-                  Get.back();
-                  _whisperDetailController.sendMsg(
-                    message: '${item.msgKey}',
-                    onClearText: editController.clear,
-                    msgType: 5,
-                    index: index,
-                  );
-                },
-                dense: true,
-                title: const Text('撤回', style: TextStyle(fontSize: 14)),
-              )
-            : ListTile(
-                onTap: () {
-                  Get.back();
-                  autoWrapReportDialog(
-                    context,
-                    ban: false,
-                    ReportOptions.imMsgReport,
-                    (reasonType, reasonDesc, banUid) =>
-                        _whisperDetailController.onReport(
-                          item,
-                          reasonType,
-                          reasonType == 0
-                              ? reasonDesc!
-                              : ReportOptions.imMsgReport['']![reasonType]!,
-                        ),
-                  );
-                },
-                dense: true,
-                title: const Text('举报', style: TextStyle(fontSize: 14)),
-              ),
+        content: ListTile(
+          onTap: () {
+            Get.back();
+            _whisperDetailController.sendMsg(
+              message: '${item.msgKey}',
+              onClearText: editController.clear,
+              msgType: 5,
+              index: index,
+            );
+          },
+          dense: true,
+          title: const Text('撤回', style: TextStyle(fontSize: 14)),
+        ),
       ),
     );
   }

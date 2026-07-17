@@ -6,7 +6,6 @@ import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
-import 'package:PiliPlus/common/widgets/dialog/report.dart';
 import 'package:PiliPlus/common/widgets/extra_hit_test_widget.dart';
 import 'package:PiliPlus/common/widgets/flutter/text/text.dart' as custom_text;
 import 'package:PiliPlus/common/widgets/gesture/tap_gesture_recognizer.dart';
@@ -17,7 +16,6 @@ import 'package:PiliPlus/grpc/bilibili/main/community/reply/v1.pb.dart'
     show ReplyInfo, ReplyControl, Content, Url, ReplyControl_VoteOption;
 import 'package:PiliPlus/grpc/reply.dart';
 import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/http/reply.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
 import 'package:PiliPlus/models/common/image_type.dart';
@@ -1059,32 +1057,6 @@ class ReplyItemGrpc extends StatelessWidget {
               minLeadingWidth: 0,
               leading: Icon(Icons.delete_outlined, color: errorColor, size: 19),
               title: Text('删除', style: style.copyWith(color: errorColor)),
-            ),
-          if (ownerMid != Int64.ZERO)
-            ListTile(
-              onTap: () {
-                Get.back();
-                autoWrapReportDialog(
-                  context,
-                  ReportOptions.commentReport,
-                  (reasonType, reasonDesc, banUid) async {
-                    final res = await ReplyHttp.report(
-                      rpid: item.id,
-                      oid: item.oid,
-                      reasonType: reasonType,
-                      reasonDesc: reasonDesc,
-                      banUid: banUid,
-                    );
-                    if (res.isSuccess) {
-                      onDelete();
-                    }
-                    return res;
-                  },
-                );
-              },
-              minLeadingWidth: 0,
-              leading: Icon(Icons.error_outline, color: errorColor, size: 19),
-              title: Text('举报', style: style.copyWith(color: errorColor)),
             ),
           if (replyLevel == 1 && !isSubReply && ownerMid == upMid)
             ListTile(

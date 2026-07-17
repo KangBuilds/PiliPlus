@@ -35,31 +35,8 @@ import 'package:PiliPlus/utils/app_sign.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/wbi_sign.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 abstract final class MemberHttp {
-  static Future<void> reportMember(
-    dynamic mid, {
-    String? reason,
-    int? reasonV2,
-  }) async {
-    final res = await Request().post(
-      Api.reportMember,
-      data: {
-        'mid': mid,
-        'reason': reason,
-        'reason_v2': ?reasonV2,
-        'csrf': Accounts.main.csrf,
-      },
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['status'] == true) {
-      SmartDialog.showToast('举报成功');
-    } else {
-      SmartDialog.showToast('举报失败');
-    }
-  }
-
   static Future<LoadingState<SpaceArticleData>> spaceArticle({
     required int mid,
     required int page,

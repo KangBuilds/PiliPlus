@@ -1,4 +1,3 @@
-import 'package:PiliPlus/common/widgets/dialog/report_member.dart';
 import 'package:PiliPlus/common/widgets/dynamic_sliver_app_bar/dynamic_sliver_app_bar.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
@@ -336,29 +335,6 @@ class _MemberPageState extends State<MemberPage> {
                   ],
                 ),
               ),
-            const PopupMenuDivider(),
-            PopupMenuItem(
-              onTap: () => showMemberReportDialog(
-                context,
-                name: _userController.username,
-                mid: _mid,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 19,
-                    color: theme.error,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '举报',
-                    style: TextStyle(color: theme.error),
-                  ),
-                ],
-              ),
-            ),
           ],
       ],
     ),

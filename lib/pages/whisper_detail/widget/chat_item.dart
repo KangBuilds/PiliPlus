@@ -42,7 +42,7 @@ class ChatItem extends StatelessWidget {
 
   final Msg item;
   final List<EmotionInfo>? eInfos;
-  final VoidCallback onLongPress;
+  final VoidCallback? onLongPress;
   final GestureTapUpCallback? onSecondaryTapUp;
   final bool isOwner;
 

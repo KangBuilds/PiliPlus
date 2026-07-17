@@ -176,13 +176,6 @@ abstract final class PageUtils {
     );
   }
 
-  static void reportVideo(int aid) {
-    Get.toNamed(
-      '/webview',
-      parameters: {'url': 'https://www.bilibili.com/appeal/?avid=$aid'},
-    );
-  }
-
   static Future<void> pushDynDetail(
     DynamicItemModel item, {
     bool isPush = false,

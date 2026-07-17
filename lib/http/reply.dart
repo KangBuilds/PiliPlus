@@ -178,37 +178,6 @@ abstract final class ReplyHttp {
     }
   }
 
-  static Future<LoadingState<void>> report({
-    required Object rpid,
-    required Object oid,
-    required int reasonType,
-    bool banUid = true,
-    String? reasonDesc,
-  }) async {
-    final res = await Request().post(
-      Api.replyReport,
-      data: {
-        'add_blacklist': banUid,
-        'csrf': Accounts.main.csrf,
-        'gaia_source': 'main_h5',
-        'oid': oid,
-        'platform': 'android',
-        'reason': reasonType,
-        'rpid': rpid,
-        'scene': 'main',
-        'type': 1,
-        if (reasonType == 0) 'content': reasonDesc!,
-      },
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-
-    if (res.data['code'] == 0) {
-      return const Success(null);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
   static Future<LoadingState<ReplyInteractData>> replyInteraction({
     required Object oid,
     required Object type,

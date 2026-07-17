@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:PiliPlus/http/api.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/init.dart';
@@ -600,35 +598,6 @@ abstract final class MsgHttp {
     );
     if (res.data['code'] == 0) {
       return Success(MsgFeedUnreadData.fromJson(res.data['data']));
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<void>> imMsgReport({
-    required int accusedUid,
-    required int reasonType,
-    required String reasonDesc,
-    required Map comment,
-    required Map extra,
-  }) async {
-    final res = await Request().post(
-      Api.imMsgReport,
-      data: {
-        'biz_code': 4,
-        'accused_uid': accusedUid,
-        'object_id': accusedUid,
-        'reason_type': reasonType,
-        'reason_desc': reasonDesc,
-        'module': 604,
-        'comment': jsonEncode(comment),
-        'extra': jsonEncode(extra),
-        'csrf': Accounts.main.csrf,
-      },
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['code'] == 0) {
-      return const Success(null);
     } else {
       return Error(res.data['message']);
     }

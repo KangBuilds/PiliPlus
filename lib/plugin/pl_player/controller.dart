@@ -1,6 +1,6 @@
 import 'dart:async' show StreamSubscription, Timer, unawaited;
 import 'dart:convert' show ascii;
-import 'dart:math' show max, min;
+import 'dart:math' show max;
 import 'dart:ui' as ui;
 
 import 'package:PiliPlus/http/browser_ua.dart';
@@ -25,10 +25,8 @@ import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
-import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension/box_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
-import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -379,7 +377,6 @@ class PlPlayerController with BlockConfigMixin {
   late final reverseFromFirst = Pref.reverseFromFirst;
   late final showDmChart = Pref.showDmChart;
   late final showViewPoints = Pref.showViewPoints;
-  late final showFsScreenshotBtn = Pref.showFsScreenshotBtn;
   late final showFsLockBtn = Pref.showFsLockBtn;
   late final keyboardControl = Pref.keyboardControl;
   late final uiScale = Pref.uiScale;
@@ -1502,57 +1499,6 @@ class PlPlayerController with BlockConfigMixin {
 
   Future<void> getVideoShot() async {
     videoShot = await VideoHttp.videoshot(bvid: bvid, cid: cid!);
-  }
-
-  Future<void> takeScreenshot() async {
-    SmartDialog.showToast('截图中');
-    final time = DurationUtils.formatDuration(
-      positionInMilliseconds / 1000,
-    ).replaceAll(':', '-');
-    final image = await videoPlayerController?.screenshot();
-    if (image != null) {
-      SmartDialog.showToast('点击弹窗保存截图');
-      showDialog(
-        context: Get.context!,
-        builder: (context) => GestureDetector(
-          onTap: () async {
-            final bytes = await image.toByteData(format: .png);
-            if (bytes != null) {
-              ImageUtils.saveByteImg(
-                bytes: bytes.buffer.asUint8List(),
-                fileName: 'screenshot_${cid}_$time',
-              );
-            }
-            Get.back();
-          },
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: min(MediaQuery.widthOf(context) / 3, 350),
-                ),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      width: 5,
-                      color: ColorScheme.of(context).surface,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: RawImage(image: image),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ).whenComplete(image.dispose);
-    } else {
-      SmartDialog.showToast('截图失败');
-    }
   }
 
   void onPopInvokedWithResult(bool didPop, Object? result) {

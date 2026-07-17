@@ -614,9 +614,6 @@ abstract final class Api {
   // static const String videoTags = '/x/tag/archive/tags';
   static const String videoTags = '/x/web-interface/view/detail/tag';
 
-  static const String reportMember =
-      '${HttpString.spaceBaseUrl}/ajax/report/add';
-
   static const String removeMsg = '/session_svr/v1/session_svr/remove_session';
 
   static const String delSysMsg = '/x/sys-msg/del_notify_list';
@@ -684,8 +681,6 @@ abstract final class Api {
       '${HttpString.appBaseUrl}/x/v2/search/recommend';
 
   static const String articleInfo = '/x/article/viewinfo';
-
-  static const String dynamicReport = '/x/dynamic/feed/dynamic_report/add';
 
   // https://github.com/SocialSisterYi/bilibili-API-collect/pull/1242
   static const String articleView = '/x/article/view';
@@ -813,8 +808,6 @@ abstract final class Api {
 
   static const String danmakuLike = '/x/v2/dm/thumbup/add';
 
-  static const String danmakuReport = '/x/dm/report/add';
-
   static const String danmakuRecall = '/x/dm/recall';
 
   static const String danmakuEditState = '/x/v2/dm/edit/state';
@@ -825,8 +818,6 @@ abstract final class Api {
 
   static const String followeeVotes =
       '${HttpString.tUrl}/vote_svr/v1/vote_svr/followee_votes';
-
-  static const String imMsgReport = '${HttpString.tUrl}/x/bplus/im/report/add';
 
   static const String dynPrivatePubSetting =
       '/x/dynamic/feed/dyn/private_pub_setting';
@@ -843,8 +834,6 @@ abstract final class Api {
   static const String bubble = '/x/tribee/v1/dyn/all';
 
   static const String sortFollowTag = '/x/relation/tags/update_sort';
-
-  static const String replyReport = '/x/v2/reply/report';
 
   static const String dynReaction = '/x/polymer/web-dynamic/v1/detail/reaction';
 }
