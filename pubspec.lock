@@ -224,9 +224,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
-      resolved-ref: "697d4516df2fc3ba7417c7ce9aba079d34ba13e5"
-      url: "https://github.com/bggRGjQaUbCoE/canvas_danmaku.git"
+      ref: "codex/baseline-smooth-danmaku"
+      resolved-ref: a08e2004e24396ae8ccb5a544eb87f22341cfa06
+      url: "https://github.com/KangBuilds/canvas_danmaku.git"
     source: git
     version: "0.2.6"
   catcher_2:
