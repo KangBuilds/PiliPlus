@@ -16,6 +16,7 @@ import 'package:easy_debounce/easy_throttle.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:super_sliver_list/super_sliver_list.dart';
 
 class VideoReplyPanel extends StatefulWidget {
   const VideoReplyPanel({
@@ -183,7 +184,7 @@ class _VideoReplyPanelState extends State<VideoReplyPanel>
           if (hasVote) {
             count++;
           }
-          return SliverList.builder(
+          return SuperSliverList.builder(
             itemBuilder: (context, index) {
               if (hasVote) {
                 if (index == 0) {
