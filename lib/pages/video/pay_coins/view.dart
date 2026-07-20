@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'dart:math' show max;
 
@@ -76,17 +75,12 @@ class _PayCoinsPageState extends State<PayCoinsPage>
   late final AnimationController _boxAnimController;
   late final Animation<Offset> _boxAnim;
 
-  Timer? _timer;
   late final RxInt _thunderIndex = (-1).obs;
   static const List<String> _thunderImages = [
     Assets.thunder1,
     Assets.thunder2,
     Assets.thunder3,
   ];
-  void _cancelTimer() {
-    _timer?.cancel();
-    _timer = null;
-  }
 
   final num? _coins = GlobalData().coins;
 
@@ -159,19 +153,29 @@ class _PayCoinsPageState extends State<PayCoinsPage>
         end: const Offset(0.0, -0.2),
       ),
     );
+    _boxAnimController.addListener(_updateThunder);
 
     WidgetsBinding.instance.addPostFrameCallback(_scale);
   }
 
   @override
   void dispose() {
-    _cancelTimer();
     _slide22Controller.dispose();
     _scale22Controller.dispose();
     _coinController.dispose();
     _boxAnimController.dispose();
     _controller?.dispose();
     super.dispose();
+  }
+
+  void _updateThunder() {
+    final currentIndex = _thunderIndex.value;
+    if (currentIndex < 0 || currentIndex >= _thunderImages.length) return;
+    final index = (_boxAnimController.value * _thunderImages.length).floor();
+    assert(index >= 0 && index <= _thunderImages.length);
+    if (index != currentIndex) {
+      _thunderIndex.value = index;
+    }
   }
 
   void _scale([_]) {
@@ -517,15 +521,7 @@ class _PayCoinsPageState extends State<PayCoinsPage>
     _slide22Controller.forward().whenComplete(() {
       _slide22Controller.reverse().whenComplete(() {
         if (_pageIndex.value == 1) {
-          _thunderIndex.value += 1;
-          _timer ??= Timer.periodic(const Duration(milliseconds: 50 ~/ 3), (_) {
-            final index = _thunderIndex.value;
-            if (index == _thunderImages.length) {
-              _cancelTimer();
-            } else {
-              _thunderIndex.value = index + 1;
-            }
-          });
+          _thunderIndex.value = 0;
         }
         _boxAnimController.forward().whenComplete(_boxAnimController.reverse);
         _coinController.forward().whenComplete(() {

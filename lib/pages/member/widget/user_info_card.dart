@@ -967,8 +967,9 @@ class _HeaderTitleState extends State<HeaderTitle> {
   }
 
   void _listener() {
-    _updateIndex();
-    setState(() {});
+    final index = widget.pageController.page?.round() ?? 0;
+    if (index == _index) return;
+    setState(() => _index = index);
   }
 
   void _updateIndex() {
