@@ -1090,7 +1090,7 @@ packages:
     description:
       path: media_kit_video
       ref: experiment/native-ios-video-layer
-      resolved-ref: 06bf461b0c5edf731aa3560f1c32b7d723f221bd
+      resolved-ref: c7b668256128a5b10ca17fb6d9a13ea852ec9df3
       url: "https://github.com/KangBuilds/media-kit.git"
     source: git
     version: "1.2.5"
