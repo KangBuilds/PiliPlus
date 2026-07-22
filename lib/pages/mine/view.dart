@@ -344,7 +344,7 @@ class _MediaPageState extends CommonPageState<MinePage>
                       ),
                       const SizedBox(height: 4),
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 225),
+                        constraints: const BoxConstraints(maxWidth: 260),
                         child: LinearProgressIndicator(
                           minHeight: 2.25,
                           value: hasLevel
