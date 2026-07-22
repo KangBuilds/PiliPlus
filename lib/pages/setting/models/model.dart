@@ -95,7 +95,12 @@ class PopupModel<T extends EnumWithLabel> extends SettingsModel {
   Widget get widget => PopupListTile<T>(
     safeArea: false,
     leading: leading,
-    title: Text(title),
+    title: Builder(
+      builder: (context) => Text(
+        title,
+        style: titleStyle ?? Theme.of(context).textTheme.titleMedium,
+      ),
+    ),
     value: () {
       final v = value();
       return (v, v.label);
