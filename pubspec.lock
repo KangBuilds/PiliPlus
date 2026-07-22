@@ -93,11 +93,11 @@ packages:
     dependency: "direct main"
     description:
       path: audio_service
-      ref: "81cf56d5a8b8e9c8aa5a4c9396aebe094e09622f"
-      resolved-ref: "81cf56d5a8b8e9c8aa5a4c9396aebe094e09622f"
+      ref: main
+      resolved-ref: e0860cf42618880b7e4fc5843d1e297c93d23922
       url: "https://github.com/bggRGjQaUbCoE/audio_service.git"
     source: git
-    version: "0.18.18"
+    version: "0.18.19"
   audio_service_platform_interface:
     dependency: transitive
     description:
