@@ -58,8 +58,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart'
-    show RenderProxyBox, SemanticsConfiguration;
+import 'package:flutter/rendering.dart' show RenderProxyBox;
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
@@ -398,57 +397,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     Widget progressWidget(
       BottomControlType bottomControl,
     ) => switch (bottomControl) {
-      /// 播放暂停
-      BottomControlType.playOrPause => PlayOrPauseButton(
-        plPlayerController: plPlayerController,
-      ),
-
-      /// 上一集
-      BottomControlType.pre => ComBtn(
-        width: widgetWidth,
-        height: 30,
-        tooltip: '上一集',
-        icon: const Icon(
-          Icons.skip_previous,
-          size: 22,
-          color: Colors.white,
-        ),
-        onTap: () {
-          if (!introController.prevPlay()) {
-            SmartDialog.showToast('已经是第一集了');
-          }
-        },
-      ),
-
-      /// 下一集
-      BottomControlType.next => ComBtn(
-        width: widgetWidth,
-        height: 30,
-        tooltip: '下一集',
-        icon: const Icon(
-          Icons.skip_next,
-          size: 22,
-          color: Colors.white,
-        ),
-        onTap: () {
-          if (!introController.nextPlay()) {
-            SmartDialog.showToast('已经是最后一集了');
-          }
-        },
-      ),
-
-      /// 时间进度
-      BottomControlType.time => Obx(
-        () => _VideoTime(
-          position: DurationUtils.formatDuration(
-            plPlayerController.position.value,
-          ),
-          duration: DurationUtils.formatDuration(
-            plPlayerController.duration.value,
-          ),
-        ),
-      ),
-
       /// 高能进度条
       BottomControlType.dmChart => Obx(
         () {
@@ -849,12 +797,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
     final isNotFileSource = !plPlayerController.isFileSource;
 
-    List<BottomControlType> userSpecifyItemLeft = [
-      .playOrPause,
-      .time,
-      if (!isNotFileSource || anySeason) ...[.pre, .next],
-    ];
-
     final flag =
         isFullScreen || plPlayerController.isDesktopPip || maxWidth >= 500;
     final List<BottomControlType> userSpecifyItemRight = [
@@ -870,17 +812,91 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     ];
     return PlayerBar(
       children: [
-        Row(
-          mainAxisSize: .min,
-          children: userSpecifyItemLeft.map(progressWidget).toList(),
-        ),
-        Row(
-          mainAxisSize: .min,
-          children: userSpecifyItemRight.map(progressWidget).toList(),
+        const SizedBox.shrink(),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: const BoxDecoration(
+            color: Color(0x45000000),
+            borderRadius: BorderRadius.all(Radius.circular(18)),
+          ),
+          child: Row(
+            mainAxisSize: .min,
+            children: userSpecifyItemRight.map(progressWidget).toList(),
+          ),
         ),
       ],
     );
   }
+
+  Widget buildCenterControls() => Obx(() {
+    final videoDetail = introController.videoDetail.value;
+    final showPreviousNext =
+        plPlayerController.isFileSource ||
+        videoDetail.ugcSeason != null ||
+        (videoDetail.pages?.length ?? 0) > 1 ||
+        !videoDetailController.isUgc ||
+        videoDetailController.isPlayAll;
+
+    Widget skipButton({
+      required String tooltip,
+      required String unavailableMessage,
+      required IconData icon,
+      required bool Function() onPressed,
+    }) => SizedBox.square(
+      dimension: 52,
+      child: IconButton(
+        tooltip: tooltip,
+        padding: EdgeInsets.zero,
+        alignment: Alignment.center,
+        style: IconButton.styleFrom(
+          backgroundColor: const Color(0x45000000),
+          shape: const CircleBorder(),
+        ),
+        onPressed: () {
+          if (!onPressed()) {
+            SmartDialog.showToast(unavailableMessage);
+          }
+        },
+        icon: Icon(icon, color: Colors.white, size: 28),
+      ),
+    );
+
+    return IgnorePointer(
+      ignoring:
+          !plPlayerController.showControls.value ||
+          plPlayerController.controlsLock.value,
+      child: FadeTransition(
+        opacity: _animationController,
+        child: Center(
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 28,
+              children: [
+                if (showPreviousNext)
+                  skipButton(
+                    tooltip: '上一集',
+                    unavailableMessage: '已经是第一集了',
+                    icon: Icons.skip_previous_rounded,
+                    onPressed: introController.prevPlay,
+                  ),
+                PlayOrPauseButton(plPlayerController: plPlayerController),
+                if (showPreviousNext)
+                  skipButton(
+                    tooltip: '下一集',
+                    unavailableMessage: '已经是最后一集了',
+                    icon: Icons.skip_next_rounded,
+                    onPressed: introController.nextPlay,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  });
 
   PlPlayerController get plPlayerController => widget.plPlayerController;
 
@@ -1512,6 +1528,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           ),
         ),
 
+        Positioned.fill(child: buildCenterControls()),
+
         // 头部、底部控制条
         Positioned.fill(
           top: -1,
@@ -1720,7 +1738,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: FractionalTranslation(
-                  translation: const Offset(1, -0.4),
+                  translation: const Offset(1, 0),
                   child: Obx(
                     () => Offstage(
                       offstage: !plPlayerController.showControls.value,

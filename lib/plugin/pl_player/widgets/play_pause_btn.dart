@@ -49,20 +49,22 @@ class PlayOrPauseButtonState extends State<PlayOrPauseButton>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 42,
-      height: 34,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.plPlayerController.onDoubleTapCenter,
-        child: Center(
-          child: AnimatedIcon(
-            semanticLabel: player.state.playing ? '暂停' : '播放',
-            progress: controller,
-            icon: AnimatedIcons.play_pause,
-            color: Colors.white,
-            size: 20,
-          ),
+    return SizedBox.square(
+      dimension: 64,
+      child: IconButton(
+        tooltip: player.state.playing ? '暂停' : '播放',
+        padding: EdgeInsets.zero,
+        alignment: Alignment.center,
+        style: IconButton.styleFrom(
+          backgroundColor: const Color(0x45000000),
+          shape: const CircleBorder(),
+        ),
+        onPressed: widget.plPlayerController.onDoubleTapCenter,
+        icon: AnimatedIcon(
+          progress: controller,
+          icon: AnimatedIcons.play_pause,
+          color: Colors.white,
+          size: 32,
         ),
       ),
     );
