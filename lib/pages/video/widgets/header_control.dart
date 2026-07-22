@@ -240,18 +240,6 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
                     dense: true,
                     onTap: () {
                       Get.back();
-                      videoDetailCtr.editPlayUrl();
-                    },
-                    leading: const Icon(
-                      Icons.link,
-                      size: 20,
-                    ),
-                    title: const Text('播放地址', style: titleStyle),
-                  ),
-                  ListTile(
-                    dense: true,
-                    onTap: () {
-                      Get.back();
                       videoDetailCtr.queryVideoUrl(fromReset: true);
                     },
                     leading: const Icon(Icons.refresh_outlined, size: 20),
