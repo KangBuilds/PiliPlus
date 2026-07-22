@@ -1,3 +1,4 @@
+import AVFoundation
 import Flutter
 import MediaPlayer
 import UIKit
@@ -103,6 +104,11 @@ import UIKit
 
     let playing = arguments["playing"] as? Bool == true
     let rate = arguments["rate"] as? Double ?? 1
+    let audioSession = AVAudioSession.sharedInstance()
+    if playing && audioSession.category != .playback {
+      try? audioSession.setCategory(.playback, mode: .moviePlayback)
+      try? audioSession.setActive(true)
+    }
     let commands = MPRemoteCommandCenter.shared()
     commands.playCommand.isEnabled = !playing
     commands.pauseCommand.isEnabled = playing
