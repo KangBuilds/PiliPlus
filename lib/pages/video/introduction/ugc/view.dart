@@ -906,13 +906,6 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
             color: colorScheme.outline,
             semanticLabel: '无痕',
           ),
-        if (introController.isShowOnlineTotal)
-          Obx(
-            () => Text(
-              '${introController.total.value}人在看',
-              style: TextStyle(fontSize: 12, color: colorScheme.outline),
-            ),
-          ),
       ],
     );
   }

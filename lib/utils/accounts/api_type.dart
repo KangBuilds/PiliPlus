@@ -23,7 +23,6 @@ abstract final class ApiType {
       Api.pugvInfo,
 
       Api.ab2c,
-      Api.onlineTotal,
       Api.dynamicDetail,
       Api.aiConclusion,
       Api.seasonArchives,

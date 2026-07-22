@@ -147,13 +147,6 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.showFSActionItem,
     defaultVal: true,
   ),
-  const SwitchModel(
-    title: '观看人数',
-    subtitle: '展示同时在看人数',
-    leading: Icon(Icons.people_outlined),
-    setKey: SettingBoxKey.enableOnlineTotal,
-    defaultVal: false,
-  ),
   NormalModel(
     title: '默认全屏方向',
     leading: const Icon(Icons.open_with_outlined),

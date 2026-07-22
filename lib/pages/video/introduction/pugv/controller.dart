@@ -152,7 +152,6 @@ class PugvIntroController extends CommonIntroController {
 
       hasLater.value = videoDetailCtr.sourceType == SourceType.watchLater;
       this.cid.value = cid;
-      queryOnlineTotal();
       queryVideoIntro(episode as EpisodeItem);
       return true;
     } catch (e) {

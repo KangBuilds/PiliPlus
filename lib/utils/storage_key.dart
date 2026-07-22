@@ -21,7 +21,6 @@ abstract final class SettingBoxKey {
       p1080 = 'p1080',
       enableAutoEnter = 'enableAutoEnter',
       enableAutoExit = 'enableAutoExit',
-      enableOnlineTotal = 'enableOnlineTotal',
       keyboardControl = 'keyboardControl',
       audioPlayMode = 'audioPlayMode',
       showBatteryLevel = 'showBatteryLevel';

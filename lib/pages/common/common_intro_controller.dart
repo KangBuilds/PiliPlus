@@ -1,4 +1,4 @@
-import 'dart:async' show FutureOr, Timer;
+import 'dart:async' show FutureOr;
 
 import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -62,11 +62,6 @@ abstract class CommonIntroController extends GetxController
 
   void actionShareVideo(BuildContext context);
 
-  // 同时观看
-  final bool isShowOnlineTotal = Pref.enableOnlineTotal;
-  late final RxString total = '1'.obs;
-  Timer? timer;
-
   late final RxInt cid;
 
   late final videoDetailCtr = Get.find<VideoDetailController>(tag: heroTag);
@@ -81,42 +76,6 @@ abstract class CommonIntroController extends GetxController
     hasLater.value = args['sourceType'] == SourceType.watchLater;
 
     queryVideoIntro();
-    startTimer();
-  }
-
-  void startTimer() {
-    if (isShowOnlineTotal) {
-      queryOnlineTotal();
-      timer ??= Timer.periodic(const Duration(seconds: 10), (Timer timer) {
-        queryOnlineTotal();
-      });
-    }
-  }
-
-  void cancelTimer() {
-    timer?.cancel();
-    timer = null;
-  }
-
-  // 查看同时在看人数
-  Future<void> queryOnlineTotal() async {
-    if (!isShowOnlineTotal) {
-      return;
-    }
-    final result = await VideoHttp.onlineTotal(
-      aid: IdUtils.bv2av(bvid),
-      bvid: bvid,
-      cid: cid.value,
-    );
-    if (result case Success(:final response)) {
-      total.value = response;
-    }
-  }
-
-  @override
-  void onClose() {
-    cancelTimer();
-    super.onClose();
   }
 
   @override

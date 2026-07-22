@@ -33,9 +33,6 @@ class LocalIntroController extends CommonIntroController {
   @override
   StatDetail? getStat() => null;
 
-  @override
-  bool get isShowOnlineTotal => false;
-
   late final Set<String> aidSet = {};
 
   @override

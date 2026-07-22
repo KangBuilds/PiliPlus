@@ -350,10 +350,6 @@ abstract final class Api {
   // 黑名单
   static const String blackLst = '/x/relation/blacks';
 
-  // 多少人在看
-  // https://api.bilibili.com/x/player/online/total?aid=913663681&cid=1203559746&bvid=BV1MM4y1s7NZ&ts=56427838
-  static const String onlineTotal = '/x/player/online/total';
-
   // static const String webDanmaku = '/x/v2/dm/web/seg.so';
 
   // 发送视频弹幕

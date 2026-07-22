@@ -1481,24 +1481,6 @@ class HeaderControlState extends State<HeaderControl>
           },
         ),
       );
-      if (introController.isShowOnlineTotal) {
-        title = Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            title,
-            Obx(
-              () => Text(
-                '${introController.total.value}人正在看',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                ),
-              ),
-            ),
-          ],
-        );
-      }
       title = Expanded(child: title);
     } else {
       title = const Spacer();

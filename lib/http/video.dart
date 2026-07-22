@@ -643,24 +643,6 @@ abstract final class VideoHttp {
     );
   }
 
-  // 查看视频同时在看人数
-  static Future<LoadingState<String>> onlineTotal({
-    int? aid,
-    String? bvid,
-    required int cid,
-  }) async {
-    assert(aid != null || bvid != null);
-    final res = await Request().get(
-      Api.onlineTotal,
-      queryParameters: {'aid': aid, 'bvid': bvid, 'cid': cid},
-    );
-    if (res.data['code'] == 0) {
-      return Success(res.data['data']['total']);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
   static Future<LoadingState<AiConclusionData>> aiConclusion({
     required String bvid,
     required int cid,

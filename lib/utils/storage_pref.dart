@@ -697,9 +697,6 @@ abstract final class Pref {
   static bool get enableAi =>
       _setting.get(SettingBoxKey.enableAi, defaultValue: false);
 
-  static bool get enableOnlineTotal =>
-      _setting.get(SettingBoxKey.enableOnlineTotal, defaultValue: false);
-
   static bool get autoEnterFullScreen =>
       _setting.get(SettingBoxKey.enableAutoEnter, defaultValue: false);
 
