@@ -198,7 +198,7 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
                         ..toNamed('/member?mid=$mid');
                     },
                     leading: const Icon(Icons.person_outline, size: 20),
-                    title: Text('UP主：$name', style: titleStyle),
+                    title: Text('$name', style: titleStyle),
                   );
                 }),
                 ListTile(
