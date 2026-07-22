@@ -157,11 +157,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     final ctr = videoDetailController.plPlayerController..visible = isResume;
     if (isResume) {
       if (!ctr.showDanmaku) {
-        introController.startTimer();
         ctr.showDanmaku = true;
       }
     } else if (state == .paused) {
-      introController.cancelTimer();
       ctr.showDanmaku = false;
     }
   }
@@ -296,14 +294,8 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       ?..removeStatusLister(playerListener)
       ..removePositionListener(positionListener);
 
-    if (!videoDetailController.isFileSource) {
-      if (videoDetailController.isUgc) {
-        ugcIntroController
-          ..cancelTimer()
-          ..videoDetail.close();
-      } else {
-        pugvIntroController.cancelTimer();
-      }
+    if (!videoDetailController.isFileSource && videoDetailController.isUgc) {
+      ugcIntroController.videoDetail.close();
     }
 
     if (!videoDetailController.removeSafeArea) {
@@ -330,8 +322,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     isShowing = false;
 
     removeObserverMobile(this);
-
-    introController.cancelTimer();
 
     videoDetailController
       ..videoState.value = false
@@ -366,8 +356,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     }
 
     PlPlayerController.setPlayCallBack(playCallBack);
-
-    introController.startTimer();
 
     plPlayerController
       ?..addStatusLister(playerListener)
