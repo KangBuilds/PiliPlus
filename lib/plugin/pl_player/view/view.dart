@@ -812,7 +812,29 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     ];
     return PlayerBar(
       children: [
-        const SizedBox.shrink(),
+        Padding(
+          padding: const EdgeInsets.only(left: 10),
+          child: Obx(
+            () => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: const BoxDecoration(
+                color: Color(0x45000000),
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+              ),
+              child: Text(
+                '${DurationUtils.formatDuration(plPlayerController.position.value)} / ${DurationUtils.formatDuration(plPlayerController.duration.value)}',
+                maxLines: 1,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  height: 1.2,
+                  fontWeight: FontWeight.w500,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+          ),
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           decoration: const BoxDecoration(
