@@ -82,7 +82,10 @@ dependencies:
       ref: main
   flutter_svg: ^2.0.14
   flutter_volume_controller: ^2.0.0
-  font_awesome_flutter: ^10.12.0
+  font_awesome_flutter:
+    git:
+      url: https://github.com/bggRGjQaUbCoE/font_awesome_flutter.git
+      ref: v10.9.0
   get:
     git:
       url: https://github.com/bggRGjQaUbCoE/getx.git
