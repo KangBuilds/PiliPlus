@@ -182,11 +182,13 @@ class PlPlayerController with BlockConfigMixin {
   static const _pictureInPictureEventChannel = MethodChannel(
     'com.alexmercerind/media_kit_video/picture_in_picture',
   );
+  static const _nowPlayingChannel = MethodChannel('com.PiliPlus/now_playing');
   PictureInPictureState _pictureInPictureTransitionState =
       PictureInPictureState.inline;
   final RxBool isRestoringPictureInPicture = false.obs;
   bool _applicationInBackground = false;
   int _pictureInPictureSession = 0;
+  String? _nowPlayingTitle;
 
   Map<String, Object> get _pictureInPictureState => {
     'handle': videoPlayerController!.handle.toString(),
@@ -197,6 +199,15 @@ class PlPlayerController with BlockConfigMixin {
     'position': positionInMilliseconds / 1000,
     'duration': durationInMilliseconds / 1000,
     'playing': videoPlayerController!.state.playing && playerStatus.isPlaying,
+  };
+
+  Map<String, Object> get _nowPlayingState => {
+    'active': dataStatus.value == .loaded && !playerStatus.value.isCompleted,
+    'title': _nowPlayingTitle ?? 'PiliPlus',
+    'position': positionInMilliseconds / 1000,
+    'duration': durationInMilliseconds / 1000,
+    'playing': videoPlayerController!.state.playing && playerStatus.isPlaying,
+    'rate': playbackSpeed,
   };
 
   bool get isPictureInPictureTransitioning =>
@@ -256,12 +267,36 @@ class PlPlayerController with BlockConfigMixin {
     }
   }
 
+  Future<void> _handleNativeNowPlayingEvent(MethodCall call) async {
+    switch (call.method) {
+      case 'NowPlaying.Play':
+        await play();
+      case 'NowPlaying.Pause':
+        await pause();
+      case 'NowPlaying.Toggle':
+        if (playerStatus.isPlaying) {
+          await pause();
+        } else {
+          await play();
+        }
+      case 'NowPlaying.Seek':
+        final args = Map<Object?, Object?>.from(call.arguments as Map);
+        await seekTo(
+          Duration(milliseconds: ((args['position'] as num) * 1000).round()),
+        );
+    }
+  }
+
   Future<void> _syncNativePictureInPicture() async {
     if (videoPlayerController == null) return;
     try {
       await _pictureInPictureChannel.invokeMapMethod<String, Object?>(
         'PictureInPicture.Update',
         _pictureInPictureState,
+      );
+      await _nowPlayingChannel.invokeMethod(
+        'NowPlaying.Update',
+        _nowPlayingState,
       );
     } catch (error) {
       if (kDebugMode) debugPrint('[PiP] state sync failed: $error');
@@ -515,6 +550,7 @@ class PlPlayerController with BlockConfigMixin {
     _pictureInPictureEventChannel.setMethodCallHandler(
       _handleNativePictureInPictureEvent,
     );
+    _nowPlayingChannel.setMethodCallHandler(_handleNativeNowPlayingEvent);
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
     }
@@ -552,6 +588,7 @@ class PlPlayerController with BlockConfigMixin {
     int? epid,
     int? seasonId,
     VideoType? videoType,
+    String? title,
     VoidCallback? onInit,
     bool autoFullScreenFlag = false,
   }) async {
@@ -564,6 +601,7 @@ class PlPlayerController with BlockConfigMixin {
       this.dataSource = dataSource;
       _autoPlay = autoplay;
       _pictureInPictureSession++;
+      _nowPlayingTitle = title;
       // 初始化视频倍速
       // _playbackSpeed.value = speed;
       // 初始化数据加载状态
@@ -1371,6 +1409,9 @@ class PlPlayerController with BlockConfigMixin {
       debugPrint('dispose player');
     }
     _pictureInPictureEventChannel.setMethodCallHandler(null);
+    _nowPlayingChannel
+      ..setMethodCallHandler(null)
+      ..invokeMethod('NowPlaying.Clear');
     _videoPlayerController?.dispose();
     _videoPlayerController = null;
     _videoController = null;
