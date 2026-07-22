@@ -167,7 +167,7 @@ dependency_overrides:
     git:
       url: https://github.com/KangBuilds/media-kit.git
       path: media_kit_video
-      ref: experiment/auto-pip-inline-layer
+      ref: ios-build
   cached_network_image_ce:
     git:
       url: https://github.com/My-Responsitories/flutter_cached_network_image_ce.git
