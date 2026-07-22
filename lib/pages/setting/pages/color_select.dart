@@ -1,4 +1,3 @@
-import 'package:PiliPlus/common/widgets/animated_height.dart';
 import 'package:PiliPlus/common/widgets/color_palette.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/models/common/theme/theme_type.dart';
@@ -80,71 +79,64 @@ class _ColorSelectPageState extends State<ColorSelectPage> {
               ),
             ),
           ),
-          Obx(
-            () => PopupListTile<FlexSchemeVariant>(
-              enabled: !ctr.dynamicColor.value,
-              leading: const Icon(Icons.palette_outlined),
-              title: const Text('调色板风格'),
-              value: () =>
-                  (_dynamicSchemeVariant, _dynamicSchemeVariant.variantName),
-              itemBuilder: (_) => FlexSchemeVariant.values
-                  .map(
-                    (e) => PopupMenuItem(value: e, child: Text(e.variantName)),
-                  )
-                  .toList(),
-              onSelected: (value, setState) {
-                _dynamicSchemeVariant = value;
-                GStorage.setting
-                    .put(SettingBoxKey.schemeVariant, value.index)
-                    .whenComplete(Get.updateMyAppTheme);
-              },
-            ),
+          PopupListTile<FlexSchemeVariant>(
+            leading: const Icon(Icons.palette_outlined),
+            title: const Text('调色板风格'),
+            value: () =>
+                (_dynamicSchemeVariant, _dynamicSchemeVariant.variantName),
+            itemBuilder: (_) => FlexSchemeVariant.values
+                .map(
+                  (e) => PopupMenuItem(value: e, child: Text(e.variantName)),
+                )
+                .toList(),
+            onSelected: (value, setState) {
+              _dynamicSchemeVariant = value;
+              GStorage.setting
+                  .put(SettingBoxKey.schemeVariant, value.index)
+                  .whenComplete(Get.updateMyAppTheme);
+            },
           ),
           Padding(
             padding: padding + const .all(12),
             child: Obx(
-              () => AnimatedHeight(
-                expand: ctr.dynamicColor.value,
-                duration: const Duration(milliseconds: 200),
-                child: Wrap(
-                  alignment: .center,
-                  spacing: 22,
-                  runSpacing: 18,
-                  children: colorThemeTypes.mapIndexed(
-                    (i, e) {
-                      return GestureDetector(
-                        behavior: .opaque,
-                        onTap: () {
-                          ctr.currentColor.value = i;
-                          GStorage.setting
-                              .put(SettingBoxKey.customColor, i)
-                              .whenComplete(Get.updateMyAppTheme);
-                        },
-                        child: Column(
-                          spacing: 3,
-                          children: [
-                            ColorPalette(
-                              colorScheme: e.color.asColorSchemeSeed(
-                                _dynamicSchemeVariant,
-                                theme.brightness,
-                              ),
-                              selected: ctr.currentColor.value == i,
+              () => Wrap(
+                alignment: .center,
+                spacing: 22,
+                runSpacing: 18,
+                children: colorThemeTypes.mapIndexed(
+                  (i, e) {
+                    return GestureDetector(
+                      behavior: .opaque,
+                      onTap: () {
+                        ctr.currentColor.value = i;
+                        GStorage.setting
+                            .put(SettingBoxKey.customColor, i)
+                            .whenComplete(Get.updateMyAppTheme);
+                      },
+                      child: Column(
+                        spacing: 3,
+                        children: [
+                          ColorPalette(
+                            colorScheme: e.color.asColorSchemeSeed(
+                              _dynamicSchemeVariant,
+                              theme.brightness,
                             ),
-                            Text(
-                              e.label,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: ctr.currentColor.value != i
-                                    ? theme.colorScheme.outline
-                                    : null,
-                              ),
+                            selected: ctr.currentColor.value == i,
+                          ),
+                          Text(
+                            e.label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: ctr.currentColor.value != i
+                                  ? theme.colorScheme.outline
+                                  : null,
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ).toList(),
-                ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ).toList(),
               ),
             ),
           ),
@@ -168,7 +160,6 @@ class _ColorSelectPageState extends State<ColorSelectPage> {
 }
 
 class _ColorSelectController extends GetxController {
-  final RxBool dynamicColor = Pref.dynamicColor.obs;
   final RxInt currentColor = Pref.customColor.obs;
   final Rx<ThemeType> themeType = Pref.themeType.obs;
 }

@@ -61,7 +61,6 @@ dependencies:
   device_info_plus: ^13.1.0
   dio: ^5.9.1
   dio_http2_adapter: ^2.7.1
-  dynamic_color: ^1.8.1
   easy_debounce: ^2.0.3
   encrypt: ^5.0.3
   extended_nested_scroll_view:
@@ -81,10 +80,6 @@ dependencies:
     git:
       url: https://github.com/bggRGjQaUbCoE/flutter_smart_dialog.git
       ref: main
-  flutter_sortable_wrap:
-    git:
-      url: https://github.com/bggRGjQaUbCoE/flutter_sortable_wrap.git
-      ref: master
   flutter_svg: ^2.0.14
   flutter_volume_controller: ^2.0.0
   font_awesome_flutter:
@@ -101,10 +96,8 @@ dependencies:
   image_cropper: ^12.0.0
   image_picker: ^1.1.2
   intl: ^0.20.2
-  json_annotation: ^4.11.0
   live_photo_maker: ^0.0.6
   logger: ^2.5.0
-  material_color_utilities: ^0.13.0
   material_design_icons_flutter:
     git:
       url: https://github.com/bggRGjQaUbCoE/material_design_icons_flutter.git
@@ -118,7 +111,6 @@ dependencies:
     git:
       url: https://github.com/bggRGjQaUbCoE/flutter_native_device_orientation.git
       ref: master
-  package_info_plus: ^10.1.0
   path: ^1.9.1
   path_provider: ^2.1.5
   permission_handler_apple: ^9.4.7
@@ -140,7 +132,6 @@ dependencies:
   vector_math: ^2.2.0
   wakelock_plus: ^1.2.8
   waterfall_flow: ^3.1.0
-  web_socket_channel: ^3.0.3
 dependency_overrides:
   media_kit:
     git:
@@ -162,12 +153,6 @@ dependency_overrides:
       url: https://github.com/KangBuilds/media-kit.git
       path: media_kit_video
       ref: ios-build
-  cached_network_image_ce:
-    git:
-      url: https://github.com/My-Responsitories/flutter_cached_network_image_ce.git
-      path: cached_network_image
-      ref: develop
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
