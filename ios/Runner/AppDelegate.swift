@@ -105,7 +105,7 @@ import UIKit
     let playing = arguments["playing"] as? Bool == true
     let rate = arguments["rate"] as? Double ?? 1
     let audioSession = AVAudioSession.sharedInstance()
-    if playing && audioSession.category != .playback {
+    if playing {
       try? audioSession.setCategory(.playback, mode: .moviePlayback)
       try? audioSession.setActive(true)
     }
