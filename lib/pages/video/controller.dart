@@ -724,6 +724,7 @@ class VideoDetailController extends GetxController
       seasonId: isUgc ? null : seasonId,
       videoType: videoType,
       title: isFileSource ? entry.showTitle : args['title'] ?? bvid,
+      artwork: cover.value,
       onInit: () {
         videoState.value = true;
         setSubtitle(vttSubtitlesIndex.value);

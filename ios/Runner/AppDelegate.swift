@@ -6,6 +6,9 @@ import UIKit
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var nowPlayingChannel: FlutterMethodChannel?
   private var remoteCommandTargets: [(MPRemoteCommand, Any)] = []
+  private var artworkURL: String?
+  private var artworkTask: URLSessionDataTask?
+  private var artwork: MPMediaItemArtwork?
 
   override func application(
     _ application: UIApplication,
@@ -105,8 +108,9 @@ import UIKit
     commands.pauseCommand.isEnabled = playing
     commands.togglePlayPauseCommand.isEnabled = true
     commands.changePlaybackPositionCommand.isEnabled = true
+    loadArtwork(arguments["artwork"] as? String)
 
-    MPNowPlayingInfoCenter.default().nowPlayingInfo = [
+    var info: [String: Any] = [
       MPMediaItemPropertyTitle: arguments["title"] as? String ?? "PiliPlus",
       MPMediaItemPropertyPlaybackDuration: arguments["duration"] as? Double ?? 0,
       MPNowPlayingInfoPropertyElapsedPlaybackTime: arguments["position"] as? Double ?? 0,
@@ -114,7 +118,31 @@ import UIKit
       MPNowPlayingInfoPropertyDefaultPlaybackRate: rate,
       MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.video.rawValue,
     ]
+    info[MPMediaItemPropertyArtwork] = artwork
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     MPNowPlayingInfoCenter.default().playbackState = playing ? .playing : .paused
+  }
+
+  private func loadArtwork(_ value: String?) {
+    let value = value?.replacingOccurrences(of: "http://", with: "https://")
+    guard artworkURL != value else { return }
+    artworkTask?.cancel()
+    artworkURL = value
+    artwork = nil
+    guard let value, !value.isEmpty, let url = URL(string: value) else { return }
+
+    artworkTask = URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+      guard let data, let image = UIImage(data: data) else { return }
+      DispatchQueue.main.async { [weak self] in
+        guard let self, self.artworkURL == value else { return }
+        let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        self.artwork = artwork
+        guard var info = MPNowPlayingInfoCenter.default().nowPlayingInfo else { return }
+        info[MPMediaItemPropertyArtwork] = artwork
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+      }
+    }
+    artworkTask?.resume()
   }
 
   private func clearNowPlaying() {
@@ -123,6 +151,10 @@ import UIKit
     commands.pauseCommand.isEnabled = false
     commands.togglePlayPauseCommand.isEnabled = false
     commands.changePlaybackPositionCommand.isEnabled = false
+    artworkTask?.cancel()
+    artworkTask = nil
+    artworkURL = nil
+    artwork = nil
     MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     MPNowPlayingInfoCenter.default().playbackState = .stopped
   }

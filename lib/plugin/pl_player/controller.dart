@@ -189,6 +189,7 @@ class PlPlayerController with BlockConfigMixin {
   bool _applicationInBackground = false;
   int _pictureInPictureSession = 0;
   String? _nowPlayingTitle;
+  String? _nowPlayingArtwork;
 
   Map<String, Object> get _pictureInPictureState => {
     'handle': videoPlayerController!.handle.toString(),
@@ -204,6 +205,7 @@ class PlPlayerController with BlockConfigMixin {
   Map<String, Object> get _nowPlayingState => {
     'active': dataStatus.value == .loaded && !playerStatus.value.isCompleted,
     'title': _nowPlayingTitle ?? 'PiliPlus',
+    'artwork': _nowPlayingArtwork ?? '',
     'position': positionInMilliseconds / 1000,
     'duration': durationInMilliseconds / 1000,
     'playing': videoPlayerController!.state.playing && playerStatus.isPlaying,
@@ -589,6 +591,7 @@ class PlPlayerController with BlockConfigMixin {
     int? seasonId,
     VideoType? videoType,
     String? title,
+    String? artwork,
     VoidCallback? onInit,
     bool autoFullScreenFlag = false,
   }) async {
@@ -602,6 +605,7 @@ class PlPlayerController with BlockConfigMixin {
       _autoPlay = autoplay;
       _pictureInPictureSession++;
       _nowPlayingTitle = title;
+      _nowPlayingArtwork = artwork;
       // 初始化视频倍速
       // _playbackSpeed.value = speed;
       // 初始化数据加载状态
