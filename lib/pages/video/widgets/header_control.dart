@@ -178,6 +178,29 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 14),
               children: [
+                Obx(() {
+                  final owner = introController.videoDetail.value.owner;
+                  int? mid = owner?.mid;
+                  String? name = owner?.name;
+                  if (introController case final PugvIntroController pugv) {
+                    final upInfo = pugv.seasonItem.upInfo;
+                    mid ??= upInfo?.mid;
+                    name ??= upInfo?.uname;
+                  }
+                  if (mid == null || name?.isNotEmpty != true) {
+                    return const SizedBox.shrink();
+                  }
+                  return ListTile(
+                    dense: true,
+                    onTap: () {
+                      Get
+                        ..back()
+                        ..toNamed('/member?mid=$mid');
+                    },
+                    leading: const Icon(Icons.person_outline, size: 20),
+                    title: Text('UP主：$name', style: titleStyle),
+                  );
+                }),
                 ListTile(
                   dense: true,
                   onTap: () {
