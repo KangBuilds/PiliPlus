@@ -1089,8 +1089,8 @@ packages:
     dependency: "direct main"
     description:
       path: media_kit_video
-      ref: experiment/shared-ios-pixel-buffer
-      resolved-ref: 2b1c7e8cd1714f6d6fb53d071a796b63bf164a8e
+      ref: ios-build
+      resolved-ref: 32565c88b5ad319eea607bad35f942f84b44460c
       url: "https://github.com/KangBuilds/media-kit.git"
     source: git
     version: "1.2.5"
