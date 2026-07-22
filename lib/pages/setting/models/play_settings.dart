@@ -159,14 +159,11 @@ List<SettingsModel> get playSettings => [
     getSubtitle: () => '当前展示方式：${Pref.btmProgressBehavior.desc}',
     onTap: _showProgressBehaviorDialog,
   ),
-  PopupModel(
+  NormalModel(
     title: '播放顺序',
     leading: const Icon(Icons.repeat),
-    value: () => Pref.playRepeat,
-    items: PlayRepeat.values,
-    onSelected: (value, setState) => GStorage.video
-        .put(VideoBoxKey.playRepeat, value.index)
-        .whenComplete(setState),
+    getSubtitle: () => '当前播放顺序：${Pref.playRepeat.label}',
+    onTap: _showPlayRepeatDialog,
   ),
   const SwitchModel(
     title: '播放器设置仅对当前生效',
@@ -233,6 +230,24 @@ Future<void> _showProgressBehaviorDialog(
       SettingBoxKey.btmProgressBehavior,
       res.index,
     );
+    setState();
+  }
+}
+
+Future<void> _showPlayRepeatDialog(
+  BuildContext context,
+  VoidCallback setState,
+) async {
+  final res = await showDialog<PlayRepeat>(
+    context: context,
+    builder: (context) => SelectDialog<PlayRepeat>(
+      title: '播放顺序',
+      value: Pref.playRepeat,
+      values: PlayRepeat.values.map((e) => (e, e.label)).toList(),
+    ),
+  );
+  if (res != null) {
+    await GStorage.video.put(VideoBoxKey.playRepeat, res.index);
     setState();
   }
 }
