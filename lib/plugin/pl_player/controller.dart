@@ -356,7 +356,6 @@ class PlPlayerController with BlockConfigMixin {
   late int subtitleFontWeight = Pref.subtitleFontWeight;
 
   // settings
-  late final showFSActionItem = Pref.showFSActionItem;
   late final enableShrinkVideoSize = Pref.enableShrinkVideoSize;
   late final darkVideoPage = Pref.darkVideoPage;
   late final enableSlideVolumeBrightness = Pref.enableSlideVolumeBrightness;

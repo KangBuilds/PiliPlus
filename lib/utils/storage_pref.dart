@@ -495,9 +495,6 @@ abstract final class Pref {
     defaultValue: true,
   );
 
-  static bool get showFSActionItem =>
-      _setting.get(SettingBoxKey.showFSActionItem, defaultValue: true);
-
   static bool get enableShrinkVideoSize =>
       _setting.get(SettingBoxKey.enableShrinkVideoSize, defaultValue: true);
 

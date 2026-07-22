@@ -135,12 +135,6 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.fullScreenGestureReverse,
     defaultVal: false,
   ),
-  const SwitchModel(
-    title: '全屏展示点赞/投币/收藏等操作按钮',
-    leading: Icon(MdiIcons.dotsHorizontalCircleOutline),
-    setKey: SettingBoxKey.showFSActionItem,
-    defaultVal: true,
-  ),
   NormalModel(
     title: '默认全屏方向',
     leading: const Icon(Icons.open_with_outlined),
