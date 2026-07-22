@@ -13,7 +13,6 @@ import 'package:PiliPlus/grpc/bilibili/app/listener/v1.pb.dart'
         ListOrder,
         DashItem,
         ResponseUrl;
-import 'package:PiliPlus/http/browser_ua.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/pages/common/common_intro_controller.dart'
@@ -21,10 +20,8 @@ import 'package:PiliPlus/pages/common/common_intro_controller.dart'
 import 'package:PiliPlus/pages/dynamics_repost/view.dart';
 import 'package:PiliPlus/pages/main_reply/view.dart';
 import 'package:PiliPlus/pages/sponsor_block/block_mixin.dart';
-import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/triple_mixin.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
-import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/services/shutdown_timer_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -33,6 +30,7 @@ import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliPlus/utils/mobile_observer.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/share_utils.dart';
@@ -51,12 +49,12 @@ class AudioController extends GetxController
         TripleMixin,
         FavMixin,
         BlockConfigMixin,
-        BlockMixin {
+        BlockMixin,
+        WidgetsBindingObserver {
   late Int64 id;
   late Int64 oid;
   late List<Int64> subId;
   late int itemType;
-  Int64? extraId;
   late final PlaylistSource from;
   late final bool isUgc = itemType == 1;
 
@@ -85,9 +83,6 @@ class AudioController extends GetxController
   @override
   late final isLogin = Accounts.main.isLogin;
 
-  Duration? _start;
-  VideoDetailController? _videoDetailController;
-
   String? _prev;
   String? _next;
   bool get reachStart => _prev == null;
@@ -97,37 +92,20 @@ class AudioController extends GetxController
   @override
   void onInit() {
     super.onInit();
+    addObserverMobile(this);
     final args = Get.arguments;
     oid = Int64(args['oid']);
     final id = args['id'];
     this.id = id != null ? Int64(id) : oid;
-    subId = (args['subId'] as List<int>?)?.map(Int64.new).toList() ?? [oid];
+    subId = [oid];
     itemType = args['itemType'];
     from = args['from'];
-    _start = args['start'];
-    final int? extraId = args['extraId'];
-    if (extraId != null) {
-      this.extraId = Int64(extraId);
-    }
-    if (args['heroTag'] case String heroTag) {
-      try {
-        _videoDetailController = Get.find<VideoDetailController>(tag: heroTag);
-      } catch (_) {}
-    }
 
     _queryPlayList(isInit: true);
 
-    final String? audioUrl = args['audioUrl'];
-    final hasAudioUrl = audioUrl != null;
-    if (hasAudioUrl) {
-      _querySponsorBlock();
-      _onOpenMedia(audioUrl, ua: BrowserUa.pc, referer: HttpString.baseUrl);
-    }
     ConnectivityUtils.isWiFi.then((isWiFi) {
       cacheAudioQa = isWiFi ? Pref.defaultAudioQa : Pref.defaultAudioQaCellular;
-      if (!hasAudioUrl) {
-        _queryPlayUrl();
-      }
+      _queryPlayUrl();
     });
     animController = AnimationController(
       vsync: this,
@@ -143,6 +121,14 @@ class AudioController extends GetxController
 
   bool isPlaying() {
     return player?.state.playing ?? false;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      onPause();
+    }
   }
 
   Future<void>? onPlay() {
@@ -162,13 +148,6 @@ class AudioController extends GetxController
     hasLike.value = item.stat.hasLike_7;
     coinNum.value = item.stat.hasCoin_8 ? 2 : 0;
     hasFav.value = item.stat.hasFav;
-    withAudioService(
-      (handler) => handler.onVideoDetailChange(
-        item,
-        (subId.firstOrNull ?? oid).toInt(),
-        hashCode.toString(),
-      ),
-    );
   }
 
   Future<void> _queryPlayList({
@@ -187,7 +166,6 @@ class AudioController extends GetxController
           : isLoadNext
           ? _next
           : null,
-      extraId: extraId,
       order: order,
     );
     if (res case Success(:final response)) {
@@ -273,30 +251,17 @@ class AudioController extends GetxController
     }
   }
 
-  Future<void> _onOpenMedia(
-    String url, {
-    String ua = Constants.userAgentApp,
-    String? referer,
-  }) async {
+  Future<void> _onOpenMedia(String url) async {
     await _initPlayerIfNeeded();
     player
-      ?..setMediaHeader(
-        userAgent: ua,
-        // mpv cannot clear referer option
-        headers: {'Referer': ?referer},
-      )
-      ..open(Media(url, start: _start));
-    _start = null;
+      ?..setMediaHeader(userAgent: Constants.userAgentApp)
+      ..open(Media(url));
   }
 
   Future<void> _initPlayerIfNeeded() async {
     if (_hasInit) return;
     _hasInit = true;
-    final handler = await setupServiceLocator();
-    handler
-      ..onPlay = onPlay
-      ..onPause = onPause
-      ..onSeek = onSeek;
+    await setupAudioSession();
     assert(player == null, _subscriptions = null);
     player = await Player.create(
       configuration: PlayerConfiguration(
@@ -315,30 +280,19 @@ class AudioController extends GetxController
         final seconds = position.inSeconds;
         if (seconds != this.position.value) {
           this.position.value = seconds;
-          _videoDetailController?.playedTime = position;
-          videoPlayerServiceHandler?.onPositionChange(position);
         }
       }),
       stream.duration.listen((duration) {
         this.duration.value = duration.inSeconds;
       }),
       stream.playing.listen((playing) {
-        final PlayerStatus playerStatus;
         if (playing) {
           animController.forward();
-          playerStatus = PlayerStatus.playing;
         } else {
           animController.reverse();
-          playerStatus = PlayerStatus.paused;
         }
-        videoPlayerServiceHandler?.onStatusChange(playerStatus, false);
       }),
       stream.completed.listen((completed) {
-        _videoDetailController?.playedTime = player!.state.duration;
-        videoPlayerServiceHandler?.onStatusChange(
-          PlayerStatus.completed,
-          false,
-        );
         if (completed) {
           if (shutdownTimerService.isWaiting) {
             shutdownTimerService.handleWaiting();
@@ -615,11 +569,7 @@ class AudioController extends GetxController
             final nextPart = parts[nextIndex];
             oid = nextPart.oid;
             this.subId = [nextPart.subId];
-            _queryPlayUrl().then((res) {
-              if (res) {
-                _videoDetailController = null;
-              }
-            });
+            _queryPlayUrl();
             return true;
           }
         }
@@ -650,7 +600,6 @@ class AudioController extends GetxController
     itemType = item.itemType;
     _queryPlayUrl().then((res) {
       if (res) {
-        _videoDetailController = null;
         _updateCurrItem(audioItem);
       }
     });
@@ -722,15 +671,11 @@ class AudioController extends GetxController
 
   @override
   void onClose() {
+    removeObserverMobile(this);
     shutdownTimerService
       ..onPause = null
       ..isPlaying = null
       ..reset();
-    videoPlayerServiceHandler
-      ?..onPlay = null
-      ..onPause = null
-      ..onSeek = null
-      ..onVideoDetailDispose(hashCode.toString());
     _subscriptions?.forEach((e) => e.cancel());
     _subscriptions?.clear();
     _subscriptions = null;

@@ -5,8 +5,6 @@ import 'dart:ui';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/pair.dart';
 import 'package:PiliPlus/common/widgets/progress_bar/segment_progress_bar.dart';
-import 'package:PiliPlus/grpc/bilibili/app/listener/v1.pbenum.dart'
-    show PlaylistSource;
 import 'package:PiliPlus/grpc/dm.dart';
 import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/init.dart';
@@ -33,7 +31,6 @@ import 'package:PiliPlus/models_new/video/video_detail/page.dart';
 import 'package:PiliPlus/models_new/video/video_pbp/data.dart';
 import 'package:PiliPlus/models_new/video/video_play_info/subtitle.dart';
 import 'package:PiliPlus/models_new/video/video_stein_edgeinfo/data.dart';
-import 'package:PiliPlus/pages/audio/view.dart';
 import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/search/widgets/search_text.dart';
 import 'package:PiliPlus/pages/sponsor_block/block_mixin.dart';
@@ -1328,37 +1325,6 @@ class VideoDetailController extends GetxController
     return false;
   }
 
-  void toAudioPage() {
-    int? id;
-    int? extraId;
-    PlaylistSource from = PlaylistSource.UP_ARCHIVE;
-    if (isPlayAll) {
-      id = args['mediaId'];
-      extraId = sourceType.extraId;
-      from = sourceType.playlistSource!;
-    } else if (isUgc) {
-      try {
-        final ctr = Get.find<UgcIntroController>(tag: heroTag);
-        id = ctr.videoDetail.value.ugcSeason?.id;
-        if (id != null) {
-          extraId = 8;
-          from = PlaylistSource.MEDIA_LIST;
-        }
-      } catch (_) {}
-    }
-    AudioPage.toAudioPage(
-      itemType: 1,
-      id: id,
-      oid: aid,
-      subId: [cid.value],
-      from: from,
-      heroTag: _autoPlay.value ? heroTag : null,
-      start: playedTime,
-      audioUrl: audioUrl,
-      extraId: extraId,
-    );
-  }
-
   Future<void> onDownload(BuildContext context) async {
     VideoDetailData? videoDetail;
     List<ugc.BaseEpisodeItem>? episodes;
@@ -1496,5 +1462,4 @@ class VideoDetailController extends GetxController
       ),
     );
   }
-
 }

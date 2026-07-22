@@ -51,7 +51,7 @@ Future<T> _traceInit<T>(String name, Future<T> Function() init) async {
 }
 
 void _initAfterFirstFrame(Duration _) {
-  setupServiceLocator().ignore();
+  setupAudioSession().ignore();
   RequestUtils.syncHistoryStatus().ignore();
   ScreenBrightnessPlatform.instance.setAutoReset(false).ignore();
 }

@@ -155,9 +155,6 @@ class PlPlayerController with BlockConfigMixin {
 
   bool isMuted = false;
 
-  /// 听视频
-  late final RxBool onlyPlayAudio = false.obs;
-
   /// 镜像
   late final RxBool flipX = false.obs;
 
@@ -197,7 +194,6 @@ class PlPlayerController with BlockConfigMixin {
     'loaded': dataStatus.value == .loaded,
     'completed':
         dataStatus.value == DataStatus.loaded && playerStatus.value.isCompleted,
-    'audioOnly': onlyPlayAudio.value,
     'position': positionInMilliseconds / 1000,
     'duration': durationInMilliseconds / 1000,
     'playing': videoPlayerController!.state.playing && playerStatus.isPlaying,
@@ -431,18 +427,16 @@ class PlPlayerController with BlockConfigMixin {
   static PlayCallback? _playCallBack;
 
   static Future<void>? playIfExists() {
-    if (!canPlayFromSystemControls) return null;
-    return _playCallBack?.call();
-  }
-
-  static bool get canPlayFromSystemControls {
     final instance = _instance;
-    return instance == null ||
-        !instance._applicationInBackground ||
-        instance._pictureInPictureTransitionState ==
-            PictureInPictureState.pipActive ||
-        instance._pictureInPictureTransitionState ==
-            PictureInPictureState.restoringInline;
+    if (instance != null &&
+        instance._applicationInBackground &&
+        instance._pictureInPictureTransitionState !=
+            PictureInPictureState.pipActive &&
+        instance._pictureInPictureTransitionState !=
+            PictureInPictureState.restoringInline) {
+      return null;
+    }
+    return _playCallBack?.call();
   }
 
   // try to get PlayerStatus
@@ -457,13 +451,6 @@ class PlPlayerController with BlockConfigMixin {
     if (_instance?.playerStatus.isPlaying ?? false) {
       await _instance?.pause(notify: notify, isInterrupt: isInterrupt);
     }
-  }
-
-  static Future<void> seekToIfExists(
-    Duration position, {
-    bool isSeek = true,
-  }) async {
-    await _instance?.seekTo(position, isSeek: isSeek);
   }
 
   static double? getVolumeIfExists() {
@@ -528,8 +515,6 @@ class PlPlayerController with BlockConfigMixin {
     _pictureInPictureEventChannel.setMethodCallHandler(
       _handleNativePictureInPictureEvent,
     );
-    videoPlayerServiceHandler?.enableBackgroundPlay = Pref.enableBackgroundPlay;
-
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
     }
@@ -640,7 +625,7 @@ class PlPlayerController with BlockConfigMixin {
 
   Future<Player> _initPlayer() async {
     assert(_videoPlayerController == null);
-    await setupServiceLocator();
+    await setupAudioSession();
     final opt = {'video-sync': Pref.videoSync};
     final autosync = Pref.autosync;
     if (autosync != '0') {
@@ -702,13 +687,9 @@ class PlPlayerController with BlockConfigMixin {
       extras.addAll(Pref.initBuffer(_playbackSpeed.value));
     }
 
-    String video = dataSource.videoSource;
+    final video = dataSource.videoSource;
     if (dataSource.audioSource case final audio? when (audio.isNotEmpty)) {
-      if (onlyPlayAudio.value) {
-        video = audio;
-      } else {
-        extras['audio-files'] = '"${audio.replaceAll(':', r'\:')}"';
-      }
+      extras['audio-files'] = '"${audio.replaceAll(':', r'\:')}"';
     }
 
     await player.open(
@@ -776,11 +757,6 @@ class PlPlayerController with BlockConfigMixin {
           playerStatus.value = .paused;
         }
 
-        videoPlayerServiceHandler?.onStatusChange(
-          playerStatus.value,
-          isBuffering.value,
-        );
-
         for (final element in _statusListeners) {
           element(playing ? .playing : .paused);
         }
@@ -815,8 +791,6 @@ class PlPlayerController with BlockConfigMixin {
             this.position.value = posInSeconds;
           }
 
-          videoPlayerServiceHandler?.onPositionChange(position);
-
           makeHeartBeat(posInSeconds);
           unawaited(_syncNativePictureInPicture());
         }
@@ -834,10 +808,6 @@ class PlPlayerController with BlockConfigMixin {
       }),
       stream.buffering.listen((bool buffering) {
         isBuffering.value = buffering;
-        videoPlayerServiceHandler?.onStatusChange(
-          playerStatus.value,
-          buffering,
-        );
       }),
       if (kDebugMode)
         stream.log.listen(((PlayerLog log) {
@@ -880,7 +850,7 @@ class PlPlayerController with BlockConfigMixin {
           );
         } else if (event.startsWith('Could not open codec')) {
           SmartDialog.showToast('无法加载解码器, $event，可能会切换至软解');
-        } else if (!onlyPlayAudio.value) {
+        } else {
           if (event.startsWith("error running") ||
               event.startsWith("Failed to open .") ||
               event.startsWith("Cannot open") ||
@@ -1075,14 +1045,6 @@ class PlPlayerController with BlockConfigMixin {
       videoFit.value = .contain;
     } else {
       videoFit.value = _prefFit;
-    }
-  }
-
-  /// 设置后台播放
-  void setBackgroundPlay(bool val) {
-    videoPlayerServiceHandler?.enableBackgroundPlay = val;
-    if (!tempPlayerConf) {
-      setting.put(SettingBoxKey.enableBackgroundPlay, val);
     }
   }
 
@@ -1413,7 +1375,6 @@ class PlPlayerController with BlockConfigMixin {
     _videoPlayerController = null;
     _videoController = null;
     _instance = null;
-    videoPlayerServiceHandler?.clear();
   }
 
   static void updatePlayCount() {
@@ -1422,14 +1383,6 @@ class PlPlayerController with BlockConfigMixin {
     } else {
       _instance?._playerCount -= 1;
     }
-  }
-
-  void setOnlyPlayAudio() {
-    onlyPlayAudio.value = !onlyPlayAudio.value;
-    videoPlayerController?.setVideoTrack(
-      onlyPlayAudio.value ? VideoTrack.no() : VideoTrack.auto(),
-    );
-    unawaited(_syncNativePictureInPicture());
   }
 
   late final Map<String, ui.Image?> previewCache = {};

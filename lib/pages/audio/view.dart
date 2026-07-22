@@ -45,25 +45,15 @@ class AudioPage extends StatefulWidget {
   static void toAudioPage({
     int? id,
     required int oid,
-    List<int>? subId,
     required int itemType,
     required PlaylistSource from,
-    String? heroTag,
-    Duration? start,
-    String? audioUrl,
-    int? extraId,
   }) => Get.toNamed(
     '/audio',
     arguments: {
       'id': ?id,
       'oid': oid,
-      'subId': ?subId,
       'from': from,
       'itemType': itemType,
-      'heroTag': ?heroTag,
-      'start': ?start,
-      'audioUrl': ?audioUrl,
-      'extraId': ?extraId,
     },
   );
 }

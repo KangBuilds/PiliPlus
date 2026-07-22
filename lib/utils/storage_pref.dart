@@ -562,9 +562,6 @@ abstract final class Pref {
     defaultValue: true,
   );
 
-  static bool get enableBackgroundPlay =>
-      _setting.get(SettingBoxKey.enableBackgroundPlay, defaultValue: true);
-
   static bool get disableLikeMsg =>
       _setting.get(SettingBoxKey.disableLikeMsg, defaultValue: false);
 

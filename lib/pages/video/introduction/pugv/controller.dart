@@ -11,7 +11,6 @@ import 'package:PiliPlus/models_new/video/video_detail/stat_detail.dart';
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
 import 'package:PiliPlus/pages/video/reply/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
-import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -200,14 +199,6 @@ class PugvIntroController extends CommonIntroController {
     videoDetail
       ..value.title = episode.showTitle
       ..refresh();
-    withAudioService(
-      (handler) => handler.onVideoDetailChange(
-        episode,
-        cid.value,
-        heroTag,
-        artist: seasonItem.title,
-      ),
-    );
   }
 
   Future<void> onFavPugv(bool isFav) async {

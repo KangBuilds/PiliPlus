@@ -50,7 +50,6 @@ import 'package:PiliPlus/utils/mobile_observer.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:collection/collection.dart';
@@ -345,9 +344,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       .detached,
     ].contains(state);
     plPlayerController.setApplicationInBackground(isInBackground);
-    if (isInBackground &&
-        !plPlayerController.isPictureInPictureTransitioning &&
-        !Pref.enableBackgroundPlay) {
+    if (isInBackground && !plPlayerController.isPictureInPictureTransitioning) {
       final player = plPlayerController.videoPlayerController;
       if (player != null && player.state.playing) {
         player.pause();

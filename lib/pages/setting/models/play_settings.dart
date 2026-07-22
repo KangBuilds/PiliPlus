@@ -5,7 +5,6 @@ import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_progress_behavior.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
-import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
@@ -166,15 +165,6 @@ List<SettingsModel> get playSettings => [
     leading: const Icon(Icons.border_bottom_outlined),
     getSubtitle: () => '当前展示方式：${Pref.btmProgressBehavior.desc}',
     onTap: _showProgressBehaviorDialog,
-  ),
-  SwitchModel(
-    title: '后台音频服务',
-    subtitle: '避免画中画没有播放暂停功能',
-    leading: const Icon(Icons.volume_up_outlined),
-    setKey: SettingBoxKey.enableBackgroundPlay,
-    defaultVal: true,
-    onChanged: (value) =>
-        videoPlayerServiceHandler?.enableBackgroundPlay = value,
   ),
   PopupModel(
     title: '播放顺序',

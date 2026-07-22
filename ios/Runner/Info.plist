@@ -117,6 +117,7 @@
 				</array>
 			</dict>
 		</array>
+		<!-- Required for Picture in Picture playback. -->
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>audio</string>

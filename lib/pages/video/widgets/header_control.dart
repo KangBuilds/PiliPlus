@@ -29,7 +29,6 @@ import 'package:PiliPlus/pages/video/introduction/ugc/widgets/action_item.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
 import 'package:PiliPlus/pages/video/widgets/header_mixin.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
-import 'package:PiliPlus/plugin/pl_player/models/data_source.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/services/shutdown_timer_service.dart'
     show shutdownTimerService;
@@ -426,27 +425,6 @@ class HeaderControlState extends State<HeaderControl>
                           );
                         },
                       ),
-                      if ((isFileSource &&
-                              !(plPlayerController.dataSource as FileSource)
-                                  .isMp4) ||
-                          (!isFileSource &&
-                              videoDetailCtr.audioUrl?.isNotEmpty == true))
-                        Obx(
-                          () {
-                            final onlyPlayAudio =
-                                plPlayerController.onlyPlayAudio.value;
-                            return ActionRowLineItem(
-                              iconData: Icons.headphones,
-                              onTap: () {
-                                plPlayerController.onlyPlayAudio.value =
-                                    !onlyPlayAudio;
-                                widget.videoDetailCtr.playerInit();
-                              },
-                              text: " 听视频 ",
-                              selectStatus: onlyPlayAudio,
-                            );
-                          },
-                        ),
                     ],
                   ),
                 ),
@@ -1604,23 +1582,6 @@ class HeaderControlState extends State<HeaderControl>
                   );
                 }),
               if (!isFileSource) ...[
-                if (!isFSOrPip) ...[
-                  if (videoDetailCtr.isUgc)
-                    SizedBox(
-                      width: btnWidth,
-                      height: btnHeight,
-                      child: IconButton(
-                        tooltip: '听音频',
-                        style: btnStyle,
-                        onPressed: videoDetailCtr.toAudioPage,
-                        icon: const Icon(
-                          Icons.headphones_outlined,
-                          size: 19,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                ],
                 if (plPlayerController.enableSponsorBlock)
                   SizedBox(
                     width: btnWidth,
