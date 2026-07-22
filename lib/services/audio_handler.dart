@@ -73,11 +73,7 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
     PlayerStatus status,
     bool isBuffering,
   ) {
-    if (!enableBackgroundPlay ||
-        _item.isEmpty ||
-        !PlPlayerController.instanceExists()) {
-      return;
-    }
+    if (!enableBackgroundPlay) return;
 
     final AudioProcessingState processingState;
     if (status.isCompleted) {
@@ -127,9 +123,6 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void onStatusChange(PlayerStatus status, bool isBuffering) {
-    if (!enableBackgroundPlay) return;
-
-    if (_item.isEmpty) return;
     setPlaybackState(status, isBuffering);
   }
 
@@ -264,9 +257,7 @@ class VideoPlayerServiceHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void onPositionChange(Duration position) {
-    if (!enableBackgroundPlay ||
-        _item.isEmpty ||
-        !PlPlayerController.instanceExists()) {
+    if (!enableBackgroundPlay || _item.isEmpty) {
       return;
     }
 

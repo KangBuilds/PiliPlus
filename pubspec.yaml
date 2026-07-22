@@ -37,7 +37,7 @@ dependencies:
     git:
       url: https://github.com/bggRGjQaUbCoE/audio_service.git
       path: audio_service
-      ref: main
+      ref: 81cf56d5a8b8e9c8aa5a4c9396aebe094e09622f
   audio_session: ^0.2.2
   battery_plus: ^7.0.0
   brotli: ^0.6.0
