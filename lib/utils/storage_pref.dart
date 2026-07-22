@@ -785,11 +785,6 @@ abstract final class Pref {
 
   static String? get downloadPath => _setting.get(SettingBoxKey.downloadPath);
 
-  static bool get showBatteryLevel => _setting.get(
-    SettingBoxKey.showBatteryLevel,
-    defaultValue: PlatformUtils.isMobile,
-  );
-
   static FollowOrderType get followOrderType =>
       FollowOrderType.values[_setting.get(
         SettingBoxKey.followOrderType,

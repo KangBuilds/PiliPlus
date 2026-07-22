@@ -34,7 +34,6 @@ dependencies:
   app_links: ^7.1.1
   archive: ^4.0.0
   audio_session: ^0.2.2
-  battery_plus: ^7.0.0
   brotli: ^0.6.0
   cached_network_image_ce:
     git:

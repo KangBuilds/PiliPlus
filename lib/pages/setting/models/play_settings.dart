@@ -46,12 +46,6 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.showFsLockBtn,
     defaultVal: true,
   ),
-  SwitchModel(
-    title: '全屏显示电池电量',
-    leading: const Icon(Icons.battery_3_bar),
-    setKey: SettingBoxKey.showBatteryLevel,
-    defaultVal: true,
-  ),
   const SwitchModel(
     title: '双击快退/快进',
     subtitle: '左侧双击快退/右侧双击快进，关闭则双击均为暂停/播放',

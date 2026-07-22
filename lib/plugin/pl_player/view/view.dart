@@ -221,18 +221,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   void _onControlChanged(bool val) {
     final visible = val && !plPlayerController.controlsLock.value;
 
-    if ((widget.headerControl.key as GlobalKey<TimeBatteryMixin>).currentState
+    if ((widget.headerControl.key as GlobalKey<HeaderControlState>).currentState
         case final state?) {
       if (state.mounted) {
-        state.getBatteryLevelIfNeeded();
         state.provider
           ?..startIfNeeded()
           ..muted = !visible;
-        if (visible) {
-          state.startClock();
-        } else {
-          state.stopClock();
-        }
       }
     }
 

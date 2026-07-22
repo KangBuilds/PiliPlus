@@ -22,8 +22,7 @@ abstract final class SettingBoxKey {
       enableAutoEnter = 'enableAutoEnter',
       enableAutoExit = 'enableAutoExit',
       keyboardControl = 'keyboardControl',
-      audioPlayMode = 'audioPlayMode',
-      showBatteryLevel = 'showBatteryLevel';
+      audioPlayMode = 'audioPlayMode';
 
   static const String enableVerticalExpand = 'enableVerticalExpand',
       feedBackEnable = 'feedBackEnable',

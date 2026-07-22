@@ -1,4 +1,3 @@
-import 'dart:async' show Timer;
 import 'dart:convert' show jsonDecode, utf8;
 import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
@@ -41,15 +40,12 @@ import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/storage_utils.dart';
 import 'package:PiliPlus/utils/subtitle_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
-import 'package:battery_plus/battery_plus.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
-import 'package:easy_debounce/easy_throttle.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart' hide showBottomSheet;
@@ -57,113 +53,8 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:media_kit/media_kit.dart' show NativePlayer;
-
-mixin TimeBatteryMixin<T extends StatefulWidget> on State<T> {
-  PlPlayerController get plPlayerController;
-  late final titleKey = GlobalKey();
-  ContextSingleTicker? provider;
-  ContextSingleTicker get effectiveProvider => provider ??= ContextSingleTicker(
-    context,
-    autoStart: () =>
-        plPlayerController.showControls.value &&
-        !plPlayerController.controlsLock.value,
-  );
-
-  bool get isPortrait;
-  bool get isFullScreen;
-
-  Timer? _clock;
-  RxString now = ''.obs;
-
-  static final _format = DateFormat('HH:mm');
-
-  @override
-  void dispose() {
-    stopClock();
-    super.dispose();
-  }
-
-  void startClock() {
-    if (!_showCurrTime) return;
-    if (_clock == null) {
-      now.value = _format.format(DateTime.now());
-      _clock ??= Timer.periodic(const Duration(seconds: 1), (Timer t) {
-        if (!mounted) {
-          stopClock();
-          return;
-        }
-        now.value = _format.format(DateTime.now());
-      });
-    }
-  }
-
-  void stopClock() {
-    _clock?.cancel();
-    _clock = null;
-  }
-
-  bool _showCurrTime = false;
-  void showCurrTimeIfNeeded(bool isFullScreen) {
-    _showCurrTime = !isPortrait;
-    if (!_showCurrTime) {
-      stopClock();
-    }
-  }
-
-  late final _battery = Battery();
-  late final RxnInt _batteryLevel = RxnInt();
-  late final _showBatteryLevel = Pref.showBatteryLevel;
-  void getBatteryLevelIfNeeded() {
-    if (!_showCurrTime || !_showBatteryLevel) return;
-    EasyThrottle.throttle(
-      'getBatteryLevel$hashCode',
-      const Duration(seconds: 30),
-      () async {
-        try {
-          _batteryLevel.value = await _battery.batteryLevel;
-        } catch (_) {}
-      },
-    );
-  }
-
-  List<Widget>? get timeBatteryWidgets {
-    if (_showCurrTime) {
-      return [
-        if (_showBatteryLevel) ...[
-          Obx(
-            () {
-              final batteryLevel = _batteryLevel.value;
-              if (batteryLevel == null) {
-                return const SizedBox.shrink();
-              }
-              return Text(
-                '$batteryLevel%',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 10),
-        ],
-        Obx(
-          () => Text(
-            now.value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-            ),
-          ),
-        ),
-      ];
-    }
-    return null;
-  }
-}
 
 class HeaderControl extends StatefulWidget {
   const HeaderControl({
@@ -233,14 +124,21 @@ class HeaderControl extends StatefulWidget {
   }
 }
 
-class HeaderControlState extends State<HeaderControl>
-    with HeaderMixin, TimeBatteryMixin {
+class HeaderControlState extends State<HeaderControl> with HeaderMixin {
   @override
   late final PlPlayerController plPlayerController = widget.controller;
   late final VideoDetailController videoDetailCtr = widget.videoDetailCtr;
   late final PlayUrlModel videoInfo = videoDetailCtr.data;
   static const TextStyle subTitleStyle = TextStyle(fontSize: 12);
   static const TextStyle titleStyle = TextStyle(fontSize: 14);
+  late final titleKey = GlobalKey();
+  ContextSingleTicker? provider;
+  ContextSingleTicker get effectiveProvider => provider ??= ContextSingleTicker(
+    context,
+    autoStart: () =>
+        plPlayerController.showControls.value &&
+        !plPlayerController.controlsLock.value,
+  );
 
   String get heroTag => widget.heroTag;
   late final UgcIntroController ugcIntroController;
@@ -252,7 +150,6 @@ class HeaderControlState extends State<HeaderControl>
       ? ugcIntroController
       : pugvIntroController;
 
-  @override
   bool get isPortrait => widget.isPortrait;
   Box setting = GStorage.setting;
 
@@ -570,18 +467,6 @@ class HeaderControlState extends State<HeaderControl>
                     },
                     leading: const Icon(Icons.download_outlined, size: 20),
                     title: const Text('保存字幕', style: titleStyle),
-                  ),
-                if (plPlayerController.videoPlayerController != null)
-                  ListTile(
-                    dense: true,
-                    title: const Text('播放信息', style: titleStyle),
-                    leading: const Icon(Icons.info_outline, size: 20),
-                    onTap: () {
-                      Get.back();
-                      plPlayerController
-                        ..controls = false
-                        ..showPlayerInfo.value = true;
-                    },
                   ),
               ],
             ),
@@ -1446,7 +1331,6 @@ class HeaderControlState extends State<HeaderControl>
     final isFSOrPip = isFullScreen || plPlayerController.isDesktopPip;
     final showFSActionItem =
         !isFileSource && plPlayerController.showFSActionItem && isFSOrPip;
-    showCurrTimeIfNeeded(isFullScreen);
     Widget title;
     if (introController.videoDetail.value.title != null &&
         (isFullScreen || !isPortrait)) {
@@ -1536,8 +1420,6 @@ class HeaderControlState extends State<HeaderControl>
                   ),
                 ),
               title,
-              // show current datetime
-              ...?timeBatteryWidgets,
               if (PlatformUtils.isDesktop && !plPlayerController.isDesktopPip)
                 Obx(() {
                   final isAlwaysOnTop = plPlayerController.isAlwaysOnTop.value;
@@ -1663,6 +1545,25 @@ class HeaderControlState extends State<HeaderControl>
                   ),
                 ),
               ),
+              if (plPlayerController.videoPlayerController != null)
+                SizedBox(
+                  width: btnWidth,
+                  height: btnHeight,
+                  child: IconButton(
+                    tooltip: '播放信息',
+                    style: btnStyle,
+                    onPressed: () {
+                      plPlayerController
+                        ..controls = false
+                        ..showPlayerInfo.value = true;
+                    },
+                    icon: const Icon(
+                      Icons.info_outline,
+                      size: 19,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               SizedBox(
                 width: btnWidth,
                 height: btnHeight,
