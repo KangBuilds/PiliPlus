@@ -164,16 +164,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     });
   }
 
-  void _syncPictureInPictureRect() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final box = _playerKey.currentContext?.findRenderObject();
-      if (box is! RenderBox || !box.hasSize) return;
-      final rect = box.localToGlobal(Offset.zero) & box.size;
-      plPlayerController.updatePictureInPictureRect(rect);
-    });
-  }
-
   final RxDouble _brightnessValue = 0.0.obs;
   final RxBool _brightnessIndicator = false.obs;
   Timer? _brightnessTimer;
@@ -1292,7 +1282,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   @override
   Widget build(BuildContext context) {
-    _syncPictureInPictureRect();
     _syncVideoOutputSize();
     maxWidth = widget.maxWidth;
     maxHeight = widget.maxHeight;

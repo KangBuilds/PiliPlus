@@ -190,7 +190,6 @@ class PlPlayerController with BlockConfigMixin {
   final RxBool isRestoringPictureInPicture = false.obs;
   bool _applicationInBackground = false;
   int _pictureInPictureSession = 0;
-  ui.Rect _pictureInPictureRect = ui.Rect.zero;
 
   Map<String, Object> get _pictureInPictureState => {
     'handle': videoPlayerController!.handle.toString(),
@@ -202,49 +201,13 @@ class PlPlayerController with BlockConfigMixin {
     'position': positionInMilliseconds / 1000,
     'duration': durationInMilliseconds / 1000,
     'playing': videoPlayerController!.state.playing && playerStatus.isPlaying,
-    'inlineX': _pictureInPictureRect.left,
-    'inlineY': _pictureInPictureRect.top,
-    'inlineWidth': _pictureInPictureRect.width,
-    'inlineHeight': _pictureInPictureRect.height,
   };
-
-  void updatePictureInPictureRect(ui.Rect rect) {
-    if (rect == _pictureInPictureRect) return;
-    _pictureInPictureRect = rect;
-  }
 
   bool get isPictureInPictureTransitioning =>
       _pictureInPictureTransitionState != PictureInPictureState.inline;
 
   void setApplicationInBackground(bool value) {
     _applicationInBackground = value;
-  }
-
-  Future<void> enterPictureInPicture() async {
-    final player = videoPlayerController;
-    if (player == null) return;
-    if (dataStatus.value != .loaded ||
-        !player.state.playing ||
-        !playerStatus.isPlaying ||
-        playerStatus.value.isCompleted ||
-        onlyPlayAudio.value ||
-        _pictureInPictureRect.isEmpty) {
-      SmartDialog.showToast('请先播放视频');
-      return;
-    }
-    try {
-      final result = await _pictureInPictureChannel
-          .invokeMapMethod<String, Object?>(
-            'PictureInPicture.Start',
-            _pictureInPictureState,
-          );
-      if (result?['accepted'] != true) {
-        SmartDialog.showToast('当前视频无法开启画中画');
-      }
-    } catch (error) {
-      if (kDebugMode) debugPrint('[PiP] start failed: $error');
-      SmartDialog.showToast('画中画启动失败');
-    }
   }
 
   Future<void> _handleNativePictureInPictureEvent(MethodCall call) async {
@@ -298,9 +261,7 @@ class PlPlayerController with BlockConfigMixin {
   }
 
   Future<void> _syncNativePictureInPicture() async {
-    if (!isPictureInPictureTransitioning || videoPlayerController == null) {
-      return;
-    }
+    if (videoPlayerController == null) return;
     try {
       await _pictureInPictureChannel.invokeMapMethod<String, Object?>(
         'PictureInPicture.Update',

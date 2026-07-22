@@ -1724,20 +1724,6 @@ class HeaderControlState extends State<HeaderControl>
                 width: btnWidth,
                 height: btnHeight,
                 child: IconButton(
-                  tooltip: '画中画',
-                  style: btnStyle,
-                  onPressed: plPlayerController.enterPictureInPicture,
-                  icon: const Icon(
-                    Icons.picture_in_picture_outlined,
-                    size: 20,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: btnWidth,
-                height: btnHeight,
-                child: IconButton(
                   tooltip: "更多设置",
                   style: btnStyle,
                   onPressed: showSettingSheet,
