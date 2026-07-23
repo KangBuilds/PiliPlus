@@ -1,6 +1,6 @@
 import 'dart:async' show StreamSubscription, Timer, unawaited;
 import 'dart:convert' show ascii;
-import 'dart:math' show max;
+import 'dart:math' show max, sqrt;
 import 'dart:ui' as ui;
 
 import 'package:PiliPlus/http/browser_ua.dart';
@@ -1053,7 +1053,7 @@ class PlPlayerController with BlockConfigMixin {
   bool volumeInterceptEventStream = false;
 
   Future<void> setPlayerVolume(double volume) =>
-      _videoPlayerController?.setVolume((isMuted ? 0 : volume) * 100) ??
+      _videoPlayerController?.setVolume(isMuted ? 0 : sqrt(volume) * 100) ??
       Future<void>.value();
 
   Future<void> setVolume(double volume, {bool showIndicator = true}) async {
