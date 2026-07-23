@@ -1052,10 +1052,15 @@ class PlPlayerController with BlockConfigMixin {
   Timer? volumeTimer;
   bool volumeInterceptEventStream = false;
 
+  Future<void> setPlayerVolume(double volume) =>
+      _videoPlayerController?.setVolume((isMuted ? 0 : volume) * 100) ??
+      Future<void>.value();
+
   Future<void> setVolume(double volume, {bool showIndicator = true}) async {
     if (this.volume.value != volume) {
       this.volume.value = volume;
       try {
+        await setPlayerVolume(volume);
         FlutterVolumeController.updateShowSystemUI(false);
         await FlutterVolumeController.setVolume(volume);
       } catch (err) {
