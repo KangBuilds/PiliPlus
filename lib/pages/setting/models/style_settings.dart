@@ -62,6 +62,14 @@ List<SettingsModel> get styleSettings => [
         '当前: 主页${Pref.recommendCardWidth.toInt()}dp 其他${Pref.smallCardWidth.toInt()}dp，屏幕宽度:${MediaQuery.widthOf(Get.context!).toPrecision(2)}dp。宽度越小列数越多。',
     onTap: _showCardWidthDialog,
   ),
+  NormalModel(
+    leading: const Icon(Icons.grid_view_outlined),
+    title: '首页视频列数',
+    getSubtitle: () => Pref.recommendColumnCount == 0
+        ? '当前：自动'
+        : '当前：${Pref.recommendColumnCount} 列',
+    onTap: _showRecommendColumnCountDialog,
+  ),
   const SwitchModel(
     title: '播放页移除安全边距',
     leading: Icon(Icons.fit_screen_outlined),
@@ -108,10 +116,10 @@ List<SettingsModel> get styleSettings => [
     getSubtitle: () =>
         '当前消息类型：${Pref.msgUnReadTypeV2.map((item) => item.title).join('、')}',
   ),
-  SwitchModel(
+  const SwitchModel(
     title: '首页顶栏收起',
     subtitle: '首页列表滑动时，收起顶栏',
-    leading: const Icon(Icons.vertical_align_top_outlined),
+    leading: Icon(Icons.vertical_align_top_outlined),
     setKey: SettingBoxKey.hideTopBar,
     defaultVal: PlatformUtils.isMobile,
     needReboot: true,
@@ -543,6 +551,28 @@ Future<void> _showCardWidthDialog(
       SettingBoxKey.recommendCardWidth: res.$1,
       SettingBoxKey.smallCardWidth: res.$2,
     });
+    SmartDialog.showToast('重启生效');
+    setState();
+  }
+}
+
+Future<void> _showRecommendColumnCountDialog(
+  BuildContext context,
+  VoidCallback setState,
+) async {
+  final res = await showDialog<int>(
+    context: context,
+    builder: (context) => SelectDialog<int>(
+      title: '首页视频列数',
+      value: Pref.recommendColumnCount,
+      values: List.generate(
+        7,
+        (count) => (count, count == 0 ? '自动' : '$count 列'),
+      ),
+    ),
+  );
+  if (res != null) {
+    await GStorage.setting.put(SettingBoxKey.recommendColumnCount, res);
     SmartDialog.showToast('重启生效');
     setState();
   }

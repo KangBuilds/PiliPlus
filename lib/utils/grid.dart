@@ -36,11 +36,13 @@ class SliverGridDelegateWithExtentAndRatio extends SliverGridDelegate {
   /// The [childAspectRatio] argument must be greater than zero.
   SliverGridDelegateWithExtentAndRatio({
     required this.maxCrossAxisExtent,
+    this.crossAxisCount,
     this.mainAxisSpacing = 0.0,
     this.crossAxisSpacing = 0.0,
     this.childAspectRatio = 1.0,
     this.mainAxisExtent = 0.0,
   }) : assert(maxCrossAxisExtent > 0),
+       assert(crossAxisCount == null || crossAxisCount > 0),
        assert(mainAxisSpacing >= 0),
        assert(crossAxisSpacing >= 0),
        assert(childAspectRatio > 0);
@@ -57,6 +59,9 @@ class SliverGridDelegateWithExtentAndRatio extends SliverGridDelegate {
   /// [maxCrossAxisExtent] is 150.0, this delegate will create a grid with 4
   /// columns that are 125.0 pixels wide.
   final double maxCrossAxisExtent;
+
+  /// A fixed number of tiles, or null to derive it from [maxCrossAxisExtent].
+  final int? crossAxisCount;
 
   /// The number of logical pixels between each child along the main axis.
   final double mainAxisSpacing;
@@ -93,6 +98,7 @@ class SliverGridDelegateWithExtentAndRatio extends SliverGridDelegate {
     }
     crossAxisExtentCache = constraints.crossAxisExtent;
     int crossAxisCount =
+        this.crossAxisCount ??
         ((constraints.crossAxisExtent - crossAxisSpacing) /
                 (maxCrossAxisExtent + crossAxisSpacing))
             .ceil();
@@ -120,6 +126,7 @@ class SliverGridDelegateWithExtentAndRatio extends SliverGridDelegate {
   bool shouldRelayout(SliverGridDelegateWithExtentAndRatio oldDelegate) {
     final flag =
         oldDelegate.maxCrossAxisExtent != maxCrossAxisExtent ||
+        oldDelegate.crossAxisCount != crossAxisCount ||
         oldDelegate.mainAxisSpacing != mainAxisSpacing ||
         oldDelegate.crossAxisSpacing != crossAxisSpacing ||
         oldDelegate.childAspectRatio != childAspectRatio ||

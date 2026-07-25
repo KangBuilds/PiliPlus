@@ -167,6 +167,7 @@ abstract final class SettingBoxKey {
       displayMode = 'displayMode',
       smallCardWidth = 'smallCardWidth',
       recommendCardWidth = 'recommendCardWidth',
+      recommendColumnCount = 'recommendColumnCount',
       dynamicsWaterfallFlow = 'dynamicsWaterfallFlow',
       upPanelPosition = 'upPanelPosition',
       dynamicsShowAllFollowedUp = 'dynamicsShowAllFollowedUp',

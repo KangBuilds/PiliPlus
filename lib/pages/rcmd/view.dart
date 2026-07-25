@@ -54,6 +54,9 @@ class _RcmdPageState extends State<RcmdPage>
     mainAxisSpacing: Style.cardSpace,
     crossAxisSpacing: Style.cardSpace,
     maxCrossAxisExtent: Pref.recommendCardWidth,
+    crossAxisCount: Pref.recommendColumnCount == 0
+        ? null
+        : Pref.recommendColumnCount,
     childAspectRatio: Style.aspectRatio,
     mainAxisExtent: MediaQuery.textScalerOf(
       context,
