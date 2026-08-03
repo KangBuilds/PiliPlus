@@ -90,6 +90,7 @@ class HistoryItem extends StatelessWidget {
                       cid: cid,
                       cover: item.cover,
                       title: item.title,
+                      progress: item.playbackProgress,
                       dimension: dimension,
                     );
                   }

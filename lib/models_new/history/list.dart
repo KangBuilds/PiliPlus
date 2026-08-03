@@ -20,6 +20,12 @@ class HistoryItemModel with MultiSelectData {
   int? kid;
   String? tagName;
 
+  int? get playbackProgress => switch (progress) {
+    null => null,
+    -1 => 0,
+    final seconds => seconds * Duration.millisecondsPerSecond,
+  };
+
   HistoryItemModel({
     this.title,
     this.cover,
