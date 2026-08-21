@@ -229,6 +229,7 @@ abstract final class PageUtils {
               cid: cid,
               cover: cover,
               dimension: res!.dimension,
+              title: archive.title,
             );
           }
         } catch (err) {
@@ -263,6 +264,7 @@ abstract final class PageUtils {
             cid: cid,
             cover: cover,
             dimension: res!.dimension,
+            title: ugcSeason.title,
           );
         }
         break;
@@ -523,6 +525,7 @@ abstract final class PageUtils {
             seasonId: response.seasonId,
             epId: episode.id,
             cover: episode.cover,
+            title: episode.title,
             extraArguments: {
               'seasonItem': response,
             },
