@@ -71,14 +71,16 @@ post_install do |installer|
         private var formatSize = CGSize.zero
     SWIFT
     old.gsub!(/^/, '  ')
+    legacy = old + "  private var lastPixelBuffer: CVPixelBuffer?\n"
     new = <<~'SWIFT'
         private var formatDescription: CMVideoFormatDescription?
         private var formatSize = CGSize.zero
         private var lastPixelBuffer: CVPixelBuffer?
+        private var restoredFramePending = false
     SWIFT
     new.gsub!(/^/, '  ')
     unless contents.include?(new)
-      raise 'media_kit_video inline frame state changed upstream' unless contents.sub!(old, new)
+      raise 'media_kit_video inline frame state changed upstream' unless contents.sub!(legacy, new) || contents.sub!(old, new)
     end
 
     old = <<~'SWIFT'
@@ -101,12 +103,7 @@ post_install do |installer|
       raise 'media_kit_video inline view setup changed upstream' unless contents.sub!(old, new)
     end
 
-    old = <<~'SWIFT'
-        @available(*, unavailable)
-        required init?(coder: NSCoder) {
-    SWIFT
-    old.gsub!(/^/, '  ')
-    new = <<~'SWIFT'
+    legacy = <<~'SWIFT'
         deinit {
           NotificationCenter.default.removeObserver(self)
         }
@@ -116,13 +113,48 @@ post_install do |installer|
           displayLayer.flush()
           enqueue(pixelBuffer: { pixelBuffer })
         }
+    SWIFT
+    legacy.gsub!(/^/, '  ')
+    new = <<~'SWIFT'
+        deinit {
+          NotificationCenter.default.removeObserver(self)
+        }
 
-        @available(*, unavailable)
-        required init?(coder: NSCoder) {
+        @objc private func restoreLastFrame() {
+          guard let pixelBuffer = lastPixelBuffer else { return }
+          restoredFramePending = false
+          displayLayer.flush()
+          enqueue(pixelBuffer: { pixelBuffer })
+          restoredFramePending = true
+        }
     SWIFT
     new.gsub!(/^/, '  ')
     unless contents.include?(new)
-      raise 'media_kit_video inline view lifecycle changed upstream' unless contents.sub!(old, new)
+      old = <<~'SWIFT'
+          @available(*, unavailable)
+          required init?(coder: NSCoder) {
+      SWIFT
+      old.gsub!(/^/, '  ')
+      raise 'media_kit_video inline view lifecycle changed upstream' unless contents.sub!(legacy, new) || contents.sub!(old, new + "\n" + old)
+    end
+    contents.gsub!(legacy, '')
+
+    old = <<~'SWIFT'
+        func enqueue(pixelBuffer provider: () -> CVPixelBuffer?) {
+          if displayLayer.status == .failed {
+    SWIFT
+    old.gsub!(/^/, '  ')
+    new = <<~'SWIFT'
+        func enqueue(pixelBuffer provider: () -> CVPixelBuffer?) {
+          if restoredFramePending {
+            displayLayer.flushAndRemoveImage()
+            restoredFramePending = false
+          }
+          if displayLayer.status == .failed {
+    SWIFT
+    new.gsub!(/^/, '  ')
+    unless contents.include?(new)
+      raise 'media_kit_video inline frame enqueue lifecycle changed upstream' unless contents.sub!(old, new)
     end
 
     old = "      let pixelBuffer = provider()\n    else { return }\n\n    let size = CGSize(\n"
