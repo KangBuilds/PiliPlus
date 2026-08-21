@@ -319,7 +319,7 @@ class AuthorPanel extends StatelessWidget {
                 onTap: () {
                   Get.back();
                   ShareUtils.shareText(
-                    '${HttpString.dynamicShareBaseUrl}/${item.idStr}',
+                    '${HttpString.opusBaseUrl}/${item.idStr}',
                   );
                 },
                 minLeadingWidth: 0,

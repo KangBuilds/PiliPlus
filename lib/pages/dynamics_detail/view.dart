@@ -594,7 +594,7 @@ class _DynamicDetailPageState
                     text: '分享',
                     stat: null,
                     onPressed: (_) => ShareUtils.shareText(
-                      '${HttpString.dynamicShareBaseUrl}/${controller.dynItem.idStr}',
+                      '${HttpString.opusBaseUrl}/${controller.dynItem.idStr}',
                     ),
                   ),
                 ),
