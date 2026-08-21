@@ -48,7 +48,8 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -156,6 +157,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     final isResume = state == .resumed;
     final ctr = videoDetailController.plPlayerController..visible = isResume;
     if (isResume) {
+      if (isFullScreen && defaultTargetPlatform == TargetPlatform.iOS) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ctr.changeOrientation(isVertical: ctr.isVertical, force: true);
+        });
+      }
       if (!ctr.showDanmaku) {
         ctr.showDanmaku = true;
       }

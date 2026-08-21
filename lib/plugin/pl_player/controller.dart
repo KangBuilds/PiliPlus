@@ -1207,6 +1207,7 @@ class PlPlayerController with BlockConfigMixin {
   Future<void>? changeOrientation({
     required bool isVertical,
     DeviceOrientation? orientation,
+    bool force = false,
   }) {
     if (orientation == null && (mode == .none || mode == .gravity)) {
       return null;
@@ -1215,14 +1216,14 @@ class PlPlayerController with BlockConfigMixin {
         (mode == .vertical ||
             (mode == .auto && isVertical) ||
             (mode == .ratio && (isVertical || screenRatio < kScreenRatio)))) {
-      return portraitUpMode();
+      return portraitUpMode(force: force);
     } else {
       // https://github.com/flutter/flutter/issues/73651
       // https://github.com/flutter/flutter/issues/183708
       if (orientation == .landscapeLeft) {
-        return landscapeLeftMode();
+        return landscapeLeftMode(force: force);
       } else {
-        return landscapeRightMode();
+        return landscapeRightMode(force: force);
       }
     }
   }
