@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:PiliPlus/common/widgets/pair.dart';
 import 'package:PiliPlus/common/widgets/progress_bar/segment_progress_bar.dart';
 import 'package:PiliPlus/grpc/dm.dart';
+import 'package:PiliPlus/http/browser_ua.dart';
 import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -61,6 +62,7 @@ import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart' show Options;
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart'
     show ExtendedNestedScrollViewState;
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -1258,12 +1260,27 @@ class VideoDetailController extends GetxController
       final res = await Request().get(
         'https://bvc.bilivideo.com/pbp/data',
         queryParameters: {
+          'aid': aid,
           'bvid': bvid,
           'cid': cid.value,
+          'r': 'loader',
         },
+        options: Options(
+          headers: {
+            'user-agent': BrowserUa.pc,
+            'origin': 'https://www.bilibili.com',
+            'referer': 'https://www.bilibili.com/video/$bvid',
+          },
+        ),
       );
-      PbpData data = PbpData.fromJson(res.data);
-      int stepSec = data.stepSec ?? 0;
+      dynamic json;
+      try {
+        json = (res.data['modules'] as List).first['params']['data'];
+      } catch (_) {
+        json = res.data;
+      }
+      final data = PbpData.fromJson(json);
+      final stepSec = data.stepSec ?? 0;
       if (stepSec != 0 && data.events?.eDefault?.isNotEmpty == true) {
         dmTrend.value = Success(data.events!.eDefault!);
         return;
