@@ -345,10 +345,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     } else if (state == .resumed && _wasInBackground) {
       _wasInBackground = false;
       if (defaultTargetPlatform == TargetPlatform.iOS) {
-        plPlayerController.videoPlayerController?.setProperty(
-          'video-sync',
-          'audio',
-        );
+        final player = plPlayerController.videoPlayerController;
+        if (player != null) unawaited(player.seek(player.state.position));
       }
     }
     if (isInBackground && !plPlayerController.isPictureInPictureTransitioning) {
