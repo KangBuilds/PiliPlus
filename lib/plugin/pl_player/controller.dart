@@ -962,13 +962,6 @@ class PlPlayerController with BlockConfigMixin {
       return;
     }
 
-    if (dataSource is! FileSource) {
-      for (final entry in Pref.initBuffer(speed).entries) {
-        if (entry.key != 'cache') {
-          _videoPlayerController?.setProperty(entry.key, entry.value);
-        }
-      }
-    }
     await _videoPlayerController?.setRate(speed);
     _playbackSpeed.value = speed;
     if (danmakuController != null) {
