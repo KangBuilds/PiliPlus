@@ -124,6 +124,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   StreamSubscription<(int, int)>? _videoSizeSubscription;
   Size? _videoOutputSize;
   bool _videoOutputSyncScheduled = false;
+  bool _wasInBackground = false;
+  int _videoSurfaceGeneration = 0;
 
   void _syncVideoOutputSize() {
     if (_videoOutputSyncScheduled) return;
@@ -339,6 +341,15 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       .detached,
     ].contains(state);
     plPlayerController.setApplicationInBackground(isInBackground);
+    if (isInBackground) {
+      _wasInBackground = true;
+    } else if (state == .resumed && _wasInBackground) {
+      _wasInBackground = false;
+      if (defaultTargetPlatform == TargetPlatform.iOS &&
+          !plPlayerController.isPictureInPictureTransitioning) {
+        setState(() => _videoSurfaceGeneration++);
+      }
+    }
     if (isInBackground && !plPlayerController.isPictureInPictureTransitioning) {
       final player = plPlayerController.videoPlayerController;
       if (player != null && player.state.playing) {
@@ -2008,6 +2019,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                     fit: videoFit.boxFit,
                     alignment: widget.alignment,
                     child: SimpleVideo(
+                      key: ValueKey(_videoSurfaceGeneration),
                       controller: plPlayerController.videoController!,
                       fill: widget.fill,
                       aspectRatio: videoFit.aspectRatio,
