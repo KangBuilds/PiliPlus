@@ -124,6 +124,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   StreamSubscription<(int, int)>? _videoSizeSubscription;
   Size? _videoOutputSize;
   bool _videoOutputSyncScheduled = false;
+  bool _wasInBackground = false;
 
   void _syncVideoOutputSize() {
     if (_videoOutputSyncScheduled) return;
@@ -339,6 +340,17 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       .detached,
     ].contains(state);
     plPlayerController.setApplicationInBackground(isInBackground);
+    if (isInBackground) {
+      _wasInBackground = true;
+    } else if (state == .resumed && _wasInBackground) {
+      _wasInBackground = false;
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        plPlayerController.videoPlayerController?.setProperty(
+          'video-sync',
+          'audio',
+        );
+      }
+    }
     if (isInBackground && !plPlayerController.isPictureInPictureTransitioning) {
       final player = plPlayerController.videoPlayerController;
       if (player != null && player.state.playing) {
