@@ -38,6 +38,12 @@ post_install do |installer|
   pip_controller = File.join(__dir__, '.symlinks/plugins/media_kit_video/ios/Classes/plugin/PictureInPictureController.swift')
   if File.exist?(pip_controller)
     contents = File.read(pip_controller)
+    {
+      'UIApplication.didEnterBackgroundNotification' => 'UIScene.didEnterBackgroundNotification',
+      'UIApplication.willEnterForegroundNotification' => 'UIScene.willEnterForegroundNotification',
+    }.each do |old, new|
+      raise 'media_kit_video PiP lifecycle changed upstream' unless contents.include?(new) || contents.sub!(old, new)
+    end
     old = <<~'SWIFT'
           let duration = configuration?.duration ?? 0
           return CMTimeRange(
@@ -59,8 +65,8 @@ post_install do |installer|
     new.gsub!(/^/, '    ')
     unless contents.include?(new)
       raise 'media_kit_video PiP playback range changed upstream' unless contents.sub!(old, new)
-      File.write(pip_controller, contents)
     end
+    File.write(pip_controller, contents)
   end
 
   inline_video_view = File.join(__dir__, '.symlinks/plugins/media_kit_video/ios/Classes/plugin/InlineVideoView.swift')
