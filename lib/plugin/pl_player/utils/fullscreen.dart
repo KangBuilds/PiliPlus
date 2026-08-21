@@ -29,27 +29,24 @@ Future<void> exitDesktopFullScreen() async {
 }
 
 List<DeviceOrientation>? _lastOrientation;
-Future<void>? _setPreferredOrientations(
-  List<DeviceOrientation> orientations, {
-  bool force = false,
-}) {
-  if (!force && _lastOrientation == orientations) {
+Future<void>? _setPreferredOrientations(List<DeviceOrientation> orientations) {
+  if (_lastOrientation == orientations) {
     return null;
   }
   _lastOrientation = orientations;
   return SystemChrome.setPreferredOrientations(orientations);
 }
 
-Future<void>? portraitUpMode({bool force = false}) {
-  return _setPreferredOrientations(const [.portraitUp], force: force);
+Future<void>? portraitUpMode() {
+  return _setPreferredOrientations(const [.portraitUp]);
 }
 
-Future<void>? landscapeLeftMode({bool force = false}) {
-  return _setPreferredOrientations(const [.landscapeLeft], force: force);
+Future<void>? landscapeLeftMode() {
+  return _setPreferredOrientations(const [.landscapeLeft]);
 }
 
-Future<void>? landscapeRightMode({bool force = false}) {
-  return _setPreferredOrientations(const [.landscapeRight], force: force);
+Future<void>? landscapeRightMode() {
+  return _setPreferredOrientations(const [.landscapeRight]);
 }
 
 bool _showSystemBar = true;
