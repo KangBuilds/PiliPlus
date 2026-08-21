@@ -35,6 +35,34 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  pip_controller = File.join(__dir__, '.symlinks/plugins/media_kit_video/ios/Classes/plugin/PictureInPictureController.swift')
+  if File.exist?(pip_controller)
+    contents = File.read(pip_controller)
+    old = <<~'SWIFT'
+          let duration = configuration?.duration ?? 0
+          return CMTimeRange(
+            start: .zero,
+    SWIFT
+    old.gsub!(/^/, '    ')
+    new = <<~'SWIFT'
+          guard let configuration, let timebase = sourceLayer?.controlTimebase else {
+            return .invalid
+          }
+          let duration = configuration.duration
+          let start = CMTimeSubtract(
+            CMTimebaseGetTime(timebase),
+            CMTime(seconds: configuration.position, preferredTimescale: 600)
+          )
+          return CMTimeRange(
+            start: start,
+    SWIFT
+    new.gsub!(/^/, '    ')
+    unless contents.include?(new)
+      raise 'media_kit_video PiP playback range changed upstream' unless contents.sub!(old, new)
+      File.write(pip_controller, contents)
+    end
+  end
+
   # ponytail: remove when permission_handler_apple adds its own include guard.
   Dir.glob(File.join(__dir__, 'Flutter/ephemeral/Packages/.packages/permission_handler_apple-*/Sources/permission_handler_apple/PermissionHandlerEnums.h')).each do |header|
     contents = File.read(header)
