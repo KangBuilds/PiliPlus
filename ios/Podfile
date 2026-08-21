@@ -63,6 +63,76 @@ post_install do |installer|
     end
   end
 
+  inline_video_view = File.join(__dir__, '.symlinks/plugins/media_kit_video/ios/Classes/plugin/InlineVideoView.swift')
+  if File.exist?(inline_video_view)
+    contents = File.read(inline_video_view)
+    old = <<~'SWIFT'
+        private var formatDescription: CMVideoFormatDescription?
+        private var formatSize = CGSize.zero
+    SWIFT
+    old.gsub!(/^/, '  ')
+    new = <<~'SWIFT'
+        private var formatDescription: CMVideoFormatDescription?
+        private var formatSize = CGSize.zero
+        private var lastPixelBuffer: CVPixelBuffer?
+    SWIFT
+    new.gsub!(/^/, '  ')
+    unless contents.include?(new)
+      raise 'media_kit_video inline frame state changed upstream' unless contents.sub!(old, new)
+    end
+
+    old = <<~'SWIFT'
+        backgroundColor = .black
+        displayLayer.videoGravity = .resize
+    SWIFT
+    old.gsub!(/^/, '    ')
+    new = <<~'SWIFT'
+        backgroundColor = .black
+        displayLayer.videoGravity = .resize
+        NotificationCenter.default.addObserver(
+          self,
+          selector: #selector(restoreLastFrame),
+          name: UIApplication.didBecomeActiveNotification,
+          object: nil
+        )
+    SWIFT
+    new.gsub!(/^/, '    ')
+    unless contents.include?(new)
+      raise 'media_kit_video inline view setup changed upstream' unless contents.sub!(old, new)
+    end
+
+    old = <<~'SWIFT'
+        @available(*, unavailable)
+        required init?(coder: NSCoder) {
+    SWIFT
+    old.gsub!(/^/, '  ')
+    new = <<~'SWIFT'
+        deinit {
+          NotificationCenter.default.removeObserver(self)
+        }
+
+        @objc private func restoreLastFrame() {
+          guard let pixelBuffer = lastPixelBuffer else { return }
+          displayLayer.flush()
+          enqueue(pixelBuffer: { pixelBuffer })
+        }
+
+        @available(*, unavailable)
+        required init?(coder: NSCoder) {
+    SWIFT
+    new.gsub!(/^/, '  ')
+    unless contents.include?(new)
+      raise 'media_kit_video inline view lifecycle changed upstream' unless contents.sub!(old, new)
+    end
+
+    old = "      let pixelBuffer = provider()\n    else { return }\n\n    let size = CGSize(\n"
+    new = "      let pixelBuffer = provider()\n    else { return }\n    lastPixelBuffer = pixelBuffer\n\n    let size = CGSize(\n"
+    unless contents.include?(new)
+      raise 'media_kit_video inline frame enqueue changed upstream' unless contents.sub!(old, new)
+    end
+    File.write(inline_video_view, contents)
+  end
+
   # ponytail: remove when permission_handler_apple adds its own include guard.
   Dir.glob(File.join(__dir__, 'Flutter/ephemeral/Packages/.packages/permission_handler_apple-*/Sources/permission_handler_apple/PermissionHandlerEnums.h')).each do |header|
     contents = File.read(header)
