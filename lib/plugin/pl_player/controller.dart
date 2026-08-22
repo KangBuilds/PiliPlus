@@ -219,6 +219,16 @@ class PlPlayerController with BlockConfigMixin {
     _applicationInBackground = value;
   }
 
+  Future<void> restorePictureInPicture() async {
+    try {
+      await _pictureInPictureEventChannel.invokeMethod<void>(
+        'PictureInPicture.Restore',
+      );
+    } catch (error) {
+      if (kDebugMode) debugPrint('[PiP] restore failed: $error');
+    }
+  }
+
   Future<void> _handleNativePictureInPictureEvent(MethodCall call) async {
     final args = Map<Object?, Object?>.from(call.arguments as Map);
     final player = videoPlayerController;

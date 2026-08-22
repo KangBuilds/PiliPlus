@@ -339,7 +339,12 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       .detached,
     ].contains(state);
     plPlayerController.setApplicationInBackground(isInBackground);
-    if (isInBackground && !plPlayerController.isPictureInPictureTransitioning) {
+    if (state == .resumed && defaultTargetPlatform == TargetPlatform.iOS) {
+      unawaited(plPlayerController.restorePictureInPicture());
+    }
+    if (isInBackground &&
+        defaultTargetPlatform != TargetPlatform.iOS &&
+        !plPlayerController.isPictureInPictureTransitioning) {
       final player = plPlayerController.videoPlayerController;
       if (player != null && player.state.playing) {
         player.pause();

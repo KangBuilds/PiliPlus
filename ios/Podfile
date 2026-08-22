@@ -45,6 +45,34 @@ post_install do |installer|
       raise 'media_kit_video PiP lifecycle changed upstream' unless contents.include?(new) || contents.sub!(old, new)
     end
     old = <<~'SWIFT'
+        NotificationCenter.default.addObserver(
+          self,
+          selector: #selector(willEnterForeground),
+          name: UIScene.willEnterForegroundNotification,
+          object: nil
+        )
+    SWIFT
+    old.gsub!(/^/, '    ')
+    new = old + <<~'SWIFT'.gsub(/^/, '    ')
+        channel.setMethodCallHandler { [weak self] call, result in
+          guard call.method == "PictureInPicture.Restore" else {
+            result(FlutterMethodNotImplemented)
+            return
+          }
+          self?.willEnterForeground()
+          result(nil)
+        }
+    SWIFT
+    unless contents.include?(new)
+      raise 'media_kit_video PiP restore channel changed upstream' unless contents.sub!(old, new)
+    end
+    {
+      "    case .requesting:\n      cancelRequest(reason: \"returnedToForeground\")\n" => "    case .requesting:\n      cancelRequest(reason: \"returnedToForeground\")\n      controller?.stopPictureInPicture()\n",
+      "    case .restoring:\n      break\n" => "    case .restoring:\n      controller?.stopPictureInPicture()\n",
+    }.each do |old, new|
+      raise 'media_kit_video PiP restore lifecycle changed upstream' unless contents.include?(new) || contents.sub!(old, new)
+    end
+    old = <<~'SWIFT'
           let duration = configuration?.duration ?? 0
           return CMTimeRange(
             start: .zero,
