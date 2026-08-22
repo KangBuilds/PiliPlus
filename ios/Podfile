@@ -40,15 +40,19 @@ post_install do |installer|
     contents = File.read(pip_controller)
     {
       'UIApplication.didEnterBackgroundNotification' => 'UIScene.didEnterBackgroundNotification',
-      'UIApplication.willEnterForegroundNotification' => 'UIScene.willEnterForegroundNotification',
     }.each do |old, new|
       raise 'media_kit_video PiP lifecycle changed upstream' unless contents.include?(new) || contents.sub!(old, new)
+    end
+    unless contents.include?('UIScene.didActivateNotification')
+      raise 'media_kit_video PiP foreground lifecycle changed upstream' unless
+        contents.sub!('UIApplication.willEnterForegroundNotification', 'UIScene.didActivateNotification') ||
+        contents.sub!('UIScene.willEnterForegroundNotification', 'UIScene.didActivateNotification')
     end
     old = <<~'SWIFT'
         NotificationCenter.default.addObserver(
           self,
           selector: #selector(willEnterForeground),
-          name: UIScene.willEnterForegroundNotification,
+          name: UIScene.didActivateNotification,
           object: nil
         )
     SWIFT
