@@ -966,7 +966,7 @@ class PlPlayerController with BlockConfigMixin {
       'video-sync',
       speed > 2 ? 'audio' : Pref.videoSync,
     );
-    await _videoPlayerController?.setRate(speed);
+    await _videoPlayerController?.setRate(speed, synchronized: false);
     _playbackSpeed.value = speed;
     if (danmakuController != null) {
       try {
