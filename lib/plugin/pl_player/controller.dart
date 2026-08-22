@@ -36,7 +36,7 @@ import 'package:archive/archive.dart' show getCrc32;
 import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:collection/collection.dart' show lowerBound;
 import 'package:easy_debounce/easy_throttle.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show DeviceOrientation, HapticFeedback, MethodCall, MethodChannel;
@@ -187,6 +187,7 @@ class PlPlayerController with BlockConfigMixin {
       PictureInPictureState.inline;
   final RxBool isRestoringPictureInPicture = false.obs;
   bool _applicationInBackground = false;
+  bool _refreshVideoOnNextPlay = false;
   int _pictureInPictureSession = 0;
   String? _nowPlayingTitle;
   String? _nowPlayingArtwork;
@@ -216,6 +217,12 @@ class PlPlayerController with BlockConfigMixin {
       _pictureInPictureTransitionState != PictureInPictureState.inline;
 
   void setApplicationInBackground(bool value) {
+    if (value &&
+        defaultTargetPlatform == TargetPlatform.iOS &&
+        _pictureInPictureTransitionState == PictureInPictureState.inline &&
+        _videoPlayerController?.state.playing == false) {
+      _refreshVideoOnNextPlay = true;
+    }
     _applicationInBackground = value;
   }
 
@@ -1014,9 +1021,23 @@ class PlPlayerController with BlockConfigMixin {
       await seekTo(Duration.zero, isSeek: false);
     }
 
-    await _videoPlayerController?.play();
-
-    audioSessionHandler?.setActive(true);
+    await audioSessionHandler?.setActive(true);
+    final refreshVideo = _refreshVideoOnNextPlay;
+    _refreshVideoOnNextPlay = false;
+    final player = _videoPlayerController;
+    Future<void>? refresh;
+    if (refreshVideo && player != null && dataSource is! FileSource) {
+      await player.command(const ['set', 'hwdec', 'no']);
+      refresh = refreshPlayer();
+    }
+    if (refresh != null) {
+      await refresh;
+      if (hwdec != null) {
+        await player!.command(['set', 'hwdec', hwdec!]);
+      }
+    } else {
+      await player?.play();
+    }
 
     playerStatus.value = PlayerStatus.playing;
     // screenManager.setOverlays(false);
@@ -1029,7 +1050,7 @@ class PlPlayerController with BlockConfigMixin {
 
     // 主动暂停时让出音频焦点
     if (!isInterrupt) {
-      audioSessionHandler?.setActive(false);
+      await audioSessionHandler?.setActive(false);
     }
   }
 
@@ -1147,11 +1168,14 @@ class PlPlayerController with BlockConfigMixin {
 
   // 双击播放、暂停
   Future<void> onDoubleTapCenter() async {
+    final player = videoPlayerController!;
     if (isCompleted) {
-      await videoPlayerController!.seek(Duration.zero);
-      videoPlayerController!.play();
+      await player.seek(Duration.zero);
+      await play();
+    } else if (player.state.playing) {
+      await pause();
     } else {
-      videoPlayerController!.playOrPause();
+      await play();
     }
   }
 
