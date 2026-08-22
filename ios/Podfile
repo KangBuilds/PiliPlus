@@ -58,6 +58,15 @@ post_install do |installer|
       SWIFT
     end
     foreground_observers.each { |observer| observer.gsub!(/^/, '    ') }
+    foreground_marker = <<~'SWIFT'
+        NotificationCenter.default.addObserver(
+          self,
+          selector: #selector(markEnteringForeground),
+          name: UIApplication.willEnterForegroundNotification,
+          object: nil
+        )
+    SWIFT
+    foreground_marker.gsub!(/^/, '    ')
     restore_handler = <<~'SWIFT'
         channel.setMethodCallHandler { [weak self] call, result in
           guard call.method == "PictureInPicture.Restore" else {
@@ -70,9 +79,26 @@ post_install do |installer|
     SWIFT
     restore_handler.gsub!(/^/, '    ')
     if (observer = foreground_observers.find { |candidate| contents.include?(candidate) })
-      contents.sub!(observer, contents.include?(restore_handler) ? '' : restore_handler)
+      contents.sub!(observer, contents.include?(foreground_marker) ? '' : foreground_marker)
     end
-    raise 'media_kit_video PiP restore channel changed upstream' unless contents.include?(restore_handler)
+    unless contents.include?(foreground_marker)
+      raise 'media_kit_video PiP foreground marker changed upstream' unless contents.sub!(restore_handler, foreground_marker + restore_handler)
+    end
+    unless contents.include?(restore_handler)
+      raise 'media_kit_video PiP restore channel changed upstream' unless contents.sub!(foreground_marker, foreground_marker + restore_handler)
+    end
+    foreground_method = <<~'SWIFT'
+        @objc private func markEnteringForeground() {
+          isInBackground = false
+          log("lifecycle entering foreground")
+        }
+
+    SWIFT
+    foreground_method.gsub!(/^/, '  ')
+    unless contents.include?(foreground_method)
+      anchor = "  @objc private func willEnterForeground() {\n"
+      raise 'media_kit_video PiP foreground lifecycle changed upstream' unless contents.sub!(anchor, foreground_method + anchor)
+    end
     {
       "    case .requesting:\n      cancelRequest(reason: \"returnedToForeground\")\n" => "    case .requesting:\n      cancelRequest(reason: \"returnedToForeground\")\n      controller?.stopPictureInPicture()\n",
       "    case .restoring:\n      break\n" => "    case .restoring:\n      controller?.stopPictureInPicture()\n",
