@@ -45,6 +45,7 @@ abstract final class SettingBoxKey {
       maxCacheSize = 'maxCacheSize',
       defaultShowComment = 'defaultShowComment',
       replySortType = 'replySortType',
+      reply2SortType = 'reply2SortType',
       defaultDynamicType = 'defaultDynamicTypeV2',
       showDynInteraction = 'showDynInteraction',
       enableHotKey = 'enableHotKey',
