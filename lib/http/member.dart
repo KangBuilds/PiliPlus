@@ -544,6 +544,7 @@ abstract final class MemberHttp {
     int? tagid,
     int? pn,
     int ps = 20,
+    String orderType = '',
   }) async {
     final res = await Request().get(
       Api.followUpGroup,
@@ -552,6 +553,7 @@ abstract final class MemberHttp {
         'tagid': tagid,
         'pn': pn,
         'ps': ps,
+        'order_type': orderType,
       },
     );
     if (res.data['code'] == 0) {

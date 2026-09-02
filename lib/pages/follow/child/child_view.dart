@@ -107,8 +107,7 @@ class _FollowChildPageState extends State<FollowChildPage>
         ),
       ),
     );
-    if (widget.onSelect != null ||
-        (widget.controller?.isOwner == true && widget.tagid == null)) {
+    if (widget.onSelect != null || widget.controller?.isOwner == true) {
       return Stack(
         clipBehavior: Clip.none,
         children: [
