@@ -433,7 +433,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
             controller: videoDetailController.scrollCtr,
             onlyOneScrollInBody: true,
             pinnedHeaderSliverHeightBuilder: () {
-              double pinnedHeight = this.isFullScreen || !isPortrait
+              double pinnedHeight = this.isFullScreen
                   ? maxHeight - padding.top
                   : videoDetailController.isExpanding ||
                         videoDetailController.isCollapsing
@@ -459,7 +459,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
               return pinnedHeight;
             },
             headerSliverBuilder: (context, innerBoxIsScrolled) {
-              final height = isFullScreen || !isPortrait
+              final height = isFullScreen
                   ? maxHeight - padding.top
                   : videoDetailController.isExpanding ||
                         videoDetailController.isCollapsing
