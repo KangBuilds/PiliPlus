@@ -40,18 +40,9 @@ abstract final class DownloadHttp {
     if (res case Success(:final response)) {
       final dash = response.dash;
       if (dash != null) {
-        final videoList = dash.video!;
-        final curHighestVideoQa = videoList.first.quality.code;
-        final preferVideoQa = entry.preferedVideoQuality;
-        int targetVideoQa = curHighestVideoQa;
-        if (response.acceptQuality?.isNotEmpty == true &&
-            preferVideoQa <= curHighestVideoQa) {
-          // 如果预设的画质低于当前最高
-          targetVideoQa = response.acceptQuality!.findClosestTarget(
-            (e) => e <= preferVideoQa,
-            (a, b) => a > b ? a : b,
-          );
-        }
+        final targetVideoQa = response.findAvailableVideoQuality(
+          entry.preferedVideoQuality,
+        );
 
         /// 优先顺序 设置中指定解码格式 -> 当前可选的首个解码格式
         final supportFormats = response.supportFormats!;
@@ -75,7 +66,7 @@ abstract final class DownloadHttp {
               VideoQuality.fromCode(targetVideoQa).desc;
 
         /// 取出符合当前画质的videoList
-        final videosList = videoList
+        final videosList = dash.video!
             .where((e) => e.quality.code == targetVideoQa)
             .toList();
 
@@ -88,7 +79,7 @@ abstract final class DownloadHttp {
         final videoUrl = VideoUtils.getCdnUrl(videoDash.playUrls);
 
         final Type2File videoFile = Type2File(
-          id: videoDash.id!,
+          id: videoDash.id,
           baseUrl: videoUrl,
           bandwidth: videoDash.bandWidth!,
           codecid: videoDash.codecid!,
@@ -105,7 +96,7 @@ abstract final class DownloadHttp {
         if (audioDashList != null && audioDashList.isNotEmpty) {
           final preferAudioQa = Pref.defaultAudioQa;
           final List<int> audioIds = audioDashList
-              .map((map) => map.id!)
+              .map((map) => map.id)
               .toList();
           int closestNumber = audioIds.findClosestTarget(
             (e) => e <= preferAudioQa,
@@ -125,7 +116,7 @@ abstract final class DownloadHttp {
           );
           audioFileList = [
             Type2File(
-              id: audioDash.id!,
+              id: audioDash.id,
               baseUrl: audioUrl,
               bandwidth: audioDash.bandWidth!,
               codecid: audioDash.codecid!,
