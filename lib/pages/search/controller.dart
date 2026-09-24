@@ -128,6 +128,7 @@ class SSearchController extends GetxController
     if (searchSuggestion) {
       subInit();
       searchSuggestList = <SearchSuggestItem>[].obs;
+      if (text != null) onValueChanged(text);
     }
 
     if (enableSearchRcmd) {
@@ -179,12 +180,13 @@ class SSearchController extends GetxController
       GStorage.historyWord.put('cacheList', historyList);
     }
 
+    final text = controller.text;
     searchFocusNode.unfocus();
-    await Get.toNamed(
+    final refreshSuggest = await Get.toNamed(
       '/searchResult',
       parameters: {
         'tag': tag,
-        'keyword': controller.text,
+        'keyword': text,
       },
       arguments: {
         'initIndex': initIndex,
@@ -192,6 +194,9 @@ class SSearchController extends GetxController
       },
     );
     searchFocusNode.requestFocus();
+    if (refreshSuggest is bool && refreshSuggest) {
+      onValueChanged(text);
+    }
     if (PlatformUtils.isDesktop) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         controller.selection = TextSelection.collapsed(
@@ -205,11 +210,11 @@ class SSearchController extends GetxController
     recommendData.value = await SearchHttp.searchRecommend();
   }
 
-  void onClickKeyword(String keyword) {
+  void onClickKeyword(String keyword, {bool clearSuggest = true}) {
     controller.text = keyword;
     validateUid();
 
-    if (searchSuggestion) searchSuggestList.clear();
+    if (searchSuggestion && clearSuggest) searchSuggestList.clear();
     submit();
   }
 
