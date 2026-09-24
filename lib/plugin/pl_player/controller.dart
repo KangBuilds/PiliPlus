@@ -73,6 +73,8 @@ class PlPlayerController with BlockConfigMixin {
   final RxBool isSeeking = false.obs;
 
   final RxInt position = RxInt(0);
+  final RxInt seekPosition = RxInt(0);
+  int get progress => isSeeking.value ? seekPosition.value : position.value;
 
   int get positionInMilliseconds =>
       videoPlayerController?.state.position.inMilliseconds ?? 0;
@@ -845,9 +847,7 @@ class PlPlayerController with BlockConfigMixin {
         final posInSeconds = position.inSeconds;
 
         if (posInSeconds != this.position.value) {
-          if (!isSeeking.value) {
-            this.position.value = posInSeconds;
-          }
+          this.position.value = posInSeconds;
 
           makeHeartBeat(posInSeconds);
           unawaited(_syncNativePictureInPicture());
@@ -1067,10 +1067,12 @@ class PlPlayerController with BlockConfigMixin {
     });
   }
 
+  void onSeekStart(int seekFrom) {
+    seekPosition.value = seekFrom;
+    isSeeking.value = true;
+  }
+
   void onSeekEnd() {
-    if (seekToPos != null) {
-      feedBack();
-    }
     if (showSeekPreview) {
       showPreview.value = false;
     }

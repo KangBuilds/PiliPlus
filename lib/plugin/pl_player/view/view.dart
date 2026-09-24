@@ -44,6 +44,7 @@ import 'package:PiliPlus/utils/connectivity_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
+import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/mobile_observer.dart';
@@ -952,13 +953,13 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   }
 
   void _onHorizontalDragStart() {
-    plPlayerController.isSeeking.value = true;
+    plPlayerController.onSeekStart(plPlayerController.position.value);
   }
 
   void _onHorizontalDragUpdate(double dx) {
     final curPos =
         plPlayerController.seekToPos?.inMilliseconds ??
-        plPlayerController.position.value * 1000;
+        plPlayerController.seekPosition.value * 1000;
     final posDelta = (plPlayerController.sliderScale * dx / maxWidth).round();
     final newPos = (curPos + posDelta).clamp(
       0,
@@ -967,7 +968,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     final seconds = newPos ~/ 1000;
     plPlayerController
       ..seekToPos = Duration(milliseconds: newPos)
-      ..position.value = seconds;
+      ..seekPosition.value = seconds;
     if (!plPlayerController.isFileSource &&
         plPlayerController.showSeekPreview) {
       plPlayerController.updatePreviewIndex(seconds);
@@ -975,9 +976,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   }
 
   void _onHorizontalDragEnd() {
-    plPlayerController.onSeekEnd();
     if (plPlayerController.seekToPos case final seekToPos?) {
+      feedBack();
       plPlayerController
+        ..position.value = seekToPos.inSeconds
         ..seekTo(seekToPos, isSeek: false)
         ..seekToPos = null;
     } else {
@@ -985,6 +987,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           plPlayerController.videoPlayerController?.state.position.inSeconds ??
           0;
     }
+    plPlayerController.onSeekEnd();
   }
 
   void _onPanUpdate(ScaleUpdateDetails details) {
@@ -1434,7 +1437,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                         Obx(
                           () => Text(
                             DurationUtils.formatDuration(
-                              plPlayerController.position.value,
+                              plPlayerController.seekPosition.value,
                             ),
                             style: textStyle,
                           ),
@@ -1696,7 +1699,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   children: [
                     Obx(
                       () => ProgressBar(
-                        progress: plPlayerController.position.value,
+                        progress: plPlayerController.progress,
                         buffered: plPlayerController.buffered.value,
                         total: plPlayerController.duration.value,
                         progressBarColor: primary,
