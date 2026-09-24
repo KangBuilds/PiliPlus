@@ -22,7 +22,7 @@ import 'package:media_kit/media_kit.dart';
 mixin BlockConfigMixin {
   late final enableSponsorBlock = Pref.enableSponsorBlock;
   late final blockColor = Pref.blockColor;
-  late final blockLimit = Pref.blockLimit;
+  late final blockLimit = Pref.blockLimit * 1000;
   late final blockSettings = Pref.blockSettings;
   late final enableList = blockSettings
       .where((item) => item.second != SkipType.disable)
