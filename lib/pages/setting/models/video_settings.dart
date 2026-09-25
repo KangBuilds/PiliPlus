@@ -103,13 +103,17 @@ List<SettingsModel> get videoSettings => [
   NormalModel(
     title: '缓冲大小',
     leading: const Icon(Icons.storage_outlined),
-    getSubtitle: () => '当前前向缓存：${Pref.bufferSize}MB，后向缓存固定为4MB',
+    getSubtitle: () => Pref.bufferSize == 0
+        ? '当前：预加载整个视频（0 = 整个视频）'
+        : '当前前向缓存：${Pref.bufferSize}MB，后向缓存固定为4MB（0 = 整个视频）',
     onTap: _showBufferSizeDialog,
   ),
   NormalModel(
     title: '缓冲时长',
     leading: const Icon(Icons.av_timer),
-    getSubtitle: () => '当前：${Pref.bufferSec}s。实际缓冲为二者最小值（此选项即mpv的--cache-secs）',
+    getSubtitle: () => Pref.bufferSec == 0
+        ? '当前：不限制预加载时长（0 = 整个视频）'
+        : '当前：${Pref.bufferSec}s。实际缓冲为二者最小值（0 = 整个视频）',
     onTap: _showBufferSecDialog,
   ),
   NormalModel(

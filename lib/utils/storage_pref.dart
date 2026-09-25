@@ -42,14 +42,18 @@ Map<String, String> buildBufferOptions({
   required double bufferSec,
   required double playbackSpeed,
 }) {
-  final cacheSec = bufferSec * playbackSpeed;
-  final forwardBytes = (bufferSize * playbackSpeed * 0x100000).toStringAsFixed(
-    0,
-  );
-  const backBytes = 4 * 0x100000;
+  // ponytail: 1 GiB of packet metadata covers typical videos; raise this if very long videos hit the limit.
+  const wholeVideoBytes = 1 << 30;
+  final forwardBytes = bufferSize == 0
+      ? '$wholeVideoBytes'
+      : (bufferSize * playbackSpeed * 0x100000).toStringAsFixed(0);
+  final backBytes = bufferSize == 0 ? wholeVideoBytes : 4 * 0x100000;
   return {
     'cache': 'yes',
-    'cache-secs': cacheSec.toStringAsFixed(3),
+    'cache-on-disk': 'yes',
+    'demuxer-cache-unlink-files': 'immediate',
+    if (bufferSec != 0)
+      'cache-secs': (bufferSec * playbackSpeed).toStringAsFixed(3),
     'demuxer-hysteresis-secs': '4.000',
     'demuxer-max-bytes': forwardBytes,
     'demuxer-max-back-bytes': '$backBytes',
@@ -681,10 +685,10 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.enableLongShowControl, defaultValue: false);
 
   static double get bufferSize =>
-      _setting.get(SettingBoxKey.bufferSize, defaultValue: 16.0);
+      _setting.get(SettingBoxKey.bufferSize, defaultValue: 0.0);
 
   static double get bufferSec =>
-      _setting.get(SettingBoxKey.bufferSec, defaultValue: 16.0);
+      _setting.get(SettingBoxKey.bufferSec, defaultValue: 0.0);
 
   static Map<String, String> initBuffer([double playbackSpeed = 1.0]) =>
       buildBufferOptions(
