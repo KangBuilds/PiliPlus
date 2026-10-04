@@ -28,6 +28,7 @@ import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/extension/box_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
+import 'package:PiliPlus/utils/ios/now_playing.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -52,12 +53,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 typedef PlayCallback = Future<void>? Function();
 
-enum PictureInPictureState {
-  inline,
-  requestingPiP,
-  pipActive,
-  restoringInline,
-}
+enum PictureInPictureState { inline, requestingPiP, pipActive, restoringInline }
 
 class PlPlayerController with BlockConfigMixin {
   Player? _videoPlayerController;
@@ -185,7 +181,6 @@ class PlPlayerController with BlockConfigMixin {
   static const _pictureInPictureEventChannel = MethodChannel(
     'com.alexmercerind/media_kit_video/picture_in_picture',
   );
-  static const _nowPlayingChannel = MethodChannel('com.PiliPlus/now_playing');
   PictureInPictureState _pictureInPictureTransitionState =
       PictureInPictureState.inline;
   final RxBool isRestoringPictureInPicture = false.obs;
@@ -214,6 +209,8 @@ class PlPlayerController with BlockConfigMixin {
     'duration': durationInMilliseconds / 1000,
     'playing': videoPlayerController!.state.playing && playerStatus.isPlaying,
     'rate': playbackSpeed,
+    'canSkipNext': _onSkipToNext != null,
+    'canSkipPrevious': _onSkipToPrevious != null,
   };
 
   bool get isPictureInPictureTransitioning =>
@@ -258,9 +255,7 @@ class PlPlayerController with BlockConfigMixin {
     }
     if (call.method == 'PictureInPicture.Seek') {
       await seekTo(
-        Duration(
-          milliseconds: ((args['position'] as num) * 1000).round(),
-        ),
+        Duration(milliseconds: ((args['position'] as num) * 1000).round()),
       );
       return;
     }
@@ -277,9 +272,7 @@ class PlPlayerController with BlockConfigMixin {
         PictureInPictureState.restoringInline;
     _applicationInBackground = args['background'] == true;
     if (kDebugMode) {
-      debugPrint(
-        '[PiP] state=${args['state']}, reason=${args['reason']}',
-      );
+      debugPrint('[PiP] state=${args['state']}, reason=${args['reason']}');
     }
     if (args['pauseRequired'] == true) {
       if (kDebugMode) {
@@ -306,6 +299,10 @@ class PlPlayerController with BlockConfigMixin {
         await seekTo(
           Duration(milliseconds: ((args['position'] as num) * 1000).round()),
         );
+      case 'NowPlaying.Next':
+        _onSkipToNext?.call();
+      case 'NowPlaying.Previous':
+        _onSkipToPrevious?.call();
     }
   }
 
@@ -316,10 +313,7 @@ class PlPlayerController with BlockConfigMixin {
         'PictureInPicture.Update',
         _pictureInPictureState,
       );
-      await _nowPlayingChannel.invokeMethod(
-        'NowPlaying.Update',
-        _nowPlayingState,
-      );
+      await NativeNowPlaying.update(this, _nowPlayingState);
     } catch (error) {
       if (kDebugMode) debugPrint('[PiP] state sync failed: $error');
     }
@@ -476,10 +470,22 @@ class PlPlayerController with BlockConfigMixin {
     return _instance != null;
   }
 
-  static void setPlayCallBack(PlayCallback? playCallBack) {
+  static void setPlayCallBack(
+    PlayCallback? playCallBack, {
+    bool Function()? onSkipToNext,
+    bool Function()? onSkipToPrevious,
+  }) {
     _playCallBack = playCallBack;
+    _onSkipToNext = onSkipToNext;
+    _onSkipToPrevious = onSkipToPrevious;
+    if (playCallBack != null && _instance != null) {
+      NativeNowPlaying.claim(_instance!, _instance!._handleNativeNowPlayingEvent);
+      unawaited(_instance!._syncNativePictureInPicture());
+    }
   }
 
+  static bool Function()? _onSkipToNext;
+  static bool Function()? _onSkipToPrevious;
   static PlayCallback? _playCallBack;
 
   static Future<void>? playIfExists() {
@@ -571,7 +577,7 @@ class PlPlayerController with BlockConfigMixin {
     _pictureInPictureEventChannel.setMethodCallHandler(
       _handleNativePictureInPictureEvent,
     );
-    _nowPlayingChannel.setMethodCallHandler(_handleNativeNowPlayingEvent);
+    NativeNowPlaying.claim(this, _handleNativeNowPlayingEvent);
     if (!Accounts.heartbeat.isLogin || Pref.historyPause) {
       enableHeart = false;
     }
@@ -754,11 +760,7 @@ class PlPlayerController with BlockConfigMixin {
     }
 
     await player.open(
-      Media(
-        video,
-        start: seekTo,
-        extras: extras.isEmpty ? null : extras,
-      ),
+      Media(video, start: seekTo, extras: extras.isEmpty ? null : extras),
       play: false,
     );
   }
@@ -1443,9 +1445,7 @@ class PlPlayerController with BlockConfigMixin {
       debugPrint('dispose player');
     }
     _pictureInPictureEventChannel.setMethodCallHandler(null);
-    _nowPlayingChannel
-      ..setMethodCallHandler(null)
-      ..invokeMethod('NowPlaying.Clear');
+    unawaited(NativeNowPlaying.release(this));
     _videoPlayerController?.dispose();
     _videoPlayerController = null;
     _videoController = null;
@@ -1474,10 +1474,7 @@ class PlPlayerController with BlockConfigMixin {
     }
     if (videoShot case Success(:final response)) {
       showPreview.value = true;
-      previewIndex.value = max(
-        0,
-        lowerBound(response.index, seconds + 1) - 2,
-      );
+      previewIndex.value = max(0, lowerBound(response.index, seconds + 1) - 2);
     }
   }
 

@@ -30,6 +30,7 @@ import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliPlus/utils/ios/now_playing.dart';
 import 'package:PiliPlus/utils/mobile_observer.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -39,6 +40,7 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
 import 'package:fixnum/fixnum.dart' show Int64;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show MethodCall;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:media_kit/media_kit.dart';
@@ -72,6 +74,43 @@ class AudioController extends GetxController
   late final AnimationController animController;
 
   List<StreamSubscription>? _subscriptions;
+
+  Future<void> _handleNowPlayingEvent(MethodCall call) async {
+    switch (call.method) {
+      case 'NowPlaying.Play':
+        await onPlay();
+      case 'NowPlaying.Pause':
+        await onPause();
+      case 'NowPlaying.Toggle':
+        await playOrPause();
+      case 'NowPlaying.Seek':
+        final args = call.arguments as Map;
+        await onSeek(
+          Duration(milliseconds: ((args['position'] as num) * 1000).round()),
+        );
+      case 'NowPlaying.Next':
+        playNext();
+      case 'NowPlaying.Previous':
+        playPrev();
+    }
+  }
+
+  Future<void> _updateNowPlaying() async {
+    if (isClosed || player == null) return;
+    final state = player!.state;
+    await NativeNowPlaying.update(this, {
+      'active': true,
+      'audioOnly': true,
+      'title': audioItem.value?.arc.title ?? 'PiliPlus',
+      'artwork': audioItem.value?.arc.cover ?? '',
+      'position': state.position.inMilliseconds / 1000,
+      'duration': state.duration.inMilliseconds / 1000,
+      'playing': state.playing,
+      'rate': state.rate,
+      'canSkipNext': index != null && index! + 1 < (playlist?.length ?? 0),
+      'canSkipPrevious': index != null && index! > 0,
+    });
+  }
 
   int? index;
   List<DetailItem>? playlist;
@@ -264,18 +303,18 @@ class AudioController extends GetxController
     await setupAudioSession();
     assert(player == null, _subscriptions = null);
     player = await Player.create(
-      configuration: PlayerConfiguration(
-        options: Pref.initBuffer(),
-      ),
+      configuration: PlayerConfiguration(options: Pref.initBuffer()),
     );
     if (isClosed) {
       player!.dispose();
       player = null;
       return;
     }
+    NativeNowPlaying.claim(this, _handleNowPlayingEvent);
     final stream = player!.stream;
     _subscriptions = [
       stream.position.listen((position) {
+        unawaited(_updateNowPlaying());
         if (isDragging) return;
         final seconds = position.inSeconds;
         if (seconds != this.position.value) {
@@ -284,8 +323,10 @@ class AudioController extends GetxController
       }),
       stream.duration.listen((duration) {
         this.duration.value = duration.inSeconds;
+        unawaited(_updateNowPlaying());
       }),
       stream.playing.listen((playing) {
+        unawaited(_updateNowPlaying());
         if (playing) {
           animController.forward();
         } else {
@@ -440,10 +481,7 @@ class AudioController extends GetxController
   }
 
   void showReply() {
-    MainReplyPage.toMainReplyPage(
-      oid: oid.toInt(),
-      replyType: isUgc ? 1 : 14,
-    );
+    MainReplyPage.toMainReplyPage(oid: oid.toInt(), replyType: isUgc ? 1 : 14);
   }
 
   void actionShareVideo(BuildContext context) {
@@ -475,10 +513,7 @@ class AudioController extends GetxController
               child: const Text('分享视频', style: TextStyle(fontSize: 14)),
               onPressed: () {
                 Get.back();
-                if (audioItem.value case DetailItem(
-                  :final arc,
-                  :final owner,
-                )) {
+                if (audioItem.value case DetailItem(:final arc, :final owner)) {
                   ShareUtils.shareText(
                     '${arc.title} '
                     'UP主: ${owner.name}'
@@ -492,10 +527,7 @@ class AudioController extends GetxController
               child: const Text('分享至动态', style: TextStyle(fontSize: 14)),
               onPressed: () {
                 Get.back();
-                if (audioItem.value case DetailItem(
-                  :final arc,
-                  :final owner,
-                )) {
+                if (audioItem.value case DetailItem(:final arc, :final owner)) {
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
@@ -516,10 +548,7 @@ class AudioController extends GetxController
               child: const Text('分享至消息', style: TextStyle(fontSize: 14)),
               onPressed: () {
                 Get.back();
-                if (audioItem.value case DetailItem(
-                  :final arc,
-                  :final owner,
-                )) {
+                if (audioItem.value case DetailItem(:final arc, :final owner)) {
                   try {
                     PageUtils.pmShare(
                       context,
@@ -672,6 +701,9 @@ class AudioController extends GetxController
   @override
   void onClose() {
     removeObserverMobile(this);
+    if (_hasInit) {
+      unawaited(NativeNowPlaying.release(this));
+    }
     shutdownTimerService
       ..onPause = null
       ..isPlaying = null

@@ -62,6 +62,8 @@ import UIKit
     addTarget(commands.playCommand, method: "NowPlaying.Play")
     addTarget(commands.pauseCommand, method: "NowPlaying.Pause")
     addTarget(commands.togglePlayPauseCommand, method: "NowPlaying.Toggle")
+    addTarget(commands.nextTrackCommand, method: "NowPlaying.Next")
+    addTarget(commands.previousTrackCommand, method: "NowPlaying.Previous")
     addTarget(commands.changePlaybackPositionCommand) { [weak self] event in
       guard let event = event as? MPChangePlaybackPositionCommandEvent else {
         return .commandFailed
@@ -108,6 +110,8 @@ import UIKit
     commands.pauseCommand.isEnabled = playing
     commands.togglePlayPauseCommand.isEnabled = true
     commands.changePlaybackPositionCommand.isEnabled = true
+    commands.nextTrackCommand.isEnabled = arguments["canSkipNext"] as? Bool == true
+    commands.previousTrackCommand.isEnabled = arguments["canSkipPrevious"] as? Bool == true
     loadArtwork(arguments["artwork"] as? String)
 
     var info: [String: Any] = [
@@ -116,7 +120,8 @@ import UIKit
       MPNowPlayingInfoPropertyElapsedPlaybackTime: arguments["position"] as? Double ?? 0,
       MPNowPlayingInfoPropertyPlaybackRate: playing ? rate : 0,
       MPNowPlayingInfoPropertyDefaultPlaybackRate: rate,
-      MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.video.rawValue,
+      MPNowPlayingInfoPropertyMediaType: arguments["audioOnly"] as? Bool == true
+        ? MPNowPlayingInfoMediaType.audio.rawValue : MPNowPlayingInfoMediaType.video.rawValue,
     ]
     info[MPMediaItemPropertyArtwork] = artwork
     MPNowPlayingInfoCenter.default().nowPlayingInfo = info
@@ -151,6 +156,8 @@ import UIKit
     commands.pauseCommand.isEnabled = false
     commands.togglePlayPauseCommand.isEnabled = false
     commands.changePlaybackPositionCommand.isEnabled = false
+    commands.nextTrackCommand.isEnabled = false
+    commands.previousTrackCommand.isEnabled = false
     artworkTask?.cancel()
     artworkTask = nil
     artworkURL = nil

@@ -105,7 +105,6 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
   void initState() {
     super.initState();
 
-    PlPlayerController.setPlayCallBack(playCallBack);
     videoDetailController = Get.put(VideoDetailController(), tag: heroTag);
 
     if (videoDetailController.removeSafeArea) {
@@ -131,6 +130,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       pugvIntroController = Get.put(PugvIntroController(), tag: heroTag);
     }
 
+    _setPlayCallBack();
     videoSourceInit();
 
     addObserverMobile(this);
@@ -162,6 +162,14 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     } else if (state == .paused) {
       ctr.showDanmaku = false;
     }
+  }
+
+  void _setPlayCallBack() {
+    PlPlayerController.setPlayCallBack(
+      playCallBack,
+      onSkipToNext: () => introController.nextPlay(),
+      onSkipToPrevious: () => introController.prevPlay(),
+    );
   }
 
   Future<void>? playCallBack() {
@@ -355,7 +363,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
       videoDetailController.plPlayerController.pause();
     }
 
-    PlPlayerController.setPlayCallBack(playCallBack);
+    _setPlayCallBack();
 
     plPlayerController
       ?..addStatusLister(playerListener)
