@@ -22,6 +22,7 @@ import 'package:PiliPlus/plugin/pl_player/models/heart_beat_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/danmaku_options.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -990,24 +991,13 @@ class PlPlayerController with BlockConfigMixin {
     _playbackSpeed.value = speed;
     if (danmakuController != null) {
       try {
-        DanmakuOption currentOption = danmakuController!.option;
-        double defaultDuration = currentOption.duration * lastPlaybackSpeed;
-        double defaultStaticDuration =
-            currentOption.staticDuration * lastPlaybackSpeed;
-        DanmakuOption updatedOption = currentOption.copyWith(
-          duration: defaultDuration / speed,
-          staticDuration: defaultStaticDuration / speed,
+        DanmakuOption updatedOption = danmakuController!.option.copyWith(
+          duration: DanmakuOptions.danmakuDuration / speed,
+          staticDuration: DanmakuOptions.danmakuStaticDuration / speed,
         );
         danmakuController!.updateOption(updatedOption);
       } catch (_) {}
     }
-  }
-
-  // 还原默认速度
-  double playSpeedDefault = Pref.playSpeedDefault;
-  Future<void> setDefaultSpeed() async {
-    await _videoPlayerController?.setRate(playSpeedDefault);
-    _playbackSpeed.value = playSpeedDefault;
   }
 
   /// 播放视频
