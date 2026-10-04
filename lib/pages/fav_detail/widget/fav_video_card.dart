@@ -61,7 +61,7 @@ class FavVideoCardH extends StatelessWidget {
             : enableMultiSelect
             ? () => ctr!.onSelect(item)
             : () {
-                if (!const [0, 16].contains(item.attr)) {
+                if (const [1, 9].contains(item.attr)) {
                   Get.toNamed('/member?mid=${item.upper?.mid}');
                   return;
                 }
