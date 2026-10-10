@@ -7,6 +7,7 @@
 import 'dart:async' show Completer;
 import 'dart:io' show Platform;
 
+import 'package:PiliPlus/common/widgets/refresh_layout.dart';
 import 'package:PiliPlus/common/widgets/scroll_behavior.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart'
@@ -509,40 +510,24 @@ class RefreshIndicatorState extends State<RefreshIndicator>
         _status == RefreshIndicatorStatus.refresh ||
         _status == RefreshIndicatorStatus.done;
 
-    child = Stack(
-      clipBehavior: Clip.none,
-      children: <Widget>[
-        child,
-        if (_status != null)
-          Positioned(
-            top: widget.edgeOffset,
-            left: 0.0,
-            right: 0.0,
-            child: SizeTransition(
-              alignment: .bottomStart,
-              sizeFactor: _positionFactor, // This is what brings it down.
-              child: Padding(
-                padding: EdgeInsets.only(top: displacement),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ScaleTransition(
-                    scale: _scaleFactor,
-                    child: AnimatedBuilder(
-                      animation: _positionController,
-                      builder: (context, child) => RefreshProgressIndicator(
-                        value: showIndeterminateIndicator ? null : _value.value,
-                        valueColor: _valueColor,
-                        backgroundColor: widget.backgroundColor,
-                        strokeWidth: widget.strokeWidth,
-                        elevation: widget.elevation,
-                      ),
-                    ),
-                  ),
-                ),
+    child = RefreshLayout(
+      position: _positionFactor,
+      scale: _scaleFactor,
+      displacement: displacement,
+      edgeOffset: widget.edgeOffset,
+      body: child,
+      indicator: _status == null
+          ? null
+          : AnimatedBuilder(
+              animation: _positionController,
+              builder: (context, child) => RefreshProgressIndicator(
+                value: showIndeterminateIndicator ? null : _value.value,
+                valueColor: _valueColor,
+                backgroundColor: widget.backgroundColor,
+                strokeWidth: widget.strokeWidth,
+                elevation: widget.elevation,
               ),
             ),
-          ),
-      ],
     );
     if (!widget.isClampingScrollPhysics &&
         (Platform.isIOS || Platform.isMacOS)) {
