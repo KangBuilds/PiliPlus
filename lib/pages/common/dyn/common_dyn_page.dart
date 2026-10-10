@@ -121,7 +121,8 @@ mixin CommonDynPageMixin<T extends StatefulWidget>
   Widget replyList(LoadingState<List<ReplyInfo>?> loadingState) {
     switch (loadingState) {
       case Loading():
-        return SliverList.builder(
+        return SliverPrototypeExtentList.builder(
+          prototypeItem: const VideoReplySkeleton(),
           itemCount: 12,
           itemBuilder: (context, index) => const VideoReplySkeleton(),
         );
