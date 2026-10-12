@@ -65,6 +65,13 @@ List<SettingsModel> get videoSettings => [
     defaultVal: false,
     onChanged: (value) => VideoUtils.disableAudioCDN = value,
   ),
+  const SwitchModel(
+    title: '多 CDN 并行加速',
+    subtitle: '仅 Wi-Fi 生效。将视频切成小片，从多个 CDN 并行竞速下载以减少缓冲，会消耗额外流量',
+    leading: Icon(Icons.call_split_rounded),
+    setKey: SettingBoxKey.threadRipper,
+    defaultVal: false,
+  ),
   NormalModel(
     title: '默认画质',
     leading: const Icon(Icons.video_settings_outlined),

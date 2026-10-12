@@ -1,5 +1,6 @@
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
 import 'package:PiliPlus/models/common/video/video_decode_type.dart';
+import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 
 abstract final class VideoUtils {
@@ -38,12 +39,15 @@ abstract final class VideoUtils {
         hostOf(url).contains('bilivideo') && !isMcdn(url);
 
     final preferred = candidates.where(isBilivideo).toList();
-    final selected = (preferred.isEmpty ? candidates : preferred).first;
+    var selected = (preferred.isEmpty ? candidates : preferred).first;
 
-    if (defaultCDNService.host == null || (isAudio && disableAudioCDN)) {
-      return selected;
+    if (defaultCDNService.host != null && !(isAudio && disableAudioCDN)) {
+      selected = Uri.parse(
+        selected,
+      ).replace(host: defaultCDNService.host).toString();
     }
-    return Uri.parse(selected).replace(host: defaultCDNService.host).toString();
+    threadRipper.rememberAlternatives(selected, candidates);
+    return selected;
   }
 
   static VideoDecodeFormatType selectCodec(

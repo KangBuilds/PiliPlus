@@ -25,6 +25,7 @@ import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/danmaku_options.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/services/service_locator.dart';
+import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/extension/box_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
@@ -479,7 +480,10 @@ class PlPlayerController with BlockConfigMixin {
     _onSkipToNext = onSkipToNext;
     _onSkipToPrevious = onSkipToPrevious;
     if (playCallBack != null && _instance != null) {
-      NativeNowPlaying.claim(_instance!, _instance!._handleNativeNowPlayingEvent);
+      NativeNowPlaying.claim(
+        _instance!,
+        _instance!._handleNativeNowPlayingEvent,
+      );
       unawaited(_instance!._syncNativePictureInPicture());
     }
   }
@@ -754,8 +758,15 @@ class PlPlayerController with BlockConfigMixin {
       extras.addAll(Pref.initBuffer(_playbackSpeed.value));
     }
 
-    final video = dataSource.videoSource;
-    if (dataSource.audioSource case final audio? when (audio.isNotEmpty)) {
+    var video = dataSource.videoSource;
+    var audio = dataSource.audioSource;
+    if (dataSource is NetworkSource) {
+      video = await threadRipper.wrap(video);
+      if (audio != null && audio.isNotEmpty) {
+        audio = await threadRipper.wrap(audio);
+      }
+    }
+    if (audio != null && audio.isNotEmpty) {
       extras['audio-files'] = '"${audio.replaceAll(':', r'\:')}"';
     }
 

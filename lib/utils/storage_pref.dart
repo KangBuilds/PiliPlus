@@ -549,6 +549,9 @@ abstract final class Pref {
   static bool get disableAudioCDN =>
       _setting.get(SettingBoxKey.disableAudioCDN, defaultValue: false);
 
+  static bool get threadRipper =>
+      _setting.get(SettingBoxKey.threadRipper, defaultValue: false);
+
   static int get minDurationForRcmd =>
       _setting.get(SettingBoxKey.minDurationForRcmd, defaultValue: 0);
 

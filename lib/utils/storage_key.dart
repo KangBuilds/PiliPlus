@@ -29,6 +29,7 @@ abstract final class SettingBoxKey {
       enableLongShowControl = 'enableLongShowControl',
       CDNService = 'CDNService',
       disableAudioCDN = 'disableAudioCDN',
+      threadRipper = 'threadRipper',
       enableAutoLongPressSpeed = 'enableAutoLongPressSpeed',
       useRelativeSlide = 'useRelativeSlide',
       sliderDuration = 'sliderOffset',
