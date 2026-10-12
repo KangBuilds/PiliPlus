@@ -1,7 +1,9 @@
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
 import 'package:PiliPlus/models/common/video/video_decode_type.dart';
+import 'package:PiliPlus/services/thread_ripper/candidates.dart';
 import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:collection/collection.dart';
 
 abstract final class VideoUtils {
   static CDNService cdnService = Pref.defaultCDNService;
@@ -25,7 +27,6 @@ abstract final class VideoUtils {
     CDNService? defaultCDNService,
     bool isAudio = false,
   }) {
-    defaultCDNService ??= cdnService;
     final candidates = urls
         .map((url) => url.trim())
         .where((url) => url.isNotEmpty)
@@ -33,21 +34,38 @@ abstract final class VideoUtils {
         .toList();
     if (candidates.isEmpty) return '';
 
-    bool isMcdn(String url) =>
-        hostOf(url).contains('mcdn') && hostOf(url).contains('bilivideo');
-    bool isBilivideo(String url) =>
-        hostOf(url).contains('bilivideo') && !isMcdn(url);
+    final parsed = [for (final url in candidates) ?Uri.tryParse(url)];
+    // Bilibili's own hosts first, then other official ones (Akamai), never a
+    // P2P / PCDN node while anything else is listed
+    final official = parsed.where((uri) => !isP2PUrl(uri)).toList();
+    final preferred = official.where((uri) => uri.host.contains('bilivideo'));
+    var selected =
+        preferred.firstOrNull ??
+        official.firstOrNull ??
+        parsed.map(rescueP2PUrl).nonNulls.firstOrNull ??
+        parsed.firstOrNull;
+    if (selected == null) return candidates.first;
 
-    final preferred = candidates.where(isBilivideo).toList();
-    var selected = (preferred.isEmpty ? candidates : preferred).first;
-
-    if (defaultCDNService.host != null && !(isAudio && disableAudioCDN)) {
-      selected = Uri.parse(
-        selected,
-      ).replace(host: defaultCDNService.host).toString();
+    final host = (defaultCDNService ?? cdnService).host;
+    if (host != null &&
+        !(isAudio && disableAudioCDN) &&
+        !isP2PCdnHost(host) &&
+        selected.path.contains('/upgcxcode/')) {
+      // A host only accepts its own family of signatures: Akamai its own, the
+      // others upos ones. Use a listed address the chosen host accepts
+      final signed = acceptsSignatureOf(host, selected)
+          ? selected
+          : official.firstWhereOrNull(
+              (uri) =>
+                  uri.path.contains('/upgcxcode/') &&
+                  acceptsSignatureOf(host, uri),
+            );
+      if (signed != null) selected = signed.replace(host: host);
     }
-    threadRipper.rememberAlternatives(selected, candidates);
-    return selected;
+
+    final url = selected.toString();
+    threadRipper.rememberAlternatives(url, candidates);
+    return url;
   }
 
   static VideoDecodeFormatType selectCodec(

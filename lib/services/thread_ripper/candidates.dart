@@ -62,6 +62,43 @@ bool isAkamaiSigned(Uri uri) =>
     uri.queryParameters.containsKey('hdnts') ||
     (!uri.queryParameters.containsKey('upsig') && isAkamaiHost(uri.host));
 
+/// Whether [host] accepts the signature of [uri]: Akamai only its own, every
+/// other upgcxcode host only upos ones (Akamai answers those with 403).
+bool acceptsSignatureOf(String host, Uri uri) =>
+    isAkamaiHost(host) == isAkamaiSigned(uri);
+
+/// Where a P2P upgcxcode signature is moved when nothing else is listed.
+const defaultMirrorHost = 'upos-sz-mirrorcos.bilivideo.com';
+
+/// Bilibili's proxy, which fetches a PCDN `/v1/resource` address for us.
+const _proxyTfHost = 'proxy-tf-all-ws.bilivideo.com';
+
+final _mcdnTfRegex = RegExp(
+  r'^https?://(?:(?:\d{1,3}\.){3}\d{1,3}|[^/]+\.mcdn\.bilivideo\.(?:com|cn|net))(?::\d{1,5})?/v\d/resource',
+);
+
+/// The same file as the P2P address [uri], from a host that is not P2P;
+/// `null` when there is no such address. From no-p2p/policy.ts.
+Uri? rescueP2PUrl(Uri uri) {
+  // Any upgcxcode host serves the signature
+  if (uri.path.contains('/upgcxcode/')) {
+    if (isAkamaiSigned(uri)) return null;
+    return Uri.parse('https://$defaultMirrorHost${uri.path}?${uri.query}');
+  }
+  // Pure IP / mcdn host with its own path: only the proxy reaches it
+  if (_mcdnTfRegex.hasMatch(uri.toString())) {
+    return Uri.https(_proxyTfHost, '/', {'url': uri.toString()});
+  }
+  // Deprecated PCDN: the real host is in xy_usource
+  if (uri.host.contains('szbdyd.com')) {
+    final source = uri.queryParameters['xy_usource'];
+    if (source != null && source.isNotEmpty) {
+      return uri.replace(scheme: 'https', host: source, port: 443);
+    }
+  }
+  return null;
+}
+
 /// One URL a file could be fetched from.
 class MediaCandidate {
   MediaCandidate(this.uri, {required this.listed});

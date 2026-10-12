@@ -81,7 +81,7 @@ class HttpRangeFetcher implements RangeFetcher {
       ),
       contentType: response.headers.value(HttpHeaders.contentTypeHeader),
       redirectedToP2P: response.redirects.any(
-        (redirect) => isP2PCdnHost(uri.resolveUri(redirect.location).host),
+        (redirect) => isP2PUrl(uri.resolveUri(redirect.location)),
       ),
       body: response,
     );

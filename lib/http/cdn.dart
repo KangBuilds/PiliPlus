@@ -1,11 +1,11 @@
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/models/common/video/cdn_type.dart';
+import 'package:PiliPlus/services/thread_ripper/candidates.dart';
 
 abstract final class CDNHttp {
   static const _regionUrl =
       'https://kanda-akihito-kun.github.io/ccb/api/region.json';
-  static const _cdnUrl =
-      'https://kanda-akihito-kun.github.io/ccb/api/cdn.json';
+  static const _cdnUrl = 'https://kanda-akihito-kun.github.io/ccb/api/cdn.json';
 
   static List<CDNService>? _cache;
   static Future<List<CDNService>>? _pending;
@@ -26,7 +26,9 @@ abstract final class CDNHttp {
       final services = [
         for (final region in regions.whereType<String>())
           for (final value in (cdns[region] as List<dynamic>? ?? const []))
-            if (value case final String host when host.isNotEmpty)
+            // P2P / PCDN hosts serve whatever their peers have
+            if (value case final String host
+                when host.isNotEmpty && !isP2PCdnHost(host))
               CDNService('$region: $host', host),
       ];
       if (services.isEmpty) throw const FormatException('Empty CDN list');

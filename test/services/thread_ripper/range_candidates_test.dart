@@ -81,5 +81,18 @@ void main() {
         'upos-hz-mirrorakam.akamaized.net',
       ]);
     });
+
+    test('a 302 PCDN redirect target counts as P2P', () {
+      // Where upos-sz-302kodo.bilivideo.com actually sends a request
+      expect(
+        isP2PUrl(
+          Uri.parse(
+            'https://1865651221.qrstuvwxyzab.com:22443/upos-sz-302kodo.bilivideo.com/upgcxcode/1/2/3.m4s',
+          ),
+        ),
+        isTrue,
+      );
+      expect(isP2PUrl(Uri.parse(kListedUrl)), isFalse);
+    });
   });
 }
