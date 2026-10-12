@@ -14,6 +14,12 @@ class HostStats {
   int failures = 0;
   int cooldownUntil = 0;
 
+  /// Bytes it delivered that were used (not lost races).
+  int usefulBytes = 0;
+
+  /// When it last delivered a used byte; `0` = never.
+  int activeAt = 0;
+
   bool get measured => rate != null;
 }
 
@@ -31,6 +37,12 @@ class HostBook {
   /// Attempts in flight across every job.
   int inflight = 0;
 
+  /// Every byte received, lost races included.
+  int fetchedBytes = 0;
+
+  /// Bytes that went into a piece.
+  int usefulBytes = 0;
+
   static const _alpha = 0.3;
 
   /// Transfers shorter than this are mostly round trip: no speed sample.
@@ -40,21 +52,33 @@ class HostBook {
   static const defaultRate = 1024.0; // ~1 MB/s
   static const defaultTtfb = 400.0;
 
+  Iterable<MapEntry<String, HostStats>> get entries => _hosts.entries;
+
   HostStats operator [](String host) => _hosts.putIfAbsent(host, HostStats.new);
 
-  void recordSuccess(
-    String host, {
-    required int ttfbMs,
-    required int bytes,
-    required int transferMs,
-  }) {
-    final stats = this[host]
+  void recordTtfb(String host, int ttfbMs) {
+    final stats = this[host];
+    stats.ttfb = _ewma(stats.ttfb, ttfbMs.toDouble());
+  }
+
+  /// [bytes] arrived over [transferMs] after the first chunk.
+  void recordRate(String host, int bytes, int transferMs) {
+    if (bytes < minSample) return;
+    final stats = this[host];
+    stats.rate = _ewma(stats.rate, bytes / max(transferMs, 1));
+  }
+
+  void recordSuccess(String host) {
+    this[host]
       ..failures = 0
       ..cooldownUntil = 0;
-    stats.ttfb = _ewma(stats.ttfb, ttfbMs.toDouble());
-    if (bytes >= minSample) {
-      stats.rate = _ewma(stats.rate, bytes / max(transferMs, 1));
-    }
+  }
+
+  void recordUseful(String host, int bytes) {
+    usefulBytes += bytes;
+    this[host]
+      ..usefulBytes += bytes
+      ..activeAt = clock();
   }
 
   void recordFailure(String host, MediaOutcome outcome) {
@@ -82,16 +106,12 @@ class HostBook {
   bool isCoolingDown(String host) => this[host].cooldownUntil > clock();
 
   double get typicalRate {
-    final rates = [
-      for (final s in _hosts.values) ?s.rate,
-    ]..sort();
+    final rates = [for (final s in _hosts.values) ?s.rate]..sort();
     return rates.isEmpty ? defaultRate : rates[rates.length ~/ 2];
   }
 
   double get typicalTtfb {
-    final ttfbs = [
-      for (final s in _hosts.values) ?s.ttfb,
-    ]..sort();
+    final ttfbs = [for (final s in _hosts.values) ?s.ttfb]..sort();
     return ttfbs.isEmpty ? defaultTtfb : ttfbs[ttfbs.length ~/ 2];
   }
 

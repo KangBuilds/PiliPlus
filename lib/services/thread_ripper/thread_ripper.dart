@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' show min;
+import 'dart:typed_data';
 
 import 'package:PiliPlus/services/thread_ripper/candidates.dart';
 import 'package:PiliPlus/services/thread_ripper/fetcher.dart';
@@ -27,6 +28,37 @@ class _Source {
   /// A job of it failed: the player's retries go straight to [fallback] until
   /// then.
   int directUntil = 0;
+
+  /// The file's first bytes, fetched as soon as the URL is handed out: mpv
+  /// reads them (the init segment and the index) before anything else.
+  /// `null` when the warm-up failed.
+  Future<Uint8List?>? head;
+}
+
+/// What the proxy does, for the playback info panel.
+class RipperStats {
+  const RipperStats({
+    required this.servedRate,
+    required this.fetchedBytes,
+    required this.usefulBytes,
+    required this.hosts,
+  });
+
+  /// Bytes per second handed to the player recently.
+  final double servedRate;
+
+  /// Every byte received, lost races included.
+  final int fetchedBytes;
+
+  /// Bytes that went to the player.
+  final int usefulBytes;
+
+  /// Hosts that delivered recently, with their speed in bytes per second,
+  /// fastest first.
+  final List<(String, double)> hosts;
+
+  /// Received but not used, as a fraction of what was used.
+  double get overhead => usefulBytes == 0 ? 0 : fetchedBytes / usefulBytes - 1;
 }
 
 /// A loopback HTTP proxy between mpv and Bilibili's CDNs: each range mpv
@@ -54,6 +86,8 @@ class ThreadRipper {
   static const _directAfterFailure = 30 * 1000;
   static const _maxSources = 16;
   static const _maxAlternatives = 64;
+  static const _rateWindowMs = 2000;
+  static const _activeHostMs = 5000;
 
   HttpServer? _server;
   Future<HttpServer>? _starting;
@@ -62,9 +96,39 @@ class ThreadRipper {
   final _sources = <String, _Source>{};
   final _alternatives = <String, List<String>>{};
   bool _wifi = true;
+
+  /// (time, bytes) handed to the player within the last `_rateWindowMs`.
+  final _served = <(int, int)>[];
   StreamSubscription<List<ConnectivityResult>>? _connectivity;
 
   bool get enabled => Pref.threadRipper;
+
+  /// Whether [url] is one this proxy handed out.
+  bool isProxyUrl(String url) =>
+      _port != null &&
+      url.startsWith(
+        'http://${InternetAddress.loopbackIPv4.address}:$_port/m/',
+      );
+
+  RipperStats get stats {
+    final now = book.clock();
+    _served.removeWhere((e) => now - e.$1 > _rateWindowMs);
+    var served = 0;
+    for (final (_, bytes) in _served) {
+      served += bytes;
+    }
+    final hosts = [
+      for (final MapEntry(key: host, value: stats) in book.entries)
+        if (now - stats.activeAt <= _activeHostMs && stats.activeAt != 0)
+          (host, (stats.rate ?? 0) * 1000),
+    ]..sort((a, b) => b.$2.compareTo(a.$2));
+    return RipperStats(
+      servedRate: served * 1000 / _rateWindowMs,
+      fetchedBytes: book.fetchedBytes,
+      usefulBytes: book.usefulBytes,
+      hosts: hosts,
+    );
+  }
 
   /// The playurl's other addresses of the file [selected] was picked from.
   void rememberAlternatives(String selected, Iterable<String> urls) {
@@ -98,12 +162,46 @@ class ThreadRipper {
       return url;
     }
     final id = (++_seq).toString();
-    _sources[id] = _Source(uri, candidates);
+    final source = _sources[id] = _Source(uri, candidates);
+    source.head = _warmUp(source);
     while (_sources.length > _maxSources) {
       _sources.remove(_sources.keys.first);
     }
     return 'http://${InternetAddress.loopbackIPv4.address}:${server.port}/m/$id';
   }
+
+  Future<Uint8List?> _warmUp(_Source source) async {
+    final job = _job(source, 0, config.firstPiece - 1);
+    try {
+      await job.begin().timeout(commitTimeout);
+      final head = BytesBuilder(copy: false);
+      for (var c = await job.next(); c != null; c = await job.next()) {
+        head.add(c);
+      }
+      return head.takeBytes();
+    } catch (_) {
+      job.cancel();
+      return null;
+    }
+  }
+
+  RipperJob _job(_Source source, int start, int? end) => RipperJob(
+    candidates: source.candidates,
+    fallback: source.fallback,
+    start: start,
+    requestedEnd: end,
+    total: source.total,
+    book: book,
+    fetcher: fetcher,
+    excluded: source.excluded,
+    racing: () => !wifiOnly || _wifi,
+    config: config,
+    onTotal: (total, contentType) {
+      source
+        ..total = total
+        ..contentType ??= contentType;
+    },
+  );
 
   Future<HttpServer> _ensureServer() {
     if (_server case final server?) return Future.value(server);
@@ -174,37 +272,38 @@ class ThreadRipper {
         return;
       }
 
-      job = RipperJob(
-        candidates: source.candidates,
-        fallback: source.fallback,
-        start: range.start,
-        requestedEnd: range.end,
-        total: source.total,
-        book: book,
-        fetcher: fetcher,
-        excluded: source.excluded,
-        racing: () => !wifiOnly || _wifi,
-        config: config,
-        onTotal: (total, contentType) {
-          source
-            ..total = total
-            ..contentType ??= contentType;
-        },
-      );
-
+      // The first bytes come from the warm-up, the rest from a job
+      Uint8List? prefix;
+      final head = source.head == null || range.start >= config.firstPiece
+          ? null
+          : await source.head!.timeout(commitTimeout, onTimeout: () => null);
       final int total;
-      try {
-        total = await job.begin().timeout(commitTimeout);
-      } catch (_) {
-        job.cancel();
-        if (source.total case final total? when range.start >= total) {
-          response
-            ..statusCode = HttpStatus.requestedRangeNotSatisfiable
-            ..headers.set(HttpHeaders.contentRangeHeader, 'bytes */$total');
+      if (head != null && source.total != null && range.start < head.length) {
+        total = source.total!;
+        final end = min(range.end ?? total - 1, total - 1);
+        prefix = Uint8List.sublistView(
+          head,
+          range.start,
+          min(head.length, end + 1),
+        );
+        if (end >= head.length) {
+          job = _job(source, head.length, end)..begin().ignore();
+        }
+      } else {
+        job = _job(source, range.start, range.end);
+        try {
+          total = await job.begin().timeout(commitTimeout);
+        } catch (_) {
+          job.cancel();
+          if (source.total case final total? when range.start >= total) {
+            response
+              ..statusCode = HttpStatus.requestedRangeNotSatisfiable
+              ..headers.set(HttpHeaders.contentRangeHeader, 'bytes */$total');
+            return;
+          }
+          _redirect(response, source.fallback);
           return;
         }
-        _redirect(response, source.fallback);
-        return;
       }
 
       final end = min(range.end ?? total - 1, total - 1);
@@ -216,7 +315,7 @@ class ThreadRipper {
         ..headers.set(HttpHeaders.acceptRangesHeader, 'bytes')
         ..headers.set(
           HttpHeaders.contentTypeHeader,
-          source.contentType ?? job.contentType ?? 'video/mp4',
+          source.contentType ?? job?.contentType ?? 'video/mp4',
         );
       if (rangeHeader != null) {
         response.headers.set(
@@ -225,17 +324,25 @@ class ThreadRipper {
         );
       }
       if (request.method == 'HEAD') {
-        job.cancel();
+        job?.cancel();
         return;
       }
+
+      if (prefix != null) {
+        _serve(response, prefix);
+        await response.flush();
+      }
+      if (job == null) return;
 
       // mpv closed the connection (a seek, a new video): stop fetching
       final runningJob = job;
       response.done.whenComplete(runningJob.cancel).ignore();
-      while (true) {
-        final chunk = await job.next();
-        if (chunk == null) break;
-        response.add(chunk);
+      for (
+        var c = await runningJob.next();
+        c != null;
+        c = await runningJob.next()
+      ) {
+        _serve(response, c);
         await response.flush();
       }
     } catch (e) {
@@ -255,6 +362,11 @@ class ThreadRipper {
         await response.close();
       } catch (_) {}
     }
+  }
+
+  void _serve(HttpResponse response, Uint8List bytes) {
+    response.add(bytes);
+    _served.add((book.clock(), bytes.length));
   }
 
   void _redirect(HttpResponse response, Uri location) {

@@ -37,6 +37,7 @@ class FakeHost {
     this.hang = false,
     this.breakAfter,
     this.failFrom,
+    this.stallAfter,
   });
 
   static const refusing = FakeHost(status: 403);
@@ -59,6 +60,9 @@ class FakeHost {
 
   /// Refuses (403) every range starting at or past this offset.
   final int? failFrom;
+
+  /// The body goes silent after this many bytes, until canceled.
+  final int? stallAfter;
 }
 
 class FakeFetcher implements RangeFetcher {
@@ -134,6 +138,12 @@ class FakeFetcher implements RangeFetcher {
       if (cancel.isCanceled) throw StateError('aborted');
       if (host.breakAfter case final limit? when sent >= limit) {
         throw StateError('connection reset');
+      }
+      if (host.stallAfter case final limit? when sent >= limit) {
+        while (!cancel.isCanceled) {
+          await Future<void>.delayed(const Duration(milliseconds: 5));
+        }
+        throw StateError('aborted');
       }
       final stop = pos + host.chunk - 1 < end ? pos + host.chunk - 1 : end;
       final chunk = data.sublist(pos, stop + 1);

@@ -26,10 +26,12 @@ import 'package:PiliPlus/pages/video/introduction/pugv/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
 import 'package:PiliPlus/pages/video/widgets/header_mixin.dart';
+import 'package:PiliPlus/pages/video/widgets/ripper_stats_rows.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/services/shutdown_timer_service.dart'
     show shutdownTimerService, ShutdownPanel;
+import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/connectivity_utils.dart';
@@ -556,10 +558,15 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
     final frameRate = VideoUtils.formatFrameRate(
       player.getProperty('current-tracks/video/demux-fps'),
     );
-    final videoHost = videoCodec.isEmpty ? '' : VideoUtils.hostOf(videoPath);
+    String hostOf(String path) =>
+        threadRipper.isProxyUrl(path) ? '多 CDN 并行' : VideoUtils.hostOf(path);
+    final videoHost = videoCodec.isEmpty ? '' : hostOf(videoPath);
     final audioHost = audioCodec.isEmpty
         ? ''
-        : VideoUtils.hostOf(audioPath.isEmpty ? videoPath : audioPath);
+        : hostOf(audioPath.isEmpty ? videoPath : audioPath);
+    final ripping =
+        threadRipper.isProxyUrl(videoPath) ||
+        threadRipper.isProxyUrl(audioPath);
     final state = player.state;
     final rows = <(String, String)>[
       ('Resolution:', '${state.width} x ${state.height}$frameRate'),
@@ -622,44 +629,57 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
               fit: FlexFit.loose,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
-                child: Table(
-                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                  columnWidths: const {
-                    0: IntrinsicColumnWidth(),
-                    1: FlexColumnWidth(),
-                  },
-                  children: rows.map((row) {
-                    void copy() => Utils.copyText('${row.$1}\n${row.$2}');
-                    return TableRow(
-                      children: [
-                        InkWell(
-                          onTap: copy,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Text(
-                              row.$1,
-                              textAlign: TextAlign.end,
-                              style: labelStyle,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Table(
+                      defaultVerticalAlignment:
+                          TableCellVerticalAlignment.middle,
+                      columnWidths: const {
+                        0: IntrinsicColumnWidth(),
+                        1: FlexColumnWidth(),
+                      },
+                      children: rows.map((row) {
+                        void copy() => Utils.copyText('${row.$1}\n${row.$2}');
+                        return TableRow(
+                          children: [
+                            InkWell(
+                              onTap: copy,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 2,
+                                ),
+                                child: Text(
+                                  row.$1,
+                                  textAlign: TextAlign.end,
+                                  style: labelStyle,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: copy,
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: 14,
-                              top: 2,
-                              bottom: 2,
+                            InkWell(
+                              onTap: copy,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 14,
+                                  top: 2,
+                                  bottom: 2,
+                                ),
+                                child: Text(
+                                  row.$2.isEmpty ? '—' : row.$2,
+                                  style: valueStyle,
+                                ),
+                              ),
                             ),
-                            child: Text(
-                              row.$2.isEmpty ? '—' : row.$2,
-                              style: valueStyle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                    if (ripping)
+                      const RipperStatsRows(
+                        labelStyle: labelStyle,
+                        valueStyle: valueStyle,
+                      ),
+                  ],
                 ),
               ),
             ),

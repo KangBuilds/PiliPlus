@@ -126,4 +126,45 @@ void main() {
       expect(retry.statusCode, 302);
     },
   );
+
+  test(
+    'warms up the head before mpv asks, and reports what it served',
+    () async {
+      final data = testFile(90 * 1024);
+      final fetcher = FakeFetcher(data);
+      final ripper = ThreadRipper(
+        fetcher: fetcher,
+        config: testConfig,
+        wifiOnly: false,
+      );
+      addTearDown(ripper.close);
+      final url = await ripper.wrapNow(kListedUrl);
+      expect(ripper.isProxyUrl(url), isTrue);
+      expect(ripper.isProxyUrl(kListedUrl), isFalse);
+
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final warmed = fetcher.requests.length;
+      expect(warmed, greaterThan(0));
+      expect(fetcher.requests.every((r) => r.$2.start == 0), isTrue);
+
+      final (response, body) = await get(url, range: 'bytes=0-');
+      expect(response.statusCode, 206);
+      expect(body, data);
+      // The head came from the warm-up: nothing fetched it again
+      expect(
+        fetcher.requests.skip(warmed).where((r) => r.$2.start == 0),
+        isEmpty,
+      );
+
+      final (head, headBody) = await get(url, range: 'bytes=10-99');
+      expect(head.statusCode, 206);
+      expect(headBody, data.sublist(10, 100));
+
+      final stats = ripper.stats;
+      expect(stats.usefulBytes, greaterThanOrEqualTo(data.length));
+      expect(stats.fetchedBytes, greaterThanOrEqualTo(stats.usefulBytes));
+      expect(stats.servedRate, greaterThan(0));
+      expect(stats.hosts, isNotEmpty);
+    },
+  );
 }

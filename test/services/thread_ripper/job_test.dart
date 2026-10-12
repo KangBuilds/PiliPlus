@@ -40,6 +40,8 @@ Future<Uint8List> _drain(RipperJob job) async {
 }
 
 void main() {
+  group('phase 2', phase2);
+
   test('assembles an open-ended range in order from many hosts', () async {
     final data = testFile(100 * 1024 + 123);
     final fetcher = FakeFetcher(
@@ -194,5 +196,173 @@ void main() {
     final count = fetcher.requests.length;
     await Future<void>.delayed(const Duration(milliseconds: 100));
     expect(fetcher.requests.length, count);
+  });
+}
+
+void phase2() {
+  const onePiece = RipperConfig(
+    firstPiece: 1024,
+    minPiece: 64 * 1024,
+    maxPiece: 64 * 1024,
+    pieceMs: 10,
+    headTtfbMs: 60,
+    ttfbMs: 120,
+    headStallMs: 60,
+    stallMs: 120,
+    giveUpMs: 2000,
+    laggardBytes: 4096,
+    probeBytes: 8192,
+    stealMin: 4096,
+    tickMs: 10,
+  );
+
+  RipperJob job(
+    FakeFetcher fetcher,
+    RipperConfig config, {
+    bool racing = true,
+  }) => RipperJob(
+    candidates: mediaCandidates([kListedUrl]),
+    fallback: Uri.parse(_fallback),
+    start: 0,
+    requestedEnd: null,
+    total: fetcher.data.length,
+    book: HostBook(),
+    fetcher: fetcher,
+    excluded: {},
+    racing: () => racing,
+    config: config,
+  );
+
+  test('hands out the head piece as it fills', () async {
+    final data = testFile(64 * 1024);
+    final fetcher = FakeFetcher(
+      data,
+      otherHosts: const FakeHost(
+        chunk: 1024,
+        chunkDelay: Duration(milliseconds: 15),
+      ),
+    );
+    final ripper = job(fetcher, onePiece, racing: false);
+    await ripper.begin();
+
+    final watch = Stopwatch()..start();
+    final first = (await ripper.next())!;
+    // The whole piece takes about a second
+    expect(watch.elapsedMilliseconds, lessThan(400));
+    expect(first.length, lessThan(data.length));
+    expect(first, data.sublist(0, first.length));
+    final rest = await _drain(ripper);
+    expect([...first, ...rest], data);
+  });
+
+  test(
+    'cuts a racer that fell behind, and races the leader once it stalls',
+    () async {
+      final data = testFile(64 * 1024);
+      final fetcher = FakeFetcher(
+        data,
+        hosts: {
+          // Listed, owns the piece: fast, then silent before the end
+          'upos-sz-mirrorali.bilivideo.com': const FakeHost(
+            chunk: 4096,
+            stallAfter: 60 * 1024,
+          ),
+          // The head racer: slow
+          'upos-sz-mirrorhw.bilivideo.com': const FakeHost(
+            chunk: 1024,
+            chunkDelay: Duration(milliseconds: 20),
+          ),
+        },
+      );
+      final ripper = job(fetcher, onePiece);
+      await ripper.begin();
+
+      expect(await _drain(ripper), data);
+      expect(
+        fetcher.delivered['upos-sz-mirrorhw.bilivideo.com'] ?? 0,
+        lessThan(16 * 1024),
+      );
+      // The stalled tail went to a third host, from where the leader stopped
+      expect(
+        fetcher.requests.where(
+          (r) =>
+              r.$1 != 'upos-sz-mirrorali.bilivideo.com' &&
+              r.$1 != 'upos-sz-mirrorhw.bilivideo.com' &&
+              r.$2.start == 60 * 1024,
+        ),
+        isNotEmpty,
+      );
+    },
+  );
+
+  test('splits the tail of a slow piece off to another host', () async {
+    final data = testFile(64 * 1024);
+    final fetcher = FakeFetcher(
+      data,
+      hosts: {
+        'upos-sz-mirrorali.bilivideo.com': const FakeHost(
+          chunk: 1024,
+          chunkDelay: Duration(milliseconds: 10),
+        ),
+      },
+      otherHosts: const FakeHost(chunk: 4096),
+    );
+    // No racing: any second host on the piece is a split
+    final ripper = job(fetcher, onePiece, racing: false);
+    await ripper.begin();
+
+    final watch = Stopwatch()..start();
+    expect(await _drain(ripper), data);
+    final split = fetcher.requests.where(
+      (r) => r.$1 != 'upos-sz-mirrorali.bilivideo.com',
+    );
+    expect(split, isNotEmpty);
+    expect(split.first.$2.start, greaterThan(0));
+    expect(split.first.$2.end, data.length - 1);
+    // The slow host alone takes about 640 ms
+    expect(watch.elapsedMilliseconds, lessThan(500));
+    // Nothing was fetched twice beyond what was in flight at the split
+    final fetched = fetcher.delivered.values.fold(0, (a, b) => a + b);
+    expect(fetched, lessThan(data.length + 8 * 1024));
+  });
+
+  test('idle slots measure hosts never measured', () async {
+    final data = testFile(256 * 1024);
+    final fetcher = FakeFetcher(
+      data,
+      otherHosts: const FakeHost(
+        chunk: 1024,
+        chunkDelay: Duration(milliseconds: 2),
+      ),
+    );
+    final ripper = job(
+      fetcher,
+      const RipperConfig(
+        firstPiece: 1024,
+        minPiece: 32 * 1024,
+        maxPiece: 32 * 1024,
+        maxPiecesAhead: 3,
+        jobInflight: 6,
+        headTtfbMs: 1000,
+        ttfbMs: 1000,
+        headStallMs: 1000,
+        stallMs: 1000,
+        probeBytes: 4096,
+        laggardBytes: 4096,
+        tickMs: 10,
+      ),
+    );
+    await ripper.begin();
+
+    expect(await _drain(ripper), data);
+    // A probe starts where an owner is: the same bytes on another host
+    final byStart = <int, Set<String>>{};
+    for (final (host, range) in fetcher.requests) {
+      (byStart[range.start] ??= {}).add(host);
+    }
+    expect(
+      byStart.entries.where((e) => e.key != 0 && e.value.length > 1),
+      isNotEmpty,
+    );
   });
 }

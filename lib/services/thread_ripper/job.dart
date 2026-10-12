@@ -2,16 +2,20 @@
 // (MIT, SukkaW), reduced for a native player that reads one open-ended range:
 //
 // - Pieces: the range is cut into pieces of about a second of transfer each,
-//   fetched a window ahead of what the player reads.
+//   fetched a window ahead of what the player reads. Bytes go into a piece's
+//   buffer at its frontier as they arrive, and the piece the player waits on
+//   is handed out as it fills.
 // - Owners: a piece goes to the host expected to finish it first.
-// - Races: the piece the player waits on starts on two hosts; any piece with
-//   no first byte or stalled gets a racer on another host. The first to
-//   finish wins, the others are canceled.
-// - Failure: retried on other hosts, then on the player's own URL; after that
-//   the job fails.
+// - Races: the piece the player waits on first starts on two hosts; any piece
+//   with no first byte or stalled gets a racer on another host. Once racers
+//   both receive, the one behind goes, unless it is still measuring a host
+//   never measured before.
+// - Endgame: with slots free and nothing waiting, the slowest piece's tail is
+//   split off to another host, and idle slots measure unmeasured hosts.
+// - Failure: the rest of a piece is retried on other hosts, then on the
+//   player's own URL; after that the job fails.
 
 import 'dart:async';
-import 'dart:collection';
 import 'dart:math' show max, min;
 import 'dart:typed_data';
 
@@ -41,6 +45,9 @@ class RipperConfig {
     this.headStallMs = 800,
     this.stallMs = 1500,
     this.giveUpMs = 8000,
+    this.laggardBytes = 64 * _kib,
+    this.probeBytes = 64 * _kib,
+    this.stealMin = 192 * _kib,
     this.tickMs = 100,
   });
 
@@ -75,6 +82,16 @@ class RipperConfig {
 
   /// No first byte, or no byte, for this long: the attempt is given up.
   final int giveUpMs;
+
+  /// A racer this far behind the leader only duplicates bytes: it goes.
+  final int laggardBytes;
+
+  /// A racer on a host never measured runs at least this far, enough to
+  /// measure the host.
+  final int probeBytes;
+
+  /// Neither half of a split piece is smaller.
+  final int stealMin;
   final int tickMs;
 }
 
@@ -88,11 +105,25 @@ class RipperJobFailed implements Exception {
 }
 
 class _Piece {
-  _Piece(this.start, this.end);
+  _Piece(this.start, this.end)
+    : buffer = Uint8List(end - start + 1),
+      frontier = start,
+      handedOut = start;
 
   final int start;
+
+  /// Inclusive. Moves in when the tail is split off.
   int end;
-  Uint8List? data;
+
+  /// Sized for the piece before any split.
+  final Uint8List buffer;
+
+  /// Everything below it is written. Only ever moves forward.
+  int frontier;
+
+  /// Everything below it went to the player.
+  int handedOut;
+
   final attempts = <_Attempt>{};
 
   /// Hosts tried for it, so a retry goes elsewhere.
@@ -101,7 +132,8 @@ class _Piece {
   bool fallbackTried = false;
 
   int get length => end - start + 1;
-  bool get done => data != null;
+  int get remaining => end - frontier + 1;
+  bool get done => frontier > end;
 }
 
 class _Attempt {
@@ -111,13 +143,26 @@ class _Attempt {
     this.host,
     this.startedAt, {
     this.fallback = false,
-  });
+    this.probe = false,
+  }) : from = piece.frontier,
+       to = piece.end,
+       pos = piece.frontier;
 
   final _Piece piece;
   final Uri uri;
   final String host;
   final int startedAt;
   final bool fallback;
+
+  /// On a host never measured: not cut as a laggard before `probeBytes`.
+  final bool probe;
+
+  /// The range it asked for.
+  final int from;
+  final int to;
+
+  /// Absolute offset of the next byte it receives.
+  int pos;
   final cancel = CancelSignal();
   int firstByteAt = 0;
   int lastByteAt = 0;
@@ -128,6 +173,15 @@ class _Attempt {
 
   /// Given up by us, which is a failure of its host, unlike a lost race.
   bool timedOut = false;
+
+  bool get receiving => firstByteAt != 0;
+
+  /// Bytes per millisecond since its first byte; `null` until it says much.
+  double? rate(int now) {
+    final bytes = received - firstChunk;
+    if (bytes < HostBook.minSample || now <= firstByteAt) return null;
+    return bytes / (now - firstByteAt);
+  }
 }
 
 /// Fetches one byte range of one file from many hosts, and hands it out in
@@ -175,7 +229,7 @@ class RipperJob {
   String? contentType;
   int _nextOffset = -1;
   int _inflight = 0;
-  final _window = Queue<_Piece>();
+  final _window = <_Piece>[];
   Object? _error;
   bool _closed = false;
   bool _handedOut = false;
@@ -213,16 +267,26 @@ class RipperJob {
     return _totalKnown.future;
   }
 
-  /// The next bytes in order; `null` once the range is complete.
+  /// The next bytes in order, as soon as any are there; `null` once the
+  /// range is complete.
   Future<Uint8List?> next() async {
     while (true) {
       if (_error case final error?) throw error;
       if (_closed) throw const RipperJobFailed('canceled');
-      if (_window.isNotEmpty && _window.first.done) {
-        final piece = _window.removeFirst();
-        _handedOut = true;
-        _pump();
-        return piece.data;
+      if (_window.isNotEmpty) {
+        final head = _window.first;
+        if (head.handedOut < head.frontier) {
+          final bytes = Uint8List.sublistView(
+            head.buffer,
+            head.handedOut - head.start,
+            head.frontier - head.start,
+          );
+          head.handedOut = head.frontier;
+          if (head.done) _window.removeAt(0);
+          _handedOut = true;
+          _pump();
+          return bytes;
+        }
       }
       if (_end != null && _window.isEmpty && _nextOffset > _end!) return null;
       await (_changed ??= Completer<void>()).future;
@@ -277,7 +341,10 @@ class RipperJob {
     while (_nextOffset <= end &&
         _window.length < config.maxPiecesAhead &&
         ahead < config.maxBytesAhead) {
-      final piece = _Piece(_nextOffset, min(_nextOffset + _pieceSize - 1, end));
+      final piece = _Piece(
+        _nextOffset,
+        min(_nextOffset + _pieceSize - 1, end),
+      );
       _window.add(piece);
       ahead += piece.length;
       _nextOffset = piece.end + 1;
@@ -292,10 +359,33 @@ class RipperJob {
     _plan();
     final now = book.clock();
 
+    _giveUpSilent(now);
+    _cutLaggards();
+
+    // Owners: every piece without an attempt gets one, in order
+    var waiting = false;
+    for (final piece in _window) {
+      if (piece.done || piece.attempts.isNotEmpty) continue;
+      if (!_slotFree) {
+        waiting = true;
+        break;
+      }
+      if (!_launch(piece)) return;
+      if (piece.attempts.isEmpty) waiting = true;
+    }
+
+    if (racing()) _race(now);
+
+    if (!waiting && _slotFree) {
+      _splitTail(now);
+      if (racing()) _probe();
+    }
+  }
+
+  void _giveUpSilent(int now) {
     for (final piece in _window) {
       for (final a in piece.attempts) {
-        final silentFor =
-            now - (a.firstByteAt == 0 ? a.startedAt : a.lastByteAt);
+        final silentFor = now - (a.receiving ? a.lastByteAt : a.startedAt);
         if (silentFor > config.giveUpMs && !a.timedOut) {
           a
             ..timedOut = true
@@ -303,17 +393,25 @@ class RipperJob {
         }
       }
     }
+  }
 
-    // Owners: every piece without an attempt gets one, in order
+  /// Racers both receiving: the one behind only duplicates bytes.
+  void _cutLaggards() {
     for (final piece in _window) {
-      if (piece.done || piece.attempts.isNotEmpty) continue;
-      if (!_slotFree) break;
-      if (!_launch(piece)) return;
+      if (piece.done || piece.attempts.length < 2) continue;
+      var lead = 0;
+      for (final a in piece.attempts) {
+        if (a.receiving && a.pos > lead) lead = a.pos;
+      }
+      for (final a in piece.attempts) {
+        if (!a.receiving || a.cancel.isCanceled) continue;
+        if (a.probe && a.received < config.probeBytes) continue;
+        if (lead - a.pos > config.laggardBytes) a.cancel.cancel();
+      }
     }
+  }
 
-    if (!racing()) return;
-
-    // Races
+  void _race(int now) {
     var isHead = true;
     for (final piece in _window) {
       final head = isHead;
@@ -324,7 +422,7 @@ class RipperJob {
       if (!_slotFree) break;
       if (_needsRacer(piece, head, now)) {
         for (final a in piece.attempts) {
-          if (a.firstByteAt == 0) book.recordWait(a.host, now - a.startedAt);
+          if (!a.receiving) book.recordWait(a.host, now - a.startedAt);
         }
         _launch(piece, racer: true);
       }
@@ -341,9 +439,88 @@ class RipperJob {
     );
     final stallLimit = head ? config.headStallMs : config.stallMs;
     return piece.attempts.every((a) {
-      if (a.firstByteAt == 0) return now - a.startedAt > ttfbLimit;
+      if (!a.receiving) return now - a.startedAt > ttfbLimit;
       return now - a.lastByteAt > stallLimit;
     });
+  }
+
+  /// The piece expected to finish last gives its tail to a host expected to
+  /// finish that part sooner.
+  void _splitTail(int now) {
+    final end = _end;
+    if (end == null) return;
+    _Piece? slowest;
+    _Attempt? owner;
+    double slowestEta = 0;
+    for (final piece in _window) {
+      if (piece.done || piece.attempts.length != 1) continue;
+      final a = piece.attempts.first;
+      if (a.fallback || a.cancel.isCanceled) continue;
+      final rate = a.rate(now);
+      if (rate == null || piece.remaining < 2 * config.stealMin) continue;
+      final eta = piece.remaining / rate;
+      if (eta > slowestEta) {
+        slowestEta = eta;
+        slowest = piece;
+        owner = a;
+      }
+    }
+    if (slowest == null || owner == null) return;
+
+    final (candidate, _) = _choose(slowest, bytes: slowest.remaining ~/ 2);
+    if (candidate == null) return;
+    final r1 = owner.rate(now)!;
+    final stats = book[candidate.host];
+    final r2 = stats.rate ?? book.typicalRate;
+    final ttfb2 = stats.ttfb ?? book.typicalTtfb;
+    // Both halves finish together: k / r1 = ttfb2 + (remaining - k) / r2
+    final remaining = slowest.remaining;
+    final k = (r1 * (ttfb2 + remaining / r2) / (1 + r1 / r2)).round();
+    if (k < config.stealMin || remaining - k < config.stealMin) return;
+    // Worth it only when the new host finishes its part before the owner
+    // would have finished the whole
+    if (ttfb2 + (remaining - k) / r2 >= slowestEta) return;
+
+    final at = slowest.frontier + k;
+    final tail = _Piece(at, slowest.end);
+    slowest.end = at - 1;
+    _window.insert(_window.indexOf(slowest) + 1, tail);
+    _start(_Attempt(tail, candidate.uri, candidate.host, book.clock()));
+  }
+
+  /// An idle slot measures a host never measured, on the piece with the most
+  /// left: its bytes count if it turns out faster.
+  void _probe() {
+    if (_end == null) return;
+    if (_window.any((p) => p.attempts.any((a) => a.probe))) return;
+    _Piece? target;
+    // Never the piece the player waits on, nor one already raced: a probe
+    // only duplicates bytes of an owner that is on its own
+    for (final piece in _window.skip(1)) {
+      if (piece.done ||
+          piece.attempts.length != 1 ||
+          piece.attempts.any((a) => a.fallback) ||
+          piece.remaining < 2 * config.probeBytes) {
+        continue;
+      }
+      if (target == null || piece.remaining > target.remaining) {
+        target = piece;
+      }
+    }
+    if (target == null) return;
+    final busy = {for (final a in target.attempts) a.host};
+    for (final c in candidates) {
+      final stats = book[c.host];
+      if (stats.measured ||
+          busy.contains(c.host) ||
+          excluded.contains(c.host) ||
+          book.isCoolingDown(c.host) ||
+          stats.inflight >= config.hostInflight) {
+        continue;
+      }
+      _start(_Attempt(target, c.uri, c.host, book.clock(), probe: true));
+      return;
+    }
   }
 
   /// Starts an attempt on [piece]; `false` when the job failed meanwhile.
@@ -367,9 +544,9 @@ class RipperJob {
     return false;
   }
 
-  /// The host expected to finish [piece] first, and whether, when there is
-  /// none, one may free up for it.
-  (MediaCandidate?, bool) _choose(_Piece piece) {
+  /// The host expected to deliver [bytes] (the rest of [piece] by default)
+  /// first, and whether, when there is none, one may free up for it.
+  (MediaCandidate?, bool) _choose(_Piece piece, {int? bytes}) {
     if (piece.tries >= config.maxTries) return (null, false);
     final busy = {for (final a in piece.attempts) a.host};
     final pool = [
@@ -386,12 +563,13 @@ class RipperJob {
       piece.tried.removeWhere((host) => !busy.contains(host));
       untried = pool;
     }
+    bytes ??= piece.remaining;
     MediaCandidate? best;
     var bestEta = double.infinity;
     for (final c in untried) {
       if (book[c.host].inflight >= config.hostInflight) continue;
       // Listed hosts first among the unmeasured: Bilibili picked them
-      var eta = book.estimate(c.host, piece.length);
+      var eta = book.estimate(c.host, bytes);
       if (!book[c.host].measured && !c.listed) eta *= 1.5;
       if (eta < bestEta) {
         bestEta = eta;
@@ -416,15 +594,12 @@ class RipperJob {
     MediaOutcome? outcome;
     var headers = false;
     try {
-      final response = await fetcher.fetch(
-        a.uri,
-        ByteRange(piece.start, piece.end),
-        a.cancel,
-      );
+      final expected = ByteRange(a.from, a.to);
+      final response = await fetcher.fetch(a.uri, expected, a.cancel);
       var verdict = classifyResponse(
         status: response.status,
         contentRange: response.contentRange,
-        expected: ByteRange(piece.start, piece.end),
+        expected: expected,
         expectedTotal: _total,
         redirectedToP2P: response.redirectedToP2P,
       );
@@ -434,7 +609,7 @@ class RipperJob {
           _total == null &&
           range != null &&
           range.total != null &&
-          range.start == piece.start &&
+          range.start == a.from &&
           range.end == range.total! - 1) {
         piece.end = range.end;
         verdict = ResponseVerdict(.ok, range.total);
@@ -456,48 +631,23 @@ class RipperJob {
         if (!_totalKnown.isCompleted) _totalKnown.complete(total);
       }
 
-      final builder = BytesBuilder(copy: false);
       await for (final chunk in response.body) {
-        if (a.cancel.isCanceled || piece.done) {
+        if (a.cancel.isCanceled) {
           outcome = a.timedOut ? .truncated : .canceled;
+          return;
+        }
+        if (_write(a, chunk) case final result?) {
+          outcome = result;
           a.cancel.cancel();
           return;
         }
-        final now = book.clock();
-        if (a.firstByteAt == 0) {
-          a
-            ..firstByteAt = now
-            ..firstChunk = chunk.length;
-        }
-        a
-          ..lastByteAt = now
-          ..received += chunk.length;
-        if (a.received > piece.length) {
-          outcome = .badRange;
-          a.cancel.cancel();
-          return;
-        }
-        builder.add(chunk);
       }
-      if (a.cancel.isCanceled || piece.done) {
-        outcome = .canceled;
+      if (a.cancel.isCanceled) {
+        outcome = a.timedOut ? .truncated : .canceled;
         return;
       }
-      if (a.received != piece.length) {
-        outcome = .truncated;
-        return;
-      }
-      outcome = .ok;
-      piece.data = builder.takeBytes();
-      book.recordSuccess(
-        a.host,
-        ttfbMs: a.firstByteAt - a.startedAt,
-        bytes: a.received - a.firstChunk,
-        transferMs: a.lastByteAt - a.firstByteAt,
-      );
-      for (final other in piece.attempts) {
-        if (other != a) other.cancel.cancel();
-      }
+      // Ended before what it asked for, and before the piece was done
+      outcome = a.pos > a.to || piece.done ? .ok : .truncated;
     } catch (_) {
       outcome ??= a.cancel.isCanceled && !a.timedOut
           ? MediaOutcome.canceled
@@ -509,13 +659,64 @@ class RipperJob {
     }
   }
 
+  /// Writes what [chunk] adds past the piece's frontier. `null` to keep
+  /// reading, else how the attempt ends.
+  MediaOutcome? _write(_Attempt a, List<int> chunk) {
+    final piece = a.piece;
+    final now = book.clock();
+    if (!a.receiving) {
+      a
+        ..firstByteAt = now
+        ..firstChunk = chunk.length;
+      book.recordTtfb(a.host, now - a.startedAt);
+    }
+    final chunkStart = a.pos;
+    a
+      ..lastByteAt = now
+      ..received += chunk.length
+      ..pos += chunk.length;
+    book.fetchedBytes += chunk.length;
+    if (a.pos - 1 > a.to) return .badRange;
+
+    final from = max(chunkStart, piece.frontier);
+    final until = min(a.pos - 1, piece.end);
+    if (from <= until) {
+      piece.buffer.setRange(
+        from - piece.start,
+        until - piece.start + 1,
+        chunk,
+        from - chunkStart,
+      );
+      piece.frontier = until + 1;
+      book.recordUseful(a.host, until - from + 1);
+      if (identical(piece, _window.firstOrNull)) _signal();
+    }
+    if (piece.done) {
+      for (final other in piece.attempts) {
+        if (other != a) other.cancel.cancel();
+      }
+      return .ok;
+    }
+    return null;
+  }
+
   void _finish(_Attempt a, MediaOutcome outcome) {
     final piece = a.piece;
     piece.attempts.remove(a);
     _inflight--;
     book.inflight--;
     book[a.host].inflight--;
-    if (outcome != .ok && outcome != .canceled) {
+    // Lost races and split-off tails measure their host as well
+    if (a.receiving) {
+      book.recordRate(
+        a.host,
+        a.received - a.firstChunk,
+        a.lastByteAt - a.firstByteAt,
+      );
+    }
+    if (outcome == .ok) {
+      book.recordSuccess(a.host);
+    } else if (outcome != .canceled) {
       book.recordFailure(a.host, outcome);
       if (isFileLevelFailure(outcome)) excluded.add(a.host);
       piece.tries++;
