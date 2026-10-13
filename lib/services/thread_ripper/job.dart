@@ -33,6 +33,7 @@ class RipperConfig {
     this.minPiece = 512 * _kib,
     this.maxPiece = 4 * _mib,
     this.pieceMs = 1000,
+    this.pieceTtfbs = 4,
     this.maxPiecesAhead = 8,
     this.maxBytesAhead = 16 * _mib,
     this.jobInflight = 8,
@@ -57,8 +58,11 @@ class RipperConfig {
   final int minPiece;
   final int maxPiece;
 
-  /// A piece is about this long a transfer at the typical host rate.
+  /// A piece is about this long a transfer at the typical host rate...
   final int pieceMs;
+
+  /// ...and at least this many times the typical time to first byte.
+  final int pieceTtfbs;
   final int maxPiecesAhead;
   final int maxBytesAhead;
   final int jobInflight;
@@ -131,6 +135,9 @@ class _Piece {
   int tries = 0;
   bool fallbackTried = false;
 
+  /// After a failure while the network was down: not before then.
+  int retryAt = 0;
+
   int get length => end - start + 1;
   int get remaining => end - frontier + 1;
   bool get done => frontier > end;
@@ -174,6 +181,9 @@ class _Attempt {
   /// Given up by us, which is a failure of its host, unlike a lost race.
   bool timedOut = false;
 
+  /// Gaps between its chunks, ms.
+  final gaps = <int>[];
+
   bool get receiving => firstByteAt != 0;
 
   /// Bytes per millisecond since its first byte; `null` until it says much.
@@ -195,11 +205,13 @@ class RipperJob {
     required this.book,
     required this.fetcher,
     required this.excluded,
+    String? file,
     int? total,
     this.racing = _always,
     this.config = const RipperConfig(),
     this.onTotal,
-  }) : _total = total {
+  }) : file = file ?? fallback.path,
+       _total = total {
     if (total != null) _setEnd(total);
     // Nobody may be waiting for it when the job is canceled
     _totalKnown.future.ignore();
@@ -218,6 +230,9 @@ class RipperJob {
 
   /// Hosts without this file, shared by every job of it.
   final Set<String> excluded;
+
+  /// Identifies the file to the host book: speeds are per file.
+  final String file;
 
   /// Whether duplicates may be started (Wi-Fi).
   final bool Function() racing;
@@ -326,10 +341,18 @@ class RipperJob {
     _end = min(requestedEnd ?? total - 1, total - 1);
   }
 
-  int get _pieceSize => (book.typicalRate * config.pieceMs).round().clamp(
-    config.minPiece,
-    config.maxPiece,
-  );
+  int get _pieceSize {
+    // Far from the CDN every request waits long for its first byte: a piece
+    // must be long enough that the wait stays a small part of it
+    final ms = max(
+      config.pieceMs,
+      book.typicalTtfb(file) * config.pieceTtfbs,
+    );
+    return (book.typicalRate(file) * ms).round().clamp(
+      config.minPiece,
+      config.maxPiece,
+    );
+  }
 
   void _plan() {
     final end = _end;
@@ -366,6 +389,10 @@ class RipperJob {
     var waiting = false;
     for (final piece in _window) {
       if (piece.done || piece.attempts.isNotEmpty) continue;
+      if (piece.retryAt > now) {
+        waiting = true;
+        continue;
+      }
       if (!_slotFree) {
         waiting = true;
         break;
@@ -422,7 +449,7 @@ class RipperJob {
       if (!_slotFree) break;
       if (_needsRacer(piece, head, now)) {
         for (final a in piece.attempts) {
-          if (!a.receiving) book.recordWait(a.host, now - a.startedAt);
+          if (!a.receiving) book.recordWait(a.host, file, now - a.startedAt);
         }
         _launch(piece, racer: true);
       }
@@ -435,12 +462,14 @@ class RipperJob {
     if (head && !_handedOut && piece.attempts.length < 2) return true;
     final ttfbLimit = max(
       head ? config.headTtfbMs : config.ttfbMs,
-      (book.typicalTtfb * 3).round(),
+      (book.typicalTtfb(file) * 3).round(),
     );
     final stallLimit = head ? config.headStallMs : config.stallMs;
     return piece.attempts.every((a) {
       if (!a.receiving) return now - a.startedAt > ttfbLimit;
-      return now - a.lastByteAt > stallLimit;
+      // A host whose chunks usually come far apart is not stalled yet
+      final gap = book.gap(a.host, file) ?? 0;
+      return now - a.lastByteAt > max(stallLimit, (gap * 2).round());
     });
   }
 
@@ -470,9 +499,7 @@ class RipperJob {
     final (candidate, _) = _choose(slowest, bytes: slowest.remaining ~/ 2);
     if (candidate == null) return;
     final r1 = owner.rate(now)!;
-    final stats = book[candidate.host];
-    final r2 = stats.rate ?? book.typicalRate;
-    final ttfb2 = stats.ttfb ?? book.typicalTtfb;
+    final (ttfb: ttfb2, rate: r2) = book.speedOf(candidate.host, file);
     // Both halves finish together: k / r1 = ttfb2 + (remaining - k) / r2
     final remaining = slowest.remaining;
     final k = (r1 * (ttfb2 + remaining / r2) / (1 + r1 / r2)).round();
@@ -491,7 +518,7 @@ class RipperJob {
   /// An idle slot measures a host never measured, on the piece with the most
   /// left: its bytes count if it turns out faster.
   void _probe() {
-    if (_end == null) return;
+    if (_end == null || !book.mayProbe(file)) return;
     if (_window.any((p) => p.attempts.any((a) => a.probe))) return;
     _Piece? target;
     // Never the piece the player waits on, nor one already raced: a probe
@@ -511,13 +538,14 @@ class RipperJob {
     final busy = {for (final a in target.attempts) a.host};
     for (final c in candidates) {
       final stats = book[c.host];
-      if (stats.measured ||
+      if (book.isMeasured(c.host, file) ||
           busy.contains(c.host) ||
           excluded.contains(c.host) ||
           book.isCoolingDown(c.host) ||
           stats.inflight >= config.hostInflight) {
         continue;
       }
+      book.noteProbe(file);
       _start(_Attempt(target, c.uri, c.host, book.clock(), probe: true));
       return;
     }
@@ -569,8 +597,8 @@ class RipperJob {
     for (final c in untried) {
       if (book[c.host].inflight >= config.hostInflight) continue;
       // Listed hosts first among the unmeasured: Bilibili picked them
-      var eta = book.estimate(c.host, bytes);
-      if (!book[c.host].measured && !c.listed) eta *= 1.5;
+      var eta = book.estimate(c.host, file, bytes);
+      if (!book.isMeasured(c.host, file) && !c.listed) eta *= 1.5;
       if (eta < bestEta) {
         bestEta = eta;
         best = c;
@@ -583,6 +611,7 @@ class RipperJob {
     final piece = attempt.piece;
     piece.attempts.add(attempt);
     piece.tried.add(attempt.host);
+    book.noteStart();
     _inflight++;
     book.inflight++;
     book[attempt.host].inflight++;
@@ -668,14 +697,16 @@ class RipperJob {
       a
         ..firstByteAt = now
         ..firstChunk = chunk.length;
-      book.recordTtfb(a.host, now - a.startedAt);
+      book.recordTtfb(a.host, file, now - a.startedAt);
+    } else {
+      a.gaps.add(now - a.lastByteAt);
     }
     final chunkStart = a.pos;
     a
       ..lastByteAt = now
       ..received += chunk.length
       ..pos += chunk.length;
-    book.fetchedBytes += chunk.length;
+    book.recordBytes(a.host, chunk.length);
     if (a.pos - 1 > a.to) return .badRange;
 
     final from = max(chunkStart, piece.frontier);
@@ -706,23 +737,35 @@ class RipperJob {
     _inflight--;
     book.inflight--;
     book[a.host].inflight--;
+    book.noteEnd(a.host);
     // Lost races and split-off tails measure their host as well
     if (a.receiving) {
       book.recordRate(
         a.host,
+        file,
         a.received - a.firstChunk,
         a.lastByteAt - a.firstByteAt,
       );
+      if (a.gaps.length >= 4) {
+        final gaps = [...a.gaps]..sort();
+        book.recordGap(a.host, file, gaps[(gaps.length * 9) ~/ 10]);
+      }
     }
     if (outcome == .ok) {
       book.recordSuccess(a.host);
     } else if (outcome != .canceled) {
-      book.recordFailure(a.host, outcome);
-      if (isFileLevelFailure(outcome)) excluded.add(a.host);
-      piece.tries++;
-      if (a.fallback && piece.attempts.isEmpty && !piece.done) {
-        _fail('fallback failed for ${piece.start}-${piece.end}: $outcome');
-        return;
+      if (!book.recordFailure(a.host, outcome)) {
+        // The viewer's network is down: nothing to learn about the host or
+        // the piece. Try again shortly, the player's own URL included
+        piece.retryAt = book.clock() + 500;
+        if (a.fallback) piece.fallbackTried = false;
+      } else {
+        if (isFileLevelFailure(outcome)) excluded.add(a.host);
+        piece.tries++;
+        if (a.fallback && piece.attempts.isEmpty && !piece.done) {
+          _fail('fallback failed for ${piece.start}-${piece.end}: $outcome');
+          return;
+        }
       }
     }
     _signal();

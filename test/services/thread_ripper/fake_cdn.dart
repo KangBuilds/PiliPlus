@@ -153,3 +153,34 @@ class FakeFetcher implements RangeFetcher {
     }
   }
 }
+
+/// Every request fails at once, and every body breaks, while [down].
+class OutageFetcher implements RangeFetcher {
+  OutageFetcher(this.inner);
+
+  final FakeFetcher inner;
+  bool down = false;
+  int failed = 0;
+
+  @override
+  Future<RangeResponse> fetch(
+    Uri uri,
+    ByteRange range,
+    CancelSignal cancel,
+  ) async {
+    if (down) {
+      failed++;
+      throw StateError('network is unreachable');
+    }
+    final response = await inner.fetch(uri, range, cancel);
+    return RangeResponse(
+      status: response.status,
+      contentRange: response.contentRange,
+      contentType: response.contentType,
+      body: response.body.map((chunk) {
+        if (down) throw StateError('connection reset');
+        return chunk;
+      }),
+    );
+  }
+}

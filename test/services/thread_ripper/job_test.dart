@@ -197,6 +197,60 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 100));
     expect(fetcher.requests.length, count);
   });
+
+  test('races the head before later pieces fill the job slots', () async {
+    final data = Uint8List(16 * 1024 * 1024);
+    final fetcher = FakeFetcher(data, otherHosts: const FakeHost(hang: true));
+    final book = HostBook();
+    final job = RipperJob(
+      candidates: mediaCandidates([kListedUrl]),
+      fallback: Uri.parse(kListedUrl),
+      start: 0,
+      requestedEnd: null,
+      total: data.length,
+      book: book,
+      fetcher: fetcher,
+      excluded: {},
+    );
+    addTearDown(job.cancel);
+
+    await job.begin();
+
+    final head = fetcher.requests.where((r) => r.$2.start == 0).toList();
+    expect(head.length, 2);
+    expect(head.map((r) => r.$1).toSet().length, 2);
+    expect(fetcher.requests.length, const RipperConfig().jobInflight);
+    expect(book.inflight, const RipperConfig().jobInflight);
+    expect(book.entries.every((e) => e.value.inflight <= 4), isTrue);
+  });
+
+  test('a newly free global slot goes to the head race first', () async {
+    final data = Uint8List(16 * 1024 * 1024);
+    final fetcher = FakeFetcher(data, otherHosts: const FakeHost(hang: true));
+    // Other jobs occupy all but one global slot.
+    final book = HostBook()..inflight = 23;
+    final job = RipperJob(
+      candidates: mediaCandidates([kListedUrl]),
+      fallback: Uri.parse(kListedUrl),
+      start: 0,
+      requestedEnd: null,
+      total: data.length,
+      book: book,
+      fetcher: fetcher,
+      excluded: {},
+      config: const RipperConfig(tickMs: 10),
+    );
+    addTearDown(job.cancel);
+    await job.begin();
+    expect(fetcher.requests.length, 1);
+
+    book.inflight--;
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    expect(fetcher.requests.length, 2);
+    expect(fetcher.requests.every((r) => r.$2.start == 0), isTrue);
+    expect(book.inflight, 24);
+  });
 }
 
 void phase2() {
@@ -363,6 +417,62 @@ void phase2() {
     expect(
       byStart.entries.where((e) => e.key != 0 && e.value.length > 1),
       isNotEmpty,
+    );
+  });
+
+  test('rides out a network outage without blaming hosts', () async {
+    final data = testFile(512 * 1024);
+    final fetcher = OutageFetcher(
+      FakeFetcher(
+        data,
+        otherHosts: const FakeHost(
+          chunk: 1024,
+          chunkDelay: Duration(milliseconds: 3),
+        ),
+      ),
+    );
+    final book = HostBook(networkDownMs: 200);
+    final ripper = RipperJob(
+      candidates: mediaCandidates([kListedUrl]),
+      fallback: Uri.parse(_fallback),
+      start: 0,
+      requestedEnd: null,
+      total: data.length,
+      book: book,
+      fetcher: fetcher,
+      excluded: {},
+      config: testConfig,
+    );
+    await ripper.begin();
+
+    final out = BytesBuilder(copy: false);
+    var outage = false;
+    while (true) {
+      final chunk = await ripper.next();
+      if (chunk == null) break;
+      out.add(chunk);
+      if (!outage && out.length > 64 * 1024) {
+        outage = true;
+        fetcher.down = true;
+        Future<void>.delayed(
+          const Duration(milliseconds: 600),
+          () => fetcher.down = false,
+        );
+      }
+    }
+
+    expect(out.takeBytes(), data);
+    expect(fetcher.failed, greaterThan(3));
+    // Nobody was blamed, and the player's own URL was never needed
+    expect(
+      seedHosts.where(book.isCoolingDown),
+      isEmpty,
+    );
+    expect(
+      fetcher.inner.requests.where(
+        (r) => r.$1 == 'upos-sz-302ppio.bilivideo.com',
+      ),
+      isEmpty,
     );
   });
 }
