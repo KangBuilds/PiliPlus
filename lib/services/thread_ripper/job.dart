@@ -48,6 +48,7 @@ class RipperConfig {
     this.headStallMs = 800,
     this.stallMs = 1500,
     this.giveUpMs = 8000,
+    this.stuckMs = 30000,
     this.laggardBytes = 64 * _kib,
     this.probeBytes = 64 * _kib,
     this.stealMin = 192 * _kib,
@@ -95,6 +96,10 @@ class RipperConfig {
 
   /// No first byte, or no byte, for this long: the attempt is given up.
   final int giveUpMs;
+
+  /// A piece that made no progress for this long, every host and the
+  /// player's own URL tried: the job fails.
+  final int stuckMs;
 
   /// A racer this far behind the leader only duplicates bytes: it goes.
   final int laggardBytes;
@@ -156,6 +161,12 @@ class _Piece {
   /// After a failure while the network was down: not before then.
   int retryAt = 0;
 
+  /// When it last received a byte, or was first started; `0` = not yet.
+  int lastProgressAt = 0;
+
+  /// How each host (and the player's own URL) last failed it.
+  final failures = <String, MediaOutcome>{};
+
   int get length => end - start + 1;
   int get remaining => end - frontier + 1;
   bool get done => frontier > end;
@@ -201,6 +212,9 @@ class _Attempt {
 
   /// Gaps between its chunks, ms.
   final gaps = <int>[];
+
+  /// Bytes it wrote into the piece.
+  int useful = 0;
 
   bool get receiving => firstByteAt != 0;
 
@@ -601,7 +615,21 @@ class RipperJob {
       );
       return true;
     }
-    _fail('no host could deliver ${piece.start}-${piece.end}');
+    // Hosts that only cool down come back: a new round once they do, until
+    // the piece has been stuck too long
+    final now = book.clock();
+    if (candidates.any((c) => !excluded.contains(c.host)) &&
+        now - piece.lastProgressAt < config.stuckMs) {
+      piece
+        ..tries = 0
+        ..fallbackTried = false
+        ..retryAt = now + 500;
+      return true;
+    }
+    _fail(
+      'no host could deliver ${piece.start}-${piece.end} of $total: '
+      '${piece.failures.entries.map((e) => '${e.key} ${e.value.name}').join(', ')}',
+    );
     return false;
   }
 
@@ -739,6 +767,7 @@ class RipperJob {
     final piece = attempt.piece;
     piece.attempts.add(attempt);
     piece.tried.add(attempt.host);
+    if (piece.lastProgressAt == 0) piece.lastProgressAt = book.clock();
     book.noteStart();
     _inflight++;
     book.inflight++;
@@ -848,6 +877,8 @@ class RipperJob {
       );
       piece.frontier = until + 1;
       book.recordUseful(a.host, until - from + 1);
+      a.useful += until - from + 1;
+      piece.lastProgressAt = now;
       if (identical(piece, _window.firstOrNull)) _signal();
     }
     if (piece.done) {
@@ -888,11 +919,15 @@ class RipperJob {
         piece.retryAt = book.clock() + 500;
         if (a.fallback) piece.fallbackTried = false;
       } else {
+        piece.failures[a.fallback ? 'own URL' : a.host] = outcome;
         if (isFileLevelFailure(outcome)) excluded.add(a.host);
-        piece.tries++;
-        if (a.fallback && piece.attempts.isEmpty && !piece.done) {
-          _fail('fallback failed for ${piece.start}-${piece.end}: $outcome');
-          return;
+        if (a.useful > 0) {
+          // It moved the piece on: a connection failed, not the piece, and
+          // the rest resumes where it stopped
+          piece.tries = 0;
+          if (a.fallback) piece.fallbackTried = false;
+        } else {
+          piece.tries++;
         }
       }
     }

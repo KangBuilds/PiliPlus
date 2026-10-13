@@ -330,4 +330,24 @@ void main() {
       fail('not revived');
     });
   });
+
+  test('a failed job says why', () async {
+    final reports = <String>[];
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(
+        testFile(64 * 1024),
+        otherHosts: const FakeHost(failFrom: 20000),
+      ),
+      config: testConfig,
+      wifiOnly: false,
+      report: reports.add,
+    );
+    addTearDown(ripper.close);
+    final url = await ripper.wrapNow(kListedUrl);
+
+    await get(url, range: 'bytes=0-');
+    expect(reports, hasLength(1));
+    expect(reports.single, contains('no host could deliver'));
+    expect(reports.single, contains('upos-sz-mirrorali.bilivideo.com refused'));
+  });
 }

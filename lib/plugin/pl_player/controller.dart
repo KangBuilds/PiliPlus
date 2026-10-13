@@ -934,8 +934,9 @@ class PlPlayerController with BlockConfigMixin {
             event.startsWith("Failed to open file")) {
           return;
         }
-        if (event.startsWith("Failed to open https://") ||
-            event.startsWith("Can not open external file https://") ||
+        // http too: the multi-CDN proxy's URLs
+        if (event.startsWith("Failed to open http") ||
+            event.startsWith("Can not open external file http") ||
             //tcp: ffurl_read returned 0xdfb9b0bb
             //tcp: ffurl_read returned 0xffffff99
             event.startsWith('tcp: ffurl_read returned ')) {

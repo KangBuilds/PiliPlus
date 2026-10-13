@@ -10,10 +10,11 @@ import 'package:PiliPlus/services/thread_ripper/job.dart';
 import 'package:PiliPlus/services/thread_ripper/range.dart';
 import 'package:PiliPlus/utils/connectivity_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/utils.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
-final threadRipper = ThreadRipper();
+final threadRipper = ThreadRipper(report: Utils.reportError);
 
 /// One file the player was handed a proxy URL for.
 class _Source {
@@ -108,11 +109,15 @@ class ThreadRipper {
     this.config = const RipperConfig(),
     this.wifiOnly = true,
     this.commitTimeout = const Duration(seconds: 5),
+    this.report,
   }) : fetcher = fetcher ?? HttpRangeFetcher(),
        book = book ?? HostBook();
 
   final RangeFetcher fetcher;
   final HostBook book;
+
+  /// Where a failed job is reported: why the player saw its stream end.
+  final void Function(String message)? report;
   final RipperConfig config;
   final bool wifiOnly;
 
@@ -518,7 +523,7 @@ class ThreadRipper {
       job?.cancel();
       if (e is RipperJobFailed && e.message != 'canceled') {
         source?.directUntil = book.clock() + _directAfterFailure;
-        if (kDebugMode) debugPrint('thread ripper: $e');
+        report?.call('thread ripper: ${e.message}');
       }
       // Committed: closing short of Content-Length drops the connection, mpv
       // sees the body end early and opens the range again

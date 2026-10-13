@@ -184,3 +184,26 @@ class OutageFetcher implements RangeFetcher {
     );
   }
 }
+
+/// The first [failFirst] requests, to any host, get a 500.
+class FlakyFetcher implements RangeFetcher {
+  FlakyFetcher(this.inner, {required this.failFirst});
+
+  final FakeFetcher inner;
+  int failFirst;
+
+  @override
+  Future<RangeResponse> fetch(Uri uri, ByteRange range, CancelSignal cancel) {
+    if (failFirst > 0) {
+      failFirst--;
+      return Future.value(
+        const RangeResponse(
+          status: 500,
+          contentRange: null,
+          body: Stream.empty(),
+        ),
+      );
+    }
+    return inner.fetch(uri, range, cancel);
+  }
+}

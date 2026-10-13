@@ -521,4 +521,39 @@ void phase2() {
     await _drain(ripper);
     expect(ripper.ticking, isFalse);
   });
+
+  test('a piece moving on through dropped connections never fails', () async {
+    final data = testFile(32 * 1024);
+    // Every connection, the player's own URL's included, drops after 1 KiB
+    final fetcher = FakeFetcher(
+      data,
+      otherHosts: const FakeHost(chunk: 1024, breakAfter: 1024),
+    );
+    final ripper = _job(fetcher, total: data.length, racing: false);
+    await ripper.begin();
+
+    expect(await _drain(ripper), data);
+  });
+
+  test('waits for hosts cooling down instead of failing', () async {
+    final data = testFile(16 * 1024);
+    // More failures in a row than hosts: all of them, and the player's own
+    // URL, cool down before anything works
+    final fetcher = FlakyFetcher(FakeFetcher(data), failFirst: 24);
+    final ripper = RipperJob(
+      candidates: mediaCandidates([kListedUrl]),
+      fallback: Uri.parse(_fallback),
+      start: 0,
+      requestedEnd: null,
+      total: data.length,
+      book: HostBook(),
+      fetcher: fetcher,
+      excluded: {},
+      racing: () => false,
+      config: testConfig,
+    );
+    await ripper.begin();
+
+    expect(await _drain(ripper), data);
+  });
 }
