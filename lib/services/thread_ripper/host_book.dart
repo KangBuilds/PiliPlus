@@ -282,12 +282,11 @@ class HostBook {
     return (ttfb: ttfb, rate: rate);
   }
 
-  /// Expected milliseconds for [host] to deliver [bytes] of [file], counting
-  /// what it is already busy with.
+  /// Expected milliseconds for one request to [host] to deliver [bytes] of
+  /// [file].
   double estimate(String host, String file, int bytes) {
     final (:ttfb, :rate) = speedOf(host, file);
-    // Requests to one host share its bandwidth
-    return ttfb + bytes * (this[host].inflight + 1) / rate;
+    return ttfb + bytes / rate;
   }
 
   static double? _medianOf(List<double> values) {

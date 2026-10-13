@@ -49,6 +49,8 @@ class RipperConfig {
     this.laggardBytes = 64 * _kib,
     this.probeBytes = 64 * _kib,
     this.stealMin = 192 * _kib,
+    this.ownerBand = 1.25,
+    this.smallPiece = 256 * _kib,
     this.tickMs = 100,
   });
 
@@ -96,6 +98,15 @@ class RipperConfig {
 
   /// Neither half of a split piece is smaller.
   final int stealMin;
+
+  /// A piece goes on its own only to a host expected to finish it within
+  /// this factor of the best one: on a slower host the player would wait
+  /// for that piece.
+  final double ownerBand;
+
+  /// A piece this small is about latency: it goes to the host expected to
+  /// finish it first, not the least busy.
+  final int smallPiece;
   final int tickMs;
 }
 
@@ -384,6 +395,8 @@ class RipperJob {
 
     _giveUpSilent(now);
     _cutLaggards();
+    // Give the head's rescue a free slot before fetching later pieces.
+    if (racing()) _race(now);
 
     // Owners: every piece without an attempt gets one, in order
     var waiting = false;
@@ -398,10 +411,9 @@ class RipperJob {
         break;
       }
       if (!_launch(piece)) return;
+      if (identical(piece, _window.first) && racing()) _race(now);
       if (piece.attempts.isEmpty) waiting = true;
     }
-
-    if (racing()) _race(now);
 
     if (!waiting && _slotFree) {
       _splitTail(now);
@@ -499,7 +511,7 @@ class RipperJob {
     final (candidate, _) = _choose(slowest, bytes: slowest.remaining ~/ 2);
     if (candidate == null) return;
     final r1 = owner.rate(now)!;
-    final (ttfb: ttfb2, rate: r2) = book.speedOf(candidate.host, file);
+    final (ttfb: ttfb2, rate: r2) = _speedWithLoad(candidate.host, now);
     // Both halves finish together: k / r1 = ttfb2 + (remaining - k) / r2
     final remaining = slowest.remaining;
     final k = (r1 * (ttfb2 + remaining / r2) / (1 + r1 / r2)).round();
@@ -553,7 +565,7 @@ class RipperJob {
 
   /// Starts an attempt on [piece]; `false` when the job failed meanwhile.
   bool _launch(_Piece piece, {bool racer = false}) {
-    final (candidate, waitable) = _choose(piece);
+    final (candidate, waitable) = _choose(piece, racer: racer);
     if (candidate != null) {
       _start(_Attempt(piece, candidate.uri, candidate.host, book.clock()));
       return true;
@@ -572,16 +584,75 @@ class RipperJob {
     return false;
   }
 
-  /// The host expected to deliver [bytes] (the rest of [piece] by default)
-  /// first, and whether, when there is none, one may free up for it.
-  (MediaCandidate?, bool) _choose(_Piece piece, {int? bytes}) {
+  /// What [host]'s requests receive now, together and per request; the
+  /// CDN throttles each request, so more of them add up.
+  ({double ttfb, double rate}) _speedWithLoad(String host, int now) {
+    final speed = book.speedOf(host, file);
+    var receiving = 0;
+    var together = 0.0;
+    for (final piece in _window) {
+      for (final a in piece.attempts) {
+        if (a.host != host || a.cancel.isCanceled) continue;
+        if (a.rate(now) case final rate?) {
+          receiving++;
+          together += rate;
+        }
+      }
+    }
+    if (receiving == 0) return speed;
+    return (ttfb: speed.ttfb, rate: min(speed.rate, together / receiving));
+  }
+
+  double _eta(String host, int bytes, int now) {
+    final (:ttfb, :rate) = _speedWithLoad(host, now);
+    return ttfb + bytes / rate;
+  }
+
+  /// The hosts a piece of [bytes] may go to on its own: the measured ones
+  /// expected to finish it within `ownerBand` of the best. `null` while none
+  /// is measured: any host may.
+  Set<String>? _owners(int bytes, int now) {
+    final etas = <String, double>{};
+    for (final c in candidates) {
+      if (excluded.contains(c.host) ||
+          book.isCoolingDown(c.host) ||
+          !book.isMeasured(c.host, file)) {
+        continue;
+      }
+      etas[c.host] = _eta(c.host, bytes, now);
+    }
+    if (etas.isEmpty) return null;
+    final best = etas.values.reduce(min);
+    return {
+      for (final MapEntry(key: host, value: eta) in etas.entries)
+        if (eta <= best * config.ownerBand) host,
+    };
+  }
+
+  /// Where [bytes] of [piece] (the rest of it by default) go, and whether,
+  /// when nowhere, a host may free up for it.
+  ///
+  /// An owner only goes to a host that may carry the piece alone
+  /// ([_owners]): the least busy of them, or the fastest for a small piece.
+  /// A racer goes to the fastest measured host; to [explore], or while none
+  /// is measured, to one never measured, the listed addresses first.
+  (MediaCandidate?, bool) _choose(
+    _Piece piece, {
+    int? bytes,
+    bool racer = false,
+    bool explore = false,
+  }) {
     if (piece.tries >= config.maxTries) return (null, false);
+    bytes ??= piece.remaining;
+    final now = book.clock();
+    final owners = racer ? null : _owners(bytes, now);
     final busy = {for (final a in piece.attempts) a.host};
     final pool = [
       for (final c in candidates)
         if (!excluded.contains(c.host) &&
             !busy.contains(c.host) &&
-            !book.isCoolingDown(c.host))
+            !book.isCoolingDown(c.host) &&
+            (owners == null || owners.contains(c.host)))
           c,
     ];
     if (pool.isEmpty) return (null, false);
@@ -591,21 +662,57 @@ class RipperJob {
       piece.tried.removeWhere((host) => !busy.contains(host));
       untried = pool;
     }
-    bytes ??= piece.remaining;
-    MediaCandidate? best;
-    var bestEta = double.infinity;
-    for (final c in untried) {
-      if (book[c.host].inflight >= config.hostInflight) continue;
-      // Listed hosts first among the unmeasured: Bilibili picked them
-      var eta = book.estimate(c.host, file, bytes);
-      if (!book.isMeasured(c.host, file) && !c.listed) eta *= 1.5;
-      if (eta < bestEta) {
-        bestEta = eta;
-        best = c;
-      }
+    final options = [
+      for (final c in untried)
+        if (book[c.host].inflight < config.hostInflight) c,
+    ];
+    if (options.isEmpty) return (null, true);
+
+    final unmeasured = [
+      for (final c in options)
+        if (!book.isMeasured(c.host, file)) c,
+    ];
+    final MediaCandidate chosen;
+    if (unmeasured.length == options.length ||
+        (racer && explore && unmeasured.isNotEmpty)) {
+      chosen = _leastBusy(_preferred(unmeasured), bytes, now);
+    } else {
+      final measured = [
+        for (final c in options)
+          if (book.isMeasured(c.host, file)) c,
+      ];
+      chosen = racer || bytes < config.smallPiece || _window.length == 1
+          ? _fastest(measured, bytes, now)
+          : _leastBusy(measured, bytes, now);
     }
-    return (best, true);
+    return (chosen, true);
   }
+
+  /// Among unmeasured hosts: the addresses Bilibili listed for the file
+  /// first, the signatures moved elsewhere after.
+  List<MediaCandidate> _preferred(List<MediaCandidate> options) {
+    final listed = [
+      for (final c in options)
+        if (c.listed) c,
+    ];
+    return listed.isNotEmpty ? listed : options;
+  }
+
+  MediaCandidate _leastBusy(List<MediaCandidate> options, int bytes, int now) =>
+      options.reduce((best, c) {
+        final load = book[c.host].inflight;
+        final bestLoad = book[best.host].inflight;
+        if (load != bestLoad) return load < bestLoad ? c : best;
+        return _eta(c.host, bytes, now) < _eta(best.host, bytes, now)
+            ? c
+            : best;
+      });
+
+  MediaCandidate _fastest(List<MediaCandidate> options, int bytes, int now) =>
+      options.reduce(
+        (best, c) =>
+            _eta(c.host, bytes, now) < _eta(best.host, bytes, now) ? c : best,
+      );
 
   void _start(_Attempt attempt) {
     final piece = attempt.piece;

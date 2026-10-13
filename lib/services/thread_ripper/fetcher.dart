@@ -74,6 +74,26 @@ class HttpRangeFetcher implements RangeFetcher {
       ..headers.set(HttpHeaders.rangeHeader, 'bytes=$range')
       ..headers.set(HttpHeaders.refererHeader, HttpString.baseUrl);
     final response = await request.close();
+    // abort() stops working once headers arrive; cancel the body as well.
+    final chunks = StreamIterator<List<int>>(response);
+    var reading = false;
+    cancel.onCancel(() {
+      chunks.cancel().ignore();
+      // Never read: nothing listens to the response, so drop its connection
+      // here, or it stays taken until the server ends the body
+      if (!reading) response.listen(null).cancel().ignore();
+    });
+    Stream<List<int>> body() async* {
+      reading = true;
+      try {
+        while (await chunks.moveNext()) {
+          yield chunks.current;
+        }
+      } finally {
+        await chunks.cancel();
+      }
+    }
+
     return RangeResponse(
       status: response.statusCode,
       contentRange: parseContentRange(
@@ -83,7 +103,7 @@ class HttpRangeFetcher implements RangeFetcher {
       redirectedToP2P: response.redirects.any(
         (redirect) => isP2PUrl(uri.resolveUri(redirect.location)),
       ),
-      body: response,
+      body: body(),
     );
   }
 }
