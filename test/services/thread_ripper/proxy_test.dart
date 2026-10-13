@@ -238,4 +238,50 @@ void main() {
     expect(response.statusCode, 206);
     expect(body, data);
   });
+
+  test('headers fast, body slow: mpv goes to its own URL in time', () async {
+    final data = testFile(64 * 1024);
+    final ripper = ThreadRipper(
+      // Every host answers at once, then sends nothing for two seconds
+      fetcher: FakeFetcher(
+        data,
+        otherHosts: const FakeHost(chunkDelay: Duration(seconds: 2)),
+      ),
+      config: testConfig,
+      wifiOnly: false,
+      commitTimeout: const Duration(milliseconds: 400),
+    );
+    addTearDown(ripper.close);
+    final url = await ripper.wrapNow(kListedUrl);
+
+    for (final range in ['bytes=0-', 'bytes=40000-']) {
+      final watch = Stopwatch()..start();
+      final (response, _) = await get(url, range: range, follow: false);
+      expect(response.statusCode, 302, reason: range);
+      expect(watch.elapsedMilliseconds, lessThan(1000), reason: range);
+    }
+  });
+
+  test('HEAD reports the range without waiting for bytes', () async {
+    final data = testFile(64 * 1024);
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(
+        data,
+        otherHosts: const FakeHost(chunkDelay: Duration(seconds: 2)),
+      ),
+      config: testConfig,
+      wifiOnly: false,
+    );
+    addTearDown(ripper.close);
+    final url = await ripper.wrapNow(kListedUrl);
+
+    final request = await client.headUrl(Uri.parse(url));
+    request.headers.set(HttpHeaders.rangeHeader, 'bytes=100-');
+    final watch = Stopwatch()..start();
+    final response = await request.close();
+    await response.drain<void>();
+    expect(response.statusCode, 206);
+    expect(response.contentLength, data.length - 100);
+    expect(watch.elapsedMilliseconds, lessThan(1000));
+  });
 }

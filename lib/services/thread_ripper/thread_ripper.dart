@@ -410,34 +410,57 @@ class ThreadRipper {
         return;
       }
 
-      // mpv closed the connection (a seek, a new video): stop fetching
+      // The range in order: the warm-up's part as it arrives (from a job of
+      // its own if the warm-up broke off), then the job's
       RipperJob? gap;
-      response.done.whenComplete(() {
-        job?.cancel();
-        gap?.cancel();
-      }).ignore();
-
-      if (fromHead) {
-        var pos = range.start;
-        final stop = min(end, headEnd);
-        while (pos <= stop) {
+      var pos = range.start;
+      final stop = fromHead ? min(end, headEnd) : -1;
+      final file = source;
+      Future<Uint8List?> nextBytes() async {
+        while (fromHead && pos <= stop) {
+          if (gap case final gap?) {
+            final bytes = await gap.next();
+            if (bytes == null) break;
+            pos += bytes.length;
+            return bytes;
+          }
           if (head.length > pos) {
             final to = min(head.length, stop + 1);
-            _serve(response, head.view(pos, to));
+            final bytes = head.view(pos, to);
             pos = to;
-            await response.flush();
-          } else if (head.failed) {
-            // The warm-up broke off: the rest of it from a job of its own
-            gap = _job(source, pos, stop);
-            await gap.begin();
-            await _drain(gap, response);
-            pos = stop + 1;
+            return bytes;
+          }
+          if (head.failed) {
+            gap = _job(file, pos, stop);
+            await gap!.begin();
           } else {
             await head.changed;
           }
         }
+        return job?.next();
       }
-      if (job != null) await _drain(job, response);
+
+      // Nothing reaches mpv before the first bytes are in hand: until then
+      // it can still be sent to its own URL, within the same deadline
+      final Uint8List? first;
+      try {
+        first = await nextBytes().timeout(left());
+      } on TimeoutException {
+        job?.cancel();
+        gap?.cancel();
+        _redirect(response, source.fallback);
+        return;
+      }
+
+      // mpv closed the connection (a seek, a new video): stop fetching
+      response.done.whenComplete(() {
+        job?.cancel();
+        gap?.cancel();
+      }).ignore();
+      for (var bytes = first; bytes != null; bytes = await nextBytes()) {
+        _serve(response, bytes);
+        await response.flush();
+      }
     } catch (e) {
       job?.cancel();
       if (e is RipperJobFailed && e.message != 'canceled') {
@@ -453,21 +476,19 @@ class ThreadRipper {
     }
   }
 
-  Future<void> _drain(RipperJob job, HttpResponse response) async {
-    for (var c = await job.next(); c != null; c = await job.next()) {
-      _serve(response, c);
-      await response.flush();
-    }
-  }
-
   void _serve(HttpResponse response, Uint8List bytes) {
     response.add(bytes);
     _served.add((book.clock(), bytes.length));
   }
 
+  /// Sends mpv to [location]; valid until the first bytes went out, even
+  /// after the headers of a ranged answer were set.
   void _redirect(HttpResponse response, Uri location) {
     response
       ..statusCode = HttpStatus.found
+      ..contentLength = 0
+      ..headers.removeAll(HttpHeaders.contentRangeHeader)
+      ..headers.removeAll(HttpHeaders.acceptRangesHeader)
       ..headers.set(HttpHeaders.locationHeader, location.toString());
   }
 }
