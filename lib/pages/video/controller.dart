@@ -658,7 +658,7 @@ class VideoDetailController extends GetxController
   }
 
   /// 更新画质、音质
-  void updatePlayer() {
+  Future<void> updatePlayer() async {
     final currentVideoQa = this.currentVideoQa.value;
     if (currentVideoQa == null) return;
     _autoPlay.value = true;
@@ -679,7 +679,7 @@ class VideoDetailController extends GetxController
       audioUrl = VideoUtils.getCdnUrl(firstAudio.playUrls, isAudio: true);
     }
 
-    playerInit();
+    await playerInit();
   }
 
   Future<void>? _initPlayerIfNeeded(bool autoFullScreenFlag) {
@@ -736,6 +736,7 @@ class VideoDetailController extends GetxController
       width: firstVideo.width,
       height: firstVideo.height,
       autoFullScreenFlag: autoFullScreenFlag,
+      reloadMedia: isFileSource ? null : reloadPlayUrl,
     );
 
     if (isClosed) return;
@@ -758,6 +759,27 @@ class VideoDetailController extends GetxController
   }
 
   bool isQuerying = false;
+
+  /// Fresh URLs for the quality, codec and audio playing now, reopened at
+  /// the same position: signed URLs expire. `false` when none came.
+  Future<bool> reloadPlayUrl() async {
+    if (isFileSource || isQuerying || isClosed) return false;
+    isQuerying = true;
+    try {
+      final result = await _getVideoUrl(VideoQuality.hdrVivid.code);
+      if (isClosed) return false;
+      if (result case Success(:final response) when response.dash != null) {
+        data = response;
+        await _supplementVideoQualities();
+        if (isClosed || currentVideoQa.value == null) return false;
+        await updatePlayer();
+        return true;
+      }
+      return false;
+    } finally {
+      isQuerying = false;
+    }
+  }
 
   final languages = Rxn<List<LanguageItem>>();
   final currLang = Rxn<String>();

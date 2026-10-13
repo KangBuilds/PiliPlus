@@ -623,7 +623,11 @@ class PlPlayerController with BlockConfigMixin {
     String? artwork,
     VoidCallback? onInit,
     bool autoFullScreenFlag = false,
+    Future<bool> Function()? reloadMedia,
   }) async {
+    // Whoever opens the media says how to get fresh URLs for it; without
+    // that, a refresh reopens the same ones
+    this.reloadMedia = reloadMedia;
     try {
       _processing = true;
       showPlayerInfo.value = false;
@@ -774,12 +778,48 @@ class PlPlayerController with BlockConfigMixin {
       Media(video, start: seekTo, extras: extras.isEmpty ? null : extras),
       play: false,
     );
+    _mediaOpenedAt = dataSource is NetworkSource ? DateTime.now() : null;
   }
 
-  Future<void>? refreshPlayer() {
+  /// Fetches fresh URLs for what plays and reopens the player with them;
+  /// `false` when it could not.
+  Future<bool> Function()? reloadMedia;
+
+  /// When the network media now open was opened.
+  DateTime? _mediaOpenedAt;
+
+  /// Signed media URLs stop working after a while (hours, long before the
+  /// `deadline` they carry): older ones are fetched afresh on a refresh.
+  static const _mediaUrlMaxAge = Duration(minutes: 30);
+
+  @visibleForTesting
+  static bool shouldFetchFreshUrls({
+    required bool openFailed,
+    required Duration? age,
+  }) => openFailed || (age != null && age > _mediaUrlMaxAge);
+
+  /// Reopens the media at the current position: with fresh URLs when
+  /// opening failed ([openFailed]) or the URLs may have expired, else with
+  /// the same ones.
+  Future<void>? refreshPlayer({bool openFailed = false}) {
     if (dataSource is FileSource) {
       return null;
     }
+    final reload = reloadMedia;
+    final openedAt = _mediaOpenedAt;
+    if (reload != null &&
+        shouldFetchFreshUrls(
+          openFailed: openFailed,
+          age: openedAt == null ? null : DateTime.now().difference(openedAt),
+        )) {
+      return reload().then((reloaded) {
+        if (!reloaded) return _reopenMedia();
+      });
+    }
+    return _reopenMedia();
+  }
+
+  Future<void>? _reopenMedia() {
     if (_videoPlayerController case final ctr? when (ctr.current.isNotEmpty)) {
       return ctr.open(
         ctr.current.last.copyWith(start: ctr.state.position),
@@ -915,7 +955,8 @@ class PlPlayerController with BlockConfigMixin {
                     '视频链接打开失败，重试中',
                     displayTime: const Duration(milliseconds: 500),
                   );
-                  refreshPlayer();
+                  // Most likely the signed URL expired: fetch fresh ones
+                  refreshPlayer(openFailed: true);
                 }
               });
             },
