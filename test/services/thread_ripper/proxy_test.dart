@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:PiliPlus/services/thread_ripper/job.dart';
 import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -167,4 +168,74 @@ void main() {
       expect(stats.hosts, isNotEmpty);
     },
   );
+
+  test('serves the first bytes before the warm-up is complete', () async {
+    final data = testFile(256 * 1024);
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(
+        data,
+        // The 64 KiB warm-up takes over a second
+        otherHosts: const FakeHost(
+          chunk: 1024,
+          chunkDelay: Duration(milliseconds: 20),
+        ),
+      ),
+      config: const RipperConfig(
+        firstPiece: 64 * 1024,
+        minPiece: 16 * 1024,
+        maxPiece: 16 * 1024,
+        tickMs: 10,
+      ),
+      wifiOnly: false,
+    );
+    addTearDown(ripper.close);
+    final url = await ripper.wrapNow(kListedUrl);
+
+    final watch = Stopwatch()..start();
+    final (response, body) = await get(url, range: 'bytes=0-99');
+    expect(response.statusCode, 206);
+    expect(body, data.sublist(0, 100));
+    expect(watch.elapsedMilliseconds, lessThan(500));
+
+    final (_, whole) = await get(url, range: 'bytes=0-');
+    expect(whole, data);
+  });
+
+  test('one deadline: no host answering falls back once, not twice', () async {
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(
+        testFile(4096),
+        otherHosts: const FakeHost(hang: true),
+      ),
+      config: testConfig,
+      wifiOnly: false,
+      commitTimeout: const Duration(milliseconds: 400),
+    );
+    addTearDown(ripper.close);
+    final url = await ripper.wrapNow(kListedUrl);
+
+    final watch = Stopwatch()..start();
+    final (response, _) = await get(url, range: 'bytes=0-', follow: false);
+    expect(response.statusCode, 302);
+    // The warm-up wait and the job's own would add up to 800 ms
+    expect(watch.elapsedMilliseconds, lessThan(700));
+  });
+
+  test('a file the proxy dropped is rebuilt from its URL', () async {
+    final data = testFile(20 * 1024);
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(data),
+      config: testConfig,
+      wifiOnly: false,
+    );
+    addTearDown(ripper.close);
+    final first = await ripper.wrapNow(kListedUrl);
+    for (var i = 0; i < 40; i++) {
+      await ripper.wrapNow('$kListedUrl&n=$i');
+    }
+
+    final (response, body) = await get(first, range: 'bytes=0-');
+    expect(response.statusCode, 206);
+    expect(body, data);
+  });
 }

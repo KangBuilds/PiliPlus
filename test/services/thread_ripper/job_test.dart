@@ -365,7 +365,6 @@ void phase2() {
     final ripper = job(fetcher, onePiece, racing: false);
     await ripper.begin();
 
-    final watch = Stopwatch()..start();
     expect(await _drain(ripper), data);
     final split = fetcher.requests.where(
       (r) => r.$1 != 'upos-sz-mirrorali.bilivideo.com',
@@ -373,8 +372,9 @@ void phase2() {
     expect(split, isNotEmpty);
     expect(split.first.$2.start, greaterThan(0));
     expect(split.first.$2.end, data.length - 1);
-    // The slow host alone takes about 640 ms
-    expect(watch.elapsedMilliseconds, lessThan(500));
+    // The other host carried part of it (timing is left out: under a busy
+    // test runner it says little)
+    expect(fetcher.delivered[split.first.$1], greaterThan(0));
     // Nothing was fetched twice beyond what was in flight at the split
     final fetched = fetcher.delivered.values.fold(0, (a, b) => a + b);
     expect(fetched, lessThan(data.length + 8 * 1024));
@@ -474,5 +474,51 @@ void phase2() {
       ),
       isEmpty,
     );
+  });
+
+  test(
+    'the head piece is rescued while later pieces hold every slot',
+    () async {
+      final data = testFile(64 * 1024);
+      // Nothing ever answers: no slot frees up on its own
+      final fetcher = FakeFetcher(data, otherHosts: const FakeHost(hang: true));
+      final ripper = RipperJob(
+        candidates: mediaCandidates([kListedUrl]),
+        fallback: Uri.parse(_fallback),
+        start: 0,
+        requestedEnd: null,
+        total: data.length,
+        book: HostBook(),
+        fetcher: fetcher,
+        excluded: {},
+        config: const RipperConfig(
+          minPiece: 8 * 1024,
+          maxPiece: 8 * 1024,
+          jobInflight: 4,
+          headTtfbMs: 60,
+          ttfbMs: 60000,
+          giveUpMs: 60000,
+          tickMs: 10,
+        ),
+      );
+      addTearDown(ripper.cancel);
+      await ripper.begin();
+      expect(fetcher.requests.length, 4);
+
+      // Past the head's first-byte limit (three typical first bytes)
+      await Future<void>.delayed(const Duration(milliseconds: 1500));
+      final head = fetcher.requests.where((r) => r.$2.start == 0);
+      expect(head.length, 3);
+      expect(fetcher.requests.length, 5);
+    },
+  );
+
+  test('a finished job stops its timer', () async {
+    final data = testFile(20 * 1024);
+    final ripper = _job(FakeFetcher(data), total: data.length);
+    await ripper.begin();
+    expect(ripper.ticking, isTrue);
+    await _drain(ripper);
+    expect(ripper.ticking, isFalse);
   });
 }

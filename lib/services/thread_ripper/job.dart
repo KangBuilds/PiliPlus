@@ -23,6 +23,7 @@ import 'package:PiliPlus/services/thread_ripper/candidates.dart';
 import 'package:PiliPlus/services/thread_ripper/fetcher.dart';
 import 'package:PiliPlus/services/thread_ripper/host_book.dart';
 import 'package:PiliPlus/services/thread_ripper/range.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 const _kib = 1024;
 const _mib = 1024 * _kib;
@@ -38,6 +39,7 @@ class RipperConfig {
     this.maxBytesAhead = 16 * _mib,
     this.jobInflight = 8,
     this.globalInflight = 24,
+    this.urgentReserve = 2,
     this.hostInflight = 4,
     this.maxRacers = 3,
     this.maxTries = 6,
@@ -69,6 +71,11 @@ class RipperConfig {
   final int maxBytesAhead;
   final int jobInflight;
   final int globalInflight;
+
+  /// Slots above [jobInflight] only the piece the player waits on may take,
+  /// to be rescued while later pieces hold every slot. [globalInflight]
+  /// stays a hard limit.
+  final int urgentReserve;
   final int hostInflight;
 
   /// Attempts on one piece at once.
@@ -265,6 +272,9 @@ class RipperJob {
 
   int? get total => _total;
 
+  @visibleForTesting
+  bool get ticking => _ticker?.isActive ?? false;
+
   /// Starts fetching; completes with the file's total size once a host
   /// confirmed it.
   Future<int> begin() {
@@ -314,7 +324,11 @@ class RipperJob {
           return bytes;
         }
       }
-      if (_end != null && _window.isEmpty && _nextOffset > _end!) return null;
+      if (_end != null && _window.isEmpty && _nextOffset > _end!) {
+        // Complete: nothing left to schedule
+        _ticker?.cancel();
+        return null;
+      }
       await (_changed ??= Completer<void>()).future;
     }
   }
@@ -385,8 +399,11 @@ class RipperJob {
     }
   }
 
-  bool get _slotFree =>
-      _inflight < config.jobInflight && book.inflight < config.globalInflight;
+  bool get _slotFree => _hasSlot();
+
+  bool _hasSlot({bool urgent = false}) =>
+      _inflight < config.jobInflight + (urgent ? config.urgentReserve : 0) &&
+      book.inflight < config.globalInflight;
 
   void _pump() {
     if (_closed) return;
@@ -458,7 +475,11 @@ class RipperJob {
       if (piece.done || piece.attempts.isEmpty) continue;
       if (piece.attempts.length >= config.maxRacers) continue;
       if (piece.attempts.any((a) => a.fallback)) continue;
-      if (!_slotFree) break;
+      if (!_hasSlot(urgent: head)) {
+        // Only the head may dip into the reserve: the rest wait their turn
+        if (head) continue;
+        break;
+      }
       if (_needsRacer(piece, head, now)) {
         for (final a in piece.attempts) {
           if (!a.receiving) book.recordWait(a.host, file, now - a.startedAt);

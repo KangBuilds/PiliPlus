@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
-import 'dart:math' show min;
-import 'dart:typed_data';
+import 'dart:math' show max, min;
 
 import 'package:PiliPlus/services/thread_ripper/candidates.dart';
 import 'package:PiliPlus/services/thread_ripper/fetcher.dart';
@@ -31,8 +31,43 @@ class _Source {
 
   /// The file's first bytes, fetched as soon as the URL is handed out: mpv
   /// reads them (the init segment and the index) before anything else.
-  /// `null` when the warm-up failed.
-  Future<Uint8List?>? head;
+  _Head? head;
+}
+
+/// The warm-up's bytes, handed out as they arrive.
+class _Head {
+  _Head(int capacity) : _buffer = Uint8List(capacity);
+
+  final Uint8List _buffer;
+
+  /// Bytes received so far, from offset 0.
+  int length = 0;
+  bool failed = false;
+  bool done = false;
+  Completer<void>? _changed;
+
+  /// Completes on new bytes, the end, or the file's size becoming known.
+  Future<void> get changed => (_changed ??= Completer<void>()).future;
+
+  void notify() {
+    final changed = _changed;
+    _changed = null;
+    changed?.complete();
+  }
+
+  void add(Uint8List bytes) {
+    _buffer.setRange(length, length + bytes.length, bytes);
+    length += bytes.length;
+    notify();
+  }
+
+  void finish({required bool failed}) {
+    this.failed = failed;
+    done = !failed;
+    notify();
+  }
+
+  Uint8List view(int from, int to) => Uint8List.sublistView(_buffer, from, to);
 }
 
 /// What the proxy does, for the playback info panel.
@@ -72,6 +107,7 @@ class ThreadRipper {
     HostBook? book,
     this.config = const RipperConfig(),
     this.wifiOnly = true,
+    this.commitTimeout = const Duration(seconds: 5),
   }) : fetcher = fetcher ?? HttpRangeFetcher(),
        book = book ?? HostBook();
 
@@ -82,9 +118,12 @@ class ThreadRipper {
 
   /// A request gets no validated response from any host by then: mpv is sent
   /// to its own URL.
-  static const commitTimeout = Duration(seconds: 5);
+  final Duration commitTimeout;
   static const _directAfterFailure = 30 * 1000;
-  static const _maxSources = 16;
+
+  /// Files kept, the least recently used dropped first. A dropped one is
+  /// rebuilt from its proxy URL, which carries the original.
+  static const _maxSources = 32;
   static const _maxAlternatives = 64;
   static const _rateWindowMs = 2000;
   static const _activeHostMs = 5000;
@@ -162,30 +201,66 @@ class ThreadRipper {
       return url;
     }
     final id = (++_seq).toString();
-    final source = _sources[id] = _Source(uri, candidates);
-    source.head = _warmUp(source);
+    final source = _keep(id, _Source(uri, candidates));
+    _warmUp(source);
+    final original = base64Url.encode(utf8.encode(url));
+    return 'http://${InternetAddress.loopbackIPv4.address}:${server.port}/m/$id?u=$original';
+  }
+
+  _Source _keep(String id, _Source source) {
+    _sources
+      ..remove(id)
+      ..[id] = source;
     while (_sources.length > _maxSources) {
       _sources.remove(_sources.keys.first);
     }
-    return 'http://${InternetAddress.loopbackIPv4.address}:${server.port}/m/$id';
+    return source;
   }
 
-  Future<Uint8List?> _warmUp(_Source source) async {
-    final job = _job(source, 0, config.firstPiece - 1);
+  /// The file [request] is for, rebuilt from the original URL it carries
+  /// when it was dropped.
+  _Source? _sourceOf(HttpRequest request) {
+    final segments = request.uri.pathSegments;
+    if (segments.length != 2 || segments[0] != 'm') return null;
+    final id = segments[1];
+    if (_sources[id] case final source?) return _keep(id, source);
     try {
-      await job.begin().timeout(commitTimeout);
-      final head = BytesBuilder(copy: false);
-      for (var c = await job.next(); c != null; c = await job.next()) {
-        head.add(c);
-      }
-      return head.takeBytes();
+      final url = utf8.decode(
+        base64Url.decode(request.uri.queryParameters['u'] ?? ''),
+      );
+      final uri = Uri.parse(url);
+      if (!uri.path.contains('/upgcxcode/')) return null;
+      return _keep(
+        id,
+        _Source(uri, mediaCandidates([url, ...?_alternatives[url]])),
+      );
     } catch (_) {
-      job.cancel();
       return null;
     }
   }
 
-  RipperJob _job(_Source source, int start, int? end) => RipperJob(
+  Future<void> _warmUp(_Source source) async {
+    final head = source.head = _Head(config.firstPiece);
+    final job = _job(source, 0, config.firstPiece - 1, onTotal: head.notify);
+    try {
+      await job.begin().timeout(commitTimeout);
+      for (var c = await job.next(); c != null; c = await job.next()) {
+        head.add(c);
+      }
+      head.finish(failed: false);
+    } catch (_) {
+      head.finish(failed: true);
+    } finally {
+      job.cancel();
+    }
+  }
+
+  RipperJob _job(
+    _Source source,
+    int start,
+    int? end, {
+    void Function()? onTotal,
+  }) => RipperJob(
     candidates: source.candidates,
     fallback: source.fallback,
     start: start,
@@ -200,6 +275,7 @@ class ThreadRipper {
       source
         ..total = total
         ..contentType ??= contentType;
+      onTotal?.call();
     },
   );
 
@@ -247,12 +323,10 @@ class ThreadRipper {
 
   Future<void> _handle(HttpRequest request) async {
     final response = request.response;
+    _Source? source;
     RipperJob? job;
     try {
-      final segments = request.uri.pathSegments;
-      final source = segments.length == 2 && segments[0] == 'm'
-          ? _sources[segments[1]]
-          : null;
+      source = _sourceOf(request);
       if (source == null) {
         response.statusCode = HttpStatus.notFound;
         return;
@@ -272,27 +346,29 @@ class ThreadRipper {
         return;
       }
 
-      // The first bytes come from the warm-up, the rest from a job
-      Uint8List? prefix;
-      final head = source.head == null || range.start >= config.firstPiece
-          ? null
-          : await source.head!.timeout(commitTimeout, onTimeout: () => null);
+      // One deadline for the whole wait, however it is spent
+      final deadline = book.clock() + commitTimeout.inMilliseconds;
+      Duration left() =>
+          Duration(milliseconds: max(0, deadline - book.clock()));
+
+      // The first bytes come from the warm-up as they arrive; it also tells
+      // the file's size
+      final head = range.start < config.firstPiece ? source.head : null;
+      while (head != null &&
+          source.total == null &&
+          !head.failed &&
+          left() > Duration.zero) {
+        await head.changed.timeout(left(), onTimeout: () {});
+      }
+      final fromHead = head != null && !head.failed && source.total != null;
+
       final int total;
-      if (head != null && source.total != null && range.start < head.length) {
+      if (fromHead) {
         total = source.total!;
-        final end = min(range.end ?? total - 1, total - 1);
-        prefix = Uint8List.sublistView(
-          head,
-          range.start,
-          min(head.length, end + 1),
-        );
-        if (end >= head.length) {
-          job = _job(source, head.length, end)..begin().ignore();
-        }
       } else {
         job = _job(source, range.start, range.end);
         try {
-          total = await job.begin().timeout(commitTimeout);
+          total = await job.begin().timeout(left());
         } catch (_) {
           job.cancel();
           if (source.total case final total? when range.start >= total) {
@@ -307,6 +383,12 @@ class ThreadRipper {
       }
 
       final end = min(range.end ?? total - 1, total - 1);
+      // The warm-up covers up to here; the rest is fetched meanwhile
+      final headEnd = min(config.firstPiece, total) - 1;
+      if (fromHead && end > headEnd) {
+        job = _job(source, headEnd + 1, end)..begin().ignore();
+      }
+
       response
         ..statusCode = rangeHeader == null
             ? HttpStatus.ok
@@ -328,31 +410,38 @@ class ThreadRipper {
         return;
       }
 
-      if (prefix != null) {
-        _serve(response, prefix);
-        await response.flush();
-      }
-      if (job == null) return;
-
       // mpv closed the connection (a seek, a new video): stop fetching
-      final runningJob = job;
-      response.done.whenComplete(runningJob.cancel).ignore();
-      for (
-        var c = await runningJob.next();
-        c != null;
-        c = await runningJob.next()
-      ) {
-        _serve(response, c);
-        await response.flush();
+      RipperJob? gap;
+      response.done.whenComplete(() {
+        job?.cancel();
+        gap?.cancel();
+      }).ignore();
+
+      if (fromHead) {
+        var pos = range.start;
+        final stop = min(end, headEnd);
+        while (pos <= stop) {
+          if (head.length > pos) {
+            final to = min(head.length, stop + 1);
+            _serve(response, head.view(pos, to));
+            pos = to;
+            await response.flush();
+          } else if (head.failed) {
+            // The warm-up broke off: the rest of it from a job of its own
+            gap = _job(source, pos, stop);
+            await gap.begin();
+            await _drain(gap, response);
+            pos = stop + 1;
+          } else {
+            await head.changed;
+          }
+        }
       }
+      if (job != null) await _drain(job, response);
     } catch (e) {
       job?.cancel();
       if (e is RipperJobFailed && e.message != 'canceled') {
-        final segments = request.uri.pathSegments;
-        if (segments.length == 2) {
-          _sources[segments[1]]?.directUntil =
-              book.clock() + _directAfterFailure;
-        }
+        source?.directUntil = book.clock() + _directAfterFailure;
         if (kDebugMode) debugPrint('thread ripper: $e');
       }
       // Committed: closing short of Content-Length drops the connection, mpv
@@ -361,6 +450,13 @@ class ThreadRipper {
       try {
         await response.close();
       } catch (_) {}
+    }
+  }
+
+  Future<void> _drain(RipperJob job, HttpResponse response) async {
+    for (var c = await job.next(); c != null; c = await job.next()) {
+      _serve(response, c);
+      await response.flush();
     }
   }
 
