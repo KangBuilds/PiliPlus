@@ -39,6 +39,7 @@ import 'package:PiliPlus/plugin/pl_player/widgets/common_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/forward_seek.dart';
 import 'package:PiliPlus/plugin/pl_player/widgets/play_pause_btn.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/video_output_size.dart';
+import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/connectivity_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
@@ -345,6 +346,10 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     plPlayerController.setApplicationInBackground(isInBackground);
     if (state == .resumed && defaultTargetPlatform == TargetPlatform.iOS) {
       unawaited(plPlayerController.restorePictureInPicture());
+    }
+    if (state == .resumed) {
+      // iOS may have taken the multi-CDN proxy's socket while suspended
+      threadRipper.revive();
     }
     if (isInBackground &&
         defaultTargetPlatform != TargetPlatform.iOS &&

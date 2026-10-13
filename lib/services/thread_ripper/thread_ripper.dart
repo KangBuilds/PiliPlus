@@ -279,9 +279,48 @@ class ThreadRipper {
     },
   );
 
+  /// The listening server, alive: iOS can take the socket away while the
+  /// app is suspended without the server ever hearing of it, and every URL
+  /// handed out then would be refused.
   Future<HttpServer> _ensureServer() {
-    if (_server case final server?) return Future.value(server);
-    return _starting ??= _bind().whenComplete(() => _starting = null);
+    return _starting ??= () async {
+      try {
+        if (_server case final server?) {
+          // Not server.port: an unbound server throws on it
+          if (await _accepts(_port!)) return server;
+          if (kDebugMode) debugPrint('thread ripper: socket lost, rebinding');
+          _server = null;
+          _socketLost = false;
+          try {
+            // Already unbound, it may throw rather than fail its future
+            await server.close(force: true);
+          } catch (_) {}
+        }
+        return await _bind();
+      } finally {
+        _starting = null;
+      }
+    }();
+  }
+
+  static Future<bool> _accepts(int port) async {
+    try {
+      final socket = await Socket.connect(
+        InternetAddress.loopbackIPv4,
+        port,
+        timeout: const Duration(milliseconds: 500),
+      );
+      socket.destroy();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// The app is in the foreground again: bring the server back before mpv
+  /// reconnects, if it was in use.
+  void revive() {
+    if (_server != null && !_shutDown) _ensureServer().ignore();
   }
 
   Future<HttpServer> _bind() async {
@@ -303,8 +342,9 @@ class ThreadRipper {
       );
     }
     void restart([_]) {
-      // iOS may take the socket away while the app is suspended
-      if (identical(_server, server)) _server = null;
+      // The socket went away and the server noticed: bind again
+      if (!identical(_server, server) || _shutDown || _socketLost) return;
+      _server = null;
       _ensureServer().ignore();
     }
 
@@ -312,8 +352,21 @@ class ThreadRipper {
     return server;
   }
 
+  bool _shutDown = false;
+  bool _socketLost = false;
+
+  /// Closes the socket behind the server's back, as iOS does to a suspended
+  /// app: the server object stays, and does not know.
+  @visibleForTesting
+  Future<void> loseSocket() async {
+    // The server must not notice: no restart
+    _socketLost = true;
+    await _server?.close(force: true);
+  }
+
   @visibleForTesting
   Future<void> close() async {
+    _shutDown = true;
     await _connectivity?.cancel();
     _connectivity = null;
     final server = _server;

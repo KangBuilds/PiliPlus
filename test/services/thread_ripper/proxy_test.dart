@@ -284,4 +284,50 @@ void main() {
     expect(response.contentLength, data.length - 100);
     expect(watch.elapsedMilliseconds, lessThan(1000));
   });
+
+  group('after iOS took the socket away', () {
+    Future<(ThreadRipper, String, Uint8List)> lost() async {
+      final data = testFile(20 * 1024);
+      final ripper = ThreadRipper(
+        fetcher: FakeFetcher(data),
+        config: testConfig,
+        wifiOnly: false,
+      );
+      addTearDown(ripper.close);
+      final url = await ripper.wrapNow(kListedUrl);
+      expect((await get(url, range: 'bytes=0-')).$2, data);
+      await ripper.loseSocket();
+      // A fresh client: a pooled connection would fail differently
+      client.close(force: true);
+      client = HttpClient()..autoUncompress = false;
+      await expectLater(
+        get(url, range: 'bytes=0-'),
+        throwsA(isA<SocketException>()),
+      );
+      return (ripper, url, data);
+    }
+
+    test('new URLs are served by a live server again', () async {
+      final (ripper, url, data) = await lost();
+      final fresh = await ripper.wrapNow(kListedUrl);
+      expect((await get(fresh, range: 'bytes=0-')).$2, data);
+      // On the same port: what mpv holds works again too
+      expect(Uri.parse(fresh).port, Uri.parse(url).port);
+      expect((await get(url, range: 'bytes=0-')).$2, data);
+    });
+
+    test('coming back to the foreground revives it', () async {
+      final (ripper, url, data) = await lost();
+      ripper.revive();
+      for (var i = 0; i < 50; i++) {
+        try {
+          expect((await get(url, range: 'bytes=0-')).$2, data);
+          return;
+        } on SocketException {
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        }
+      }
+      fail('not revived');
+    });
+  });
 }
