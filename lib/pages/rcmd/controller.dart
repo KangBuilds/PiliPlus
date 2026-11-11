@@ -1,11 +1,16 @@
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/video.dart';
+import 'package:PiliPlus/models/common/rcmd_source.dart';
 import 'package:PiliPlus/pages/common/common_list_controller.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 
 class RcmdController extends CommonListController {
   late bool enableSaveLastData = Pref.enableSaveLastData;
-  final bool appRcmd = Pref.appRcmd;
+  RcmdSource _rcmdSource = Pref.rcmdSource;
+  RcmdSource get rcmdSource => _rcmdSource;
+  bool get appRcmd => rcmdSource == RcmdSource.app;
+  int _sourceVersion = 0;
+  bool _resetSource = false;
 
   int? lastRefreshAt;
   late bool savedRcmdTip = Pref.savedRcmdTip;
@@ -21,10 +26,45 @@ class RcmdController extends CommonListController {
   }
 
   @override
-  Future<LoadingState> customGetData() {
-    return appRcmd
-        ? VideoHttp.rcmdVideoListApp(freshIdx: page)
-        : VideoHttp.rcmdVideoList(freshIdx: page, ps: 20);
+  Future<LoadingState> customGetData() async {
+    while (true) {
+      final version = _sourceVersion;
+      final result = await switch (rcmdSource) {
+        RcmdSource.app => VideoHttp.rcmdVideoListApp(freshIdx: page),
+        RcmdSource.web => VideoHttp.rcmdVideoList(freshIdx: page, ps: 20),
+        RcmdSource.desktop => VideoHttp.rcmdVideoList(
+          freshIdx: page,
+          ps: 30,
+          desktop: true,
+        ),
+      };
+      // A source switch can happen while a refresh or load-more is in flight.
+      if (version == _sourceVersion) {
+        if (_resetSource && result is Error) {
+          _resetSource = false;
+          loadingState.value = result;
+        }
+        return result;
+      }
+    }
+  }
+
+  void switchSource(RcmdSource source) {
+    if (source == rcmdSource) return;
+    _rcmdSource = source;
+    _sourceVersion++;
+    _resetSource = true;
+    lastRefreshAt = null;
+    onReload();
+  }
+
+  @override
+  bool customHandleResponse(bool isRefresh, Success response) {
+    if (!_resetSource) return false;
+    _resetSource = false;
+    // Replace the list even if the original request was a load-more.
+    loadingState.value = Success(response.response as List?);
+    return true;
   }
 
   @override

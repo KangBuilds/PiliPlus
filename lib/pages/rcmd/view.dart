@@ -50,18 +50,19 @@ class _RcmdPageState extends State<RcmdPage>
     );
   }
 
-  late final gridDelegate = SliverGridDelegateWithExtentAndRatio(
-    mainAxisSpacing: Style.cardSpace,
-    crossAxisSpacing: Style.cardSpace,
-    maxCrossAxisExtent: Pref.recommendCardWidth,
-    crossAxisCount: Pref.recommendColumnCount == 0
-        ? null
-        : Pref.recommendColumnCount,
-    childAspectRatio: Style.aspectRatio,
-    mainAxisExtent: MediaQuery.textScalerOf(
-      context,
-    ).scale(controller.appRcmd ? 70 : 90),
-  );
+  SliverGridDelegateWithExtentAndRatio get gridDelegate =>
+      SliverGridDelegateWithExtentAndRatio(
+        mainAxisSpacing: Style.cardSpace,
+        crossAxisSpacing: Style.cardSpace,
+        maxCrossAxisExtent: Pref.recommendCardWidth,
+        crossAxisCount: Pref.recommendColumnCount == 0
+            ? null
+            : Pref.recommendColumnCount,
+        childAspectRatio: Style.aspectRatio,
+        mainAxisExtent: MediaQuery.textScalerOf(
+          context,
+        ).scale(controller.appRcmd ? 70 : 90),
+      );
 
   Widget _buildBody(
     ColorScheme colorScheme,

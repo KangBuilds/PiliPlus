@@ -37,7 +37,7 @@ class _SettingPageState extends State<SettingPage> {
   static const List<_SettingsModel> _items = [
     _SettingsModel(
       type: SettingType.recommendSetting,
-      subtitle: '推荐来源（web/app）、刷新保留内容、过滤器',
+      subtitle: '推荐来源（App/Web/桌面端）、刷新保留内容、过滤器',
       icon: Icon(Icons.explore_outlined),
     ),
     _SettingsModel(

@@ -36,6 +36,7 @@ abstract final class SettingBoxKey {
       enableQuickDouble = 'enableQuickDouble',
       fullScreenGestureReverse = 'fullScreenGestureReverse',
       appRcmd = 'appRcmd',
+      rcmdSource = 'rcmdSource',
       enableSaveLastData = 'enableSaveLastData',
       minDurationForRcmd = 'minDurationForRcmd',
       minPlayForRcmd = 'minPlayForRcmd',

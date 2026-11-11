@@ -1,20 +1,23 @@
 import 'package:PiliPlus/http/video.dart';
+import 'package:PiliPlus/models/common/rcmd_source.dart';
 import 'package:PiliPlus/pages/rcmd/controller.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
+import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/utils/recommend_filter.dart';
+import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
 List<SettingsModel> get recommendSettings => [
-  const SwitchModel(
-    title: '首页使用app端推荐',
-    subtitle: '若web端推荐不太符合预期，可尝试切换至app端推荐',
-    leading: Icon(Icons.model_training_outlined),
-    setKey: SettingBoxKey.appRcmd,
-    defaultVal: true,
-    needReboot: true,
+  NormalModel(
+    title: '首页推荐来源',
+    getSubtitle: () => Pref.rcmdSource.label,
+    leading: const Icon(Icons.swap_horiz_outlined),
+    onTap: _showRcmdSourceDialog,
   ),
   SwitchModel(
     title: '保留首页推荐刷新',
@@ -101,3 +104,35 @@ List<SettingsModel> get recommendSettings => [
     onChanged: (value) => RecommendFilter.applyFilterToRelatedVideos = value,
   ),
 ];
+
+Future<void> _showRcmdSourceDialog(
+  BuildContext context,
+  VoidCallback setState,
+) async {
+  final source = await showDialog<RcmdSource>(
+    context: context,
+    builder: (context) => SelectDialog<RcmdSource>(
+      title: '首页推荐来源',
+      value: Pref.rcmdSource,
+      values: RcmdSource.values
+          .map((source) => (source, source.label))
+          .toList(),
+      subtitleBuilder: (context, index) => switch (RcmdSource.values[index]) {
+        RcmdSource.app => const Text('使用 App 端推荐接口'),
+        RcmdSource.web => const Text('使用 Web 首页推荐接口'),
+        RcmdSource.desktop => const Text('使用 Web 推荐接口，采用官方桌面客户端的请求参数'),
+      },
+    ),
+  );
+  if (source == null || source == Pref.rcmdSource) return;
+  // Keep the old App/Web preference usable when downgrading.
+  await GStorage.setting.putAll({
+    SettingBoxKey.appRcmd: source == RcmdSource.app,
+    SettingBoxKey.rcmdSource: source.index,
+  });
+  setState();
+  if (Get.isRegistered<RcmdController>()) {
+    Get.find<RcmdController>().switchSource(source);
+  }
+  SmartDialog.showToast('已切换为${source.label}');
+}

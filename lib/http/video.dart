@@ -47,18 +47,32 @@ abstract final class VideoHttp {
   static Future<LoadingState<List<RcmdVideoItemModel>>> rcmdVideoList({
     required int ps,
     required int freshIdx,
+    bool desktop = false,
   }) async {
+    final params = desktop
+        ? <String, Object>{
+            'plat': 1,
+            'feed_version': 'V1',
+            'ps': ps,
+            'fresh_idx': freshIdx,
+            'fresh_type': freshIdx == 0 ? 0 : 4,
+            'x_num': 3,
+            'y_num': 4,
+            'pc_wx_install': 0,
+            'pc_wx_gm_install': 0,
+          }
+        : <String, Object>{
+            'version': 1,
+            'feed_version': 'V8',
+            'homepage_ver': 1,
+            'ps': ps,
+            'fresh_idx': freshIdx,
+            'brush': freshIdx,
+            'fresh_type': 4,
+          };
     final res = await Request().get(
       Api.recommendListWeb,
-      queryParameters: await WbiSign.makSign({
-        'version': 1,
-        'feed_version': 'V8',
-        'homepage_ver': 1,
-        'ps': ps,
-        'fresh_idx': freshIdx,
-        'brush': freshIdx,
-        'fresh_type': 4,
-      }),
+      queryParameters: await WbiSign.makSign(params),
     );
     if (res.data['code'] == 0) {
       List<RcmdVideoItemModel> list = <RcmdVideoItemModel>[];
