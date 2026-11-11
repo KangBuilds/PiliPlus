@@ -43,6 +43,7 @@ void main() {
       expect(verdict(206, null).outcome, MediaOutcome.unverifiable);
       expect(verdict(200, null).outcome, MediaOutcome.noRange);
       expect(verdict(403, null).outcome, MediaOutcome.refused);
+      expect(isFileLevelFailure(MediaOutcome.refused), isFalse);
       expect(verdict(429, null).outcome, MediaOutcome.throttled);
     });
   });
@@ -80,6 +81,50 @@ void main() {
       expect(candidates.map((c) => c.host), [
         'upos-hz-mirrorakam.akamaized.net',
       ]);
+    });
+
+    test('keeps every signature on mirrors and listed bcache hosts', () {
+      const path = '/upgcxcode/1/2/3.m4s';
+      const bcache = 'cn-hk-eq-bcache-01.bilivideo.com';
+      final urls = [
+        'https://$bcache$path?upsig=a',
+        'https://${seedHosts.first}$path?upsig=b',
+      ];
+      final candidates = mediaCandidates([...urls, urls.first]);
+      expect(candidates.take(2).every((c) => c.listed), isTrue);
+      expect(candidates.map((c) => c.uri).toSet().length, candidates.length);
+      for (final host in [bcache, ...seedHosts]) {
+        expect(
+          candidates
+              .where((c) => c.host == host)
+              .map((c) => c.uri.queryParameters['upsig'])
+              .toSet(),
+          {'a', 'b'},
+        );
+      }
+    });
+
+    test('wrapped upgcxcode resources go through the proxy, never mirrors', () {
+      for (final host in ['203.0.113.7:4483', 'node.mcdn.bilivideo.cn:4483']) {
+        final uri = Uri.parse(
+          'https://$host/v1/resource/upgcxcode/1/2/3.m4s?upsig=a',
+        );
+        expect(mediaCandidates([uri.toString()]), isEmpty);
+        final rescued = rescueP2PUrl(uri)!;
+        expect(rescued.host, 'proxy-tf-all-ws.bilivideo.com');
+        expect(rescued.queryParameters['url'], uri.toString());
+      }
+    });
+
+    test('new PCDN domains are excluded while their upos signatures move', () {
+      for (final host in ['edge.mountaintoys.cn', 'edge.bvmlt.top']) {
+        final uri = Uri.parse('https://$host/upgcxcode/1/2/3.m4s?upsig=a');
+        expect(isP2PUrl(uri), isTrue);
+        final candidates = mediaCandidates([uri.toString()]);
+        expect(candidates.any((c) => c.host == host), isFalse);
+        expect(candidates.every((c) => !c.listed), isTrue);
+        expect(candidates.map((c) => c.host), containsAll(seedHosts));
+      }
     });
 
     test('a 302 PCDN redirect target counts as P2P', () {

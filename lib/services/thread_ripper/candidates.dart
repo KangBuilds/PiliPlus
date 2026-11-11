@@ -16,6 +16,8 @@ const _p2pKeywords = [
   'szbdyd.com',
   '.nexusedgeio.com',
   '.ahdohpiechei.com',
+  '.mountaintoys.cn',
+  '.bvmlt.top',
   // A mirror name, but its certificate is the PCDN one (*.bilivideo.cn)
   'upos-sz-mirror14b.bilivideo.com',
 ];
@@ -81,7 +83,7 @@ final _mcdnTfRegex = RegExp(
 /// `null` when there is no such address. From no-p2p/policy.ts.
 Uri? rescueP2PUrl(Uri uri) {
   // Any upgcxcode host serves the signature
-  if (uri.path.contains('/upgcxcode/')) {
+  if (uri.path.startsWith('/upgcxcode/')) {
     if (isAkamaiSigned(uri)) return null;
     return Uri.parse('https://$defaultMirrorHost${uri.path}?${uri.query}');
   }
@@ -117,10 +119,11 @@ class MediaCandidate {
 
 /// Every URL [urls] (the playurl's addresses, preferred first) can be fetched
 /// from: the listed ones that are not P2P, then each upos signature on every
-/// other upgcxcode host. At most one candidate per host.
+/// other upgcxcode host. Keeps distinct signatures on the same host.
 List<MediaCandidate> mediaCandidates(Iterable<String> urls) {
   final candidates = <MediaCandidate>[];
-  final hosts = <String>{};
+  final seen = <String>{};
+  final hosts = {...seedHosts};
   final moved = <Uri>[];
 
   for (final url in urls) {
@@ -128,24 +131,26 @@ List<MediaCandidate> mediaCandidates(Iterable<String> urls) {
     if (uri == null || !uri.isScheme('https') && !uri.isScheme('http')) {
       continue;
     }
-    final upgcxcode = uri.path.contains('/upgcxcode/');
-    if (!isP2PUrl(uri) && hosts.add(uri.host)) {
+    final upgcxcode = uri.path.startsWith('/upgcxcode/');
+    final normalized = uri.replace(scheme: 'https');
+    if (!isP2PUrl(uri) && seen.add(normalized.toString())) {
       candidates.add(
-        MediaCandidate(uri.replace(scheme: 'https'), listed: true),
+        MediaCandidate(normalized, listed: true),
       );
     }
     if (upgcxcode && !isAkamaiSigned(uri)) {
       moved.add(uri);
+      if (!isP2PUrl(uri)) hosts.add(uri.host);
     }
   }
 
-  if (moved.isNotEmpty) {
-    final signed = moved.first;
-    for (final host in seedHosts) {
-      if (hosts.add(host)) {
+  for (final signed in moved) {
+    for (final host in hosts) {
+      final uri = Uri.parse('https://$host${signed.path}?${signed.query}');
+      if (seen.add(uri.toString())) {
         candidates.add(
           MediaCandidate(
-            Uri.parse('https://$host${signed.path}?${signed.query}'),
+            uri,
             listed: false,
           ),
         );

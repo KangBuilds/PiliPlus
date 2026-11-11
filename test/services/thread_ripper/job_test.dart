@@ -167,6 +167,46 @@ void main() {
     await expectLater(job.next(), throwsA(isA<RipperJobFailed>()));
   });
 
+  test(
+    'a refused signature retries the same host with another signature',
+    () async {
+      final data = testFile(16 * 1024);
+      final bad = Uri.parse(kListedUrl);
+      final good = bad.replace(
+        queryParameters: {...bad.queryParameters, 'upsig': 'good'},
+      );
+      final fetcher = FakeFetcher(
+        data,
+        hosts: {bad.host: const FakeHost()},
+        otherHosts: FakeHost.refusing,
+        refusedUrls: {bad.toString()},
+      );
+      final book = HostBook();
+      final excluded = <String>{};
+      final job = RipperJob(
+        candidates: mediaCandidates([bad.toString(), good.toString()]),
+        fallback: bad,
+        start: 0,
+        requestedEnd: null,
+        total: data.length,
+        book: book,
+        fetcher: fetcher,
+        excluded: excluded,
+        racing: () => false,
+        config: testConfig,
+      );
+      addTearDown(job.cancel);
+
+      await job.begin();
+      expect(await _drain(job), data);
+      expect(fetcher.requestUris, contains(good));
+      expect(book.isRefused(bad, bad.path), isTrue);
+      expect(book.isRefused(good, bad.path), isFalse);
+      expect(book.isCoolingDown(bad.host), isFalse);
+      expect(excluded, isNot(contains(bad.host)));
+    },
+  );
+
   test('never duplicates a piece when racing is off', () async {
     final data = testFile(64 * 1024);
     final fetcher = FakeFetcher(

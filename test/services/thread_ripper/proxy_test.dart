@@ -98,6 +98,9 @@ void main() {
     const akamai =
         'https://upos-hz-mirrorakam.akamaized.net/upgcxcode/1/2/3.m4s?hdnts=exp=1~hmac=x';
     expect(await ripper.wrapNow(akamai), akamai);
+    const wrapped =
+        'https://node.mcdn.bilivideo.cn:4483/v1/resource/upgcxcode/1/2/3.m4s?upsig=a';
+    expect(await ripper.wrapNow(wrapped), wrapped);
   });
 
   test(

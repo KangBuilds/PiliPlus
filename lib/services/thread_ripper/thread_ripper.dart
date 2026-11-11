@@ -195,7 +195,7 @@ class ThreadRipper {
   @visibleForTesting
   Future<String> wrapNow(String url) async {
     final uri = Uri.tryParse(url);
-    if (uri == null || !uri.path.contains('/upgcxcode/')) return url;
+    if (uri == null || !uri.path.startsWith('/upgcxcode/')) return url;
     final candidates = mediaCandidates([url, ...?_alternatives[url]]);
     if (candidates.length < 2) return url;
     final HttpServer server;
@@ -234,7 +234,7 @@ class ThreadRipper {
         base64Url.decode(request.uri.queryParameters['u'] ?? ''),
       );
       final uri = Uri.parse(url);
-      if (!uri.path.contains('/upgcxcode/')) return null;
+      if (!uri.path.startsWith('/upgcxcode/')) return null;
       return _keep(
         id,
         _Source(uri, mediaCandidates([url, ...?_alternatives[url]])),

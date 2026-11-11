@@ -149,6 +149,6 @@ ResponseVerdict classifyResponse({
 /// The host does not have this file, or a different version of it: it is no
 /// use for the rest of this file.
 bool isFileLevelFailure(MediaOutcome outcome) => switch (outcome) {
-  .missing || .staleObject || .noRange || .refused || .redirect => true,
+  .missing || .staleObject || .noRange || .redirect => true,
   _ => false,
 };

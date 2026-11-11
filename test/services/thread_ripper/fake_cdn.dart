@@ -70,12 +70,15 @@ class FakeFetcher implements RangeFetcher {
     this.data, {
     this.hosts = const {},
     this.otherHosts = const FakeHost(),
+    this.refusedUrls = const {},
   });
 
   final Uint8List data;
   final Map<String, FakeHost> hosts;
   final FakeHost otherHosts;
+  final Set<String> refusedUrls;
   final requests = <(String, ByteRange)>[];
+  final requestUris = <Uri>[];
   final delivered = <String, int>{};
 
   @override
@@ -85,6 +88,7 @@ class FakeFetcher implements RangeFetcher {
     CancelSignal cancel,
   ) async {
     requests.add((uri.host, range));
+    requestUris.add(uri);
     final host = hosts[uri.host] ?? otherHosts;
     final canceled = Completer<void>();
     cancel.onCancel(() {
@@ -98,7 +102,7 @@ class FakeFetcher implements RangeFetcher {
     if (cancel.isCanceled) throw StateError('aborted');
     final failFrom = host.failFrom;
     final status =
-        host.status ??
+        (refusedUrls.contains(uri.toString()) ? 403 : host.status) ??
         (failFrom != null && range.start >= failFrom ? 403 : null);
     if (status != null) {
       return RangeResponse(

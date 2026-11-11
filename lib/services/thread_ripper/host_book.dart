@@ -18,6 +18,7 @@ class _Samples {
   final ttfb = <double>[];
   final rate = <double>[];
   final gap = <double>[];
+  final refused = <String, int>{};
 
   static const _keep = 8;
 
@@ -204,10 +205,19 @@ class HostBook {
   static bool _isConnectionFailure(MediaOutcome outcome) =>
       outcome == .network || outcome == .truncated;
 
-  /// Holds [outcome] against [host], unless it says nothing about the host.
+  /// Holds [outcome] against [uri]'s host, or just its signed address.
   /// `false` when the viewer's network is down: the attempt says nothing
   /// about the piece either.
-  bool recordFailure(String host, MediaOutcome outcome) {
+  bool recordFailure(Uri uri, String file, MediaOutcome outcome) {
+    final host = uri.host;
+    if (outcome == .refused) {
+      // Another signature on this host may still work.
+      final refused = _samples(host, file).refused;
+      final now = clock();
+      refused.removeWhere((_, until) => until <= now);
+      refused[uri.toString()] = now + 60 * 1000;
+      return true;
+    }
     final stats = this[host];
     if (_isConnectionFailure(outcome)) {
       _failedSinceProgress.add(host);
@@ -227,7 +237,6 @@ class HostBook {
     }
     stats.failures++;
     final cooldown = switch (outcome) {
-      .refused => 10 * 60 * 1000,
       .throttled => 10 * 1000,
       // Specific to the file: the job excludes the host for it instead
       .missing || .staleObject || .noRange || .redirect => 0,
@@ -238,6 +247,9 @@ class HostBook {
   }
 
   bool isCoolingDown(String host) => this[host].cooldownUntil > clock();
+
+  bool isRefused(Uri uri, String file) =>
+      (_files[file]?[uri.host]?.refused[uri.toString()] ?? 0) > clock();
 
   /// Measured on [file]: a host fast on another file may not have this one
   /// cached.

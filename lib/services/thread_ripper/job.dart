@@ -588,6 +588,7 @@ class RipperJob {
       if (book.isMeasured(c.host, file) ||
           busy.contains(c.host) ||
           excluded.contains(c.host) ||
+          book.isRefused(c.uri, file) ||
           book.isCoolingDown(c.host) ||
           stats.inflight >= config.hostInflight) {
         continue;
@@ -608,7 +609,7 @@ class RipperJob {
     if (racer || piece.attempts.isNotEmpty) return true;
     // Hosts are left, only busy with other pieces: wait for the next tick
     if (waitable) return true;
-    if (!piece.fallbackTried) {
+    if (!piece.fallbackTried && !book.isRefused(fallback, file)) {
       piece.fallbackTried = true;
       _start(
         _Attempt(piece, fallback, fallback.host, book.clock(), fallback: true),
@@ -618,7 +619,9 @@ class RipperJob {
     // Hosts that only cool down come back: a new round once they do, until
     // the piece has been stuck too long
     final now = book.clock();
-    if (candidates.any((c) => !excluded.contains(c.host)) &&
+    if (candidates.any(
+          (c) => !excluded.contains(c.host) && !book.isRefused(c.uri, file),
+        ) &&
         now - piece.lastProgressAt < config.stuckMs) {
       piece
         ..tries = 0
@@ -664,6 +667,7 @@ class RipperJob {
     final etas = <String, double>{};
     for (final c in candidates) {
       if (excluded.contains(c.host) ||
+          book.isRefused(c.uri, file) ||
           book.isCoolingDown(c.host) ||
           !book.isMeasured(c.host, file)) {
         continue;
@@ -699,6 +703,7 @@ class RipperJob {
     final pool = [
       for (final c in candidates)
         if (!excluded.contains(c.host) &&
+            !book.isRefused(c.uri, file) &&
             !busy.contains(c.host) &&
             !book.isCoolingDown(c.host) &&
             (owners == null || owners.contains(c.host)))
@@ -913,13 +918,14 @@ class RipperJob {
     if (outcome == .ok) {
       book.recordSuccess(a.host);
     } else if (outcome != .canceled) {
-      if (!book.recordFailure(a.host, outcome)) {
+      if (!book.recordFailure(a.uri, file, outcome)) {
         // The viewer's network is down: nothing to learn about the host or
         // the piece. Try again shortly, the player's own URL included
         piece.retryAt = book.clock() + 500;
         if (a.fallback) piece.fallbackTried = false;
       } else {
         piece.failures[a.fallback ? 'own URL' : a.host] = outcome;
+        if (outcome == .refused) piece.tried.remove(a.host);
         if (isFileLevelFailure(outcome)) excluded.add(a.host);
         if (a.useful > 0) {
           // It moved the piece on: a connection failed, not the piece, and

@@ -50,14 +50,14 @@ abstract final class VideoUtils {
     if (host != null &&
         !(isAudio && disableAudioCDN) &&
         !isP2PCdnHost(host) &&
-        selected.path.contains('/upgcxcode/')) {
+        selected.path.startsWith('/upgcxcode/')) {
       // A host only accepts its own family of signatures: Akamai its own, the
       // others upos ones. Use a listed address the chosen host accepts
       final signed = acceptsSignatureOf(host, selected)
           ? selected
           : official.firstWhereOrNull(
               (uri) =>
-                  uri.path.contains('/upgcxcode/') &&
+                  uri.path.startsWith('/upgcxcode/') &&
                   acceptsSignatureOf(host, uri),
             );
       if (signed != null) selected = signed.replace(host: host);

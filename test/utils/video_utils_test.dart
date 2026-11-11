@@ -63,6 +63,25 @@ void main() {
       expect(proxied.queryParameters['url'], mcdnTf);
     });
 
+    test('a CDN override never rewrites wrapped resource signatures', () {
+      const wrapped = 'https://203.0.113.7:4483/v1/resource$upos';
+      final proxied = Uri.parse(
+        pick([wrapped], host: 'upos-sz-mirrorcos.bilivideo.com'),
+      );
+      expect(proxied.host, 'proxy-tf-all-ws.bilivideo.com');
+      expect(proxied.queryParameters['url'], wrapped);
+
+      const listed =
+          'https://cn-hk-eq-bcache-01.bilivideo.com/v1/resource$upos';
+      expect(pick([listed], host: 'upos-sz-mirrorcos.bilivideo.com'), listed);
+    });
+
+    test('new PCDN domains never outrank listed official addresses', () {
+      for (final host in ['edge.mountaintoys.cn', 'edge.bvmlt.top']) {
+        expect(pick(['https://$host$upos', akamai]), akamai);
+      }
+    });
+
     test('applies the CDN override to signatures the host accepts', () {
       expect(
         Uri.parse(pick([bcache], host: 'upos-sz-mirrorcos.bilivideo.com')).host,

@@ -55,11 +55,17 @@ void main() {
         ..noteStart()
         ..recordBytes('a', 1024);
       now += 3001;
-      expect(book.recordFailure('b', MediaOutcome.network), isFalse);
+      expect(
+        book.recordFailure(Uri.https('b', '/f'), 'f', MediaOutcome.network),
+        isFalse,
+      );
       expect(book.isCoolingDown('b'), isFalse);
 
       book.recordBytes('a', 1024);
-      expect(book.recordFailure('b', MediaOutcome.network), isTrue);
+      expect(
+        book.recordFailure(Uri.https('b', '/f'), 'f', MediaOutcome.network),
+        isTrue,
+      );
       expect(book.isCoolingDown('b'), isTrue);
     },
   );
@@ -68,11 +74,20 @@ void main() {
     book
       ..noteStart()
       ..recordBytes('x', 1024);
-    expect(book.recordFailure('a', MediaOutcome.network), isTrue);
-    expect(book.recordFailure('b', MediaOutcome.truncated), isTrue);
+    expect(
+      book.recordFailure(Uri.https('a', '/f'), 'f', MediaOutcome.network),
+      isTrue,
+    );
+    expect(
+      book.recordFailure(Uri.https('b', '/f'), 'f', MediaOutcome.truncated),
+      isTrue,
+    );
     expect(book.isCoolingDown('a'), isTrue);
     // The third makes it clear: everyone is forgiven
-    expect(book.recordFailure('c', MediaOutcome.network), isFalse);
+    expect(
+      book.recordFailure(Uri.https('c', '/f'), 'f', MediaOutcome.network),
+      isFalse,
+    );
     expect(book.isCoolingDown('a'), isFalse);
     expect(book.isCoolingDown('b'), isFalse);
     expect(book.isCoolingDown('c'), isFalse);
@@ -85,17 +100,32 @@ void main() {
         ..noteStart()
         ..recordBytes('a', 1024);
       now += 500;
-      expect(book.recordFailure('a', MediaOutcome.truncated), isTrue);
+      expect(
+        book.recordFailure(Uri.https('a', '/f'), 'f', MediaOutcome.truncated),
+        isTrue,
+      );
       expect(book.isCoolingDown('a'), isFalse);
       expect(book['a'].failures, 0);
     },
   );
 
-  test('a refusal always counts, network or not', () {
+  test('a refusal excludes only its signed URL and file for 60 seconds', () {
+    final refused = Uri.https('a', '/f', {'upsig': 'bad'});
+    final alternative = Uri.https('a', '/f', {'upsig': 'good'});
     book.noteStart();
     now += 5000;
-    expect(book.recordFailure('a', MediaOutcome.refused), isTrue);
-    expect(book.isCoolingDown('a'), isTrue);
+    expect(book.recordFailure(refused, 'f', MediaOutcome.refused), isTrue);
+    expect(book.isRefused(refused, 'f'), isTrue);
+    expect(book.isRefused(alternative, 'f'), isFalse);
+    expect(book.isRefused(refused, 'other-file'), isFalse);
+    expect(book.isCoolingDown('a'), isFalse);
+    expect(book['a'].failures, 0);
+
+    book.recordSuccess('a');
+    now += 59999;
+    expect(book.isRefused(refused, 'f'), isTrue);
+    now++;
+    expect(book.isRefused(refused, 'f'), isFalse);
   });
 
   test('probes are budgeted per file', () {
