@@ -1105,9 +1105,7 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
         }
 
         void updateBottomPadding(double val) {
-          plPlayerController
-            ..subtitlePaddingB = val.round()
-            ..updateSubtitleStyle();
+          plPlayerController.updateSubtitleBottomPadding(val);
           setState(() {});
         }
 

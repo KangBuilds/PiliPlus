@@ -219,7 +219,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     });
   }
 
-  int? tmpSubtitlePaddingB;
   StreamSubscription? _controlsListener;
   void _onControlChanged(bool val) {
     final visible = val && !plPlayerController.controlsLock.value;
@@ -242,20 +241,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     if (widget.videoDetailController case final controller?) {
       if (controller.vttSubtitlesIndex.value != 0) {
         if (visible) {
-          const int minPadding = 70;
-          if (plPlayerController.subtitlePaddingB < minPadding) {
-            tmpSubtitlePaddingB = plPlayerController.subtitlePaddingB;
-            plPlayerController
-              ..subtitlePaddingB = minPadding
-              ..subtitleConfig.value = plPlayerController.getSubConfig;
-          }
+          plPlayerController.adjustSubtitlePadding();
         } else {
-          if (tmpSubtitlePaddingB != null) {
-            plPlayerController
-              ..subtitlePaddingB = tmpSubtitlePaddingB!
-              ..subtitleConfig.value = plPlayerController.getSubConfig;
-            tmpSubtitlePaddingB = null;
-          }
+          plPlayerController.resetSubtitlePadding();
         }
       }
     }
@@ -385,6 +373,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     _doubleTapGestureRecognizer.dispose();
     _scaleGestureRecognizer.dispose();
     _brightnessListener?.cancel();
+    plPlayerController.resetSubtitlePadding();
     _controlsListener?.cancel();
     _videoSizeSubscription?.cancel();
     _animationController.dispose();

@@ -3,15 +3,23 @@ import 'dart:async';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/utils/storage.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show EdgeInsets;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
 
 class _SettingsBox implements Box<dynamic> {
+  final stored = <dynamic, dynamic>{};
+
   @override
   dynamic get(dynamic key, {dynamic defaultValue}) =>
-      key == 'buvid' ? 'test-buvid' : defaultValue;
+      stored[key] ?? (key == 'buvid' ? 'test-buvid' : defaultValue);
+
+  @override
+  Future<void> putAll(Map<dynamic, dynamic> entries) async =>
+      stored.addAll(entries);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -38,10 +46,11 @@ void main() {
   late NativeDeviceOrientationPlatform originalOrientation;
   late _Orientation orientation;
   late PlPlayerController player;
+  final settings = _SettingsBox();
   final orientationChanges = <MethodCall>[];
 
   setUpAll(() {
-    GStorage.setting = _SettingsBox();
+    GStorage.setting = settings;
     GStorage.video = _SettingsBox();
     GStorage.localCache = _SettingsBox();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -58,6 +67,7 @@ void main() {
   });
 
   setUp(() {
+    settings.stored.clear();
     originalOrientation = NativeDeviceOrientationPlatform.instance;
     NativeDeviceOrientationPlatform.instance = orientation = _Orientation();
     player = PlPlayerController.getInstance();
@@ -99,5 +109,63 @@ void main() {
       isAutoRotate: true,
     ));
     expect(orientationChanges, isEmpty);
+  });
+
+  test('subtitle avoidance restores the original padding exactly once', () {
+    player
+      ..subtitlePaddingB = 24
+      ..adjustSubtitlePadding()
+      ..adjustSubtitlePadding();
+    expect(player.subtitlePaddingB, 70);
+    expect(player.subtitleConfig.value.padding.bottom, 70);
+    player.resetSubtitlePadding();
+    expect(player.subtitlePaddingB, 24);
+    expect(player.subtitleConfig.value.padding.bottom, 24);
+    expect(player.tmpSubtitlePaddingB, isNull);
+    player.resetSubtitlePadding();
+    expect(player.subtitlePaddingB, 24);
+  });
+
+  test('manual subtitle setting is not overwritten when controls hide', () {
+    player
+      ..subtitlePaddingB = 24
+      ..adjustSubtitlePadding()
+      ..updateSubtitleBottomPadding(42)
+      ..resetSubtitlePadding();
+    expect(player.subtitlePaddingB, 42);
+    expect(player.subtitleConfig.value.padding.bottom, 42);
+    expect(player.tmpSubtitlePaddingB, isNull);
+  });
+
+  test(
+    'dragging subtitles clears avoidance, updates style and persists padding',
+    () {
+      player
+        ..subtitlePaddingB = 24
+        ..adjustSubtitlePadding()
+        ..onUpdatePadding(const EdgeInsets.only(bottom: 500))
+        ..resetSubtitlePadding();
+      expect(player.subtitlePaddingB, 200);
+      expect(player.subtitleConfig.value.padding.bottom, 200);
+      expect(settings.stored[SettingBoxKey.subtitlePaddingB], 200);
+    },
+  );
+
+  test('temporary control avoidance is never persisted as user padding', () {
+    player
+      ..subtitlePaddingB = 24
+      ..adjustSubtitlePadding()
+      ..putSubtitleSettings();
+    expect(settings.stored[SettingBoxKey.subtitlePaddingB], 24);
+    expect(player.subtitlePaddingB, 70);
+  });
+
+  test('already elevated subtitles do not need temporary avoidance', () {
+    player
+      ..subtitlePaddingB = 100
+      ..adjustSubtitlePadding();
+    expect(player.tmpSubtitlePaddingB, isNull);
+    player.resetSubtitlePadding();
+    expect(player.subtitlePaddingB, 100);
   });
 }

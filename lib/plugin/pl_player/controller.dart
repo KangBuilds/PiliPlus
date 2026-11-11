@@ -364,6 +364,7 @@ class PlPlayerController with BlockConfigMixin {
   late double subtitleFontScale = Pref.subtitleFontScale;
   late double subtitleFontScaleFS = Pref.subtitleFontScaleFS;
   late int subtitlePaddingH = Pref.subtitlePaddingH;
+  int? tmpSubtitlePaddingB;
   late int subtitlePaddingB = Pref.subtitlePaddingB;
   late double subtitleBgOpacity = Pref.subtitleBgOpacity;
   final bool showVipDanmaku = Pref.showVipDanmaku; // loop unswitching
@@ -460,8 +461,30 @@ class PlPlayerController with BlockConfigMixin {
     subtitleConfig.value = getSubConfig;
   }
 
+  void updateSubtitleBottomPadding(double padding) {
+    tmpSubtitlePaddingB = null;
+    subtitlePaddingB = padding.round().clamp(0, 200);
+    updateSubtitleStyle();
+  }
+
+  void adjustSubtitlePadding() {
+    if (subtitlePaddingB < 70) {
+      tmpSubtitlePaddingB = subtitlePaddingB;
+      subtitlePaddingB = 70;
+      updateSubtitleStyle();
+    }
+  }
+
+  void resetSubtitlePadding() {
+    if (tmpSubtitlePaddingB case final padding?) {
+      subtitlePaddingB = padding;
+      tmpSubtitlePaddingB = null;
+      updateSubtitleStyle();
+    }
+  }
+
   void onUpdatePadding(EdgeInsets padding) {
-    subtitlePaddingB = padding.bottom.round().clamp(0, 200);
+    updateSubtitleBottomPadding(padding.bottom);
     putSubtitleSettings();
   }
 
@@ -1433,7 +1456,7 @@ class PlPlayerController with BlockConfigMixin {
       SettingBoxKey.subtitleFontScale: subtitleFontScale,
       SettingBoxKey.subtitleFontScaleFS: subtitleFontScaleFS,
       SettingBoxKey.subtitlePaddingH: subtitlePaddingH,
-      SettingBoxKey.subtitlePaddingB: subtitlePaddingB,
+      SettingBoxKey.subtitlePaddingB: tmpSubtitlePaddingB ?? subtitlePaddingB,
       SettingBoxKey.subtitleBgOpacity: subtitleBgOpacity,
       SettingBoxKey.subtitleStrokeWidth: subtitleStrokeWidth,
       SettingBoxKey.subtitleFontWeight: subtitleFontWeight,
