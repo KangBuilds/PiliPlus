@@ -4,6 +4,7 @@ import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/http/api.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/http/loading_state.dart';
+import 'package:PiliPlus/models/login/captcha_config.dart';
 import 'package:PiliPlus/models/login/model.dart';
 import 'package:PiliPlus/models_new/login_devices/data.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -344,6 +345,23 @@ abstract final class LoginHttp {
         'msg': res.data['message'],
         'data': res.data['data'],
       };
+    }
+  }
+
+  static Future<bool> isGeetestConfigUnavailable(String gt) async {
+    try {
+      final res = await Request().get<String>(
+        'https://api.geetest.com/gettype.php',
+        queryParameters: {'gt': gt, 'client_type': 'ios', 'pt': 20},
+        options: Options(
+          responseType: ResponseType.plain,
+          extra: {'account': const NoAccount()},
+        ),
+      );
+      return isMissingCaptchaConfig(res.data ?? '');
+    } catch (_) {
+      // Transport failures do not prove the registration is unavailable.
+      return false;
     }
   }
 
