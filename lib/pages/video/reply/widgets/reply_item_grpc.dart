@@ -835,13 +835,15 @@ class ReplyItemGrpc extends StatelessWidget {
         } else if (_timeRegExp.hasMatch(matchStr)) {
           matchStr = matchStr.replaceAll('：', ':');
           bool isValid = false;
+          String? tag;
           try {
-            final ctr = Get.find<VideoDetailController>(
-              tag: getTag?.call() ?? Get.arguments['heroTag'],
-            );
-            isValid =
-                DurationUtils.parseDuration(matchStr) * 1000 <=
-                ctr.data.timeLength!;
+            tag = getTag?.call() ?? Get.arguments?['heroTag'];
+            if (tag != null) {
+              final ctr = Get.find<VideoDetailController>(tag: tag);
+              isValid =
+                  DurationUtils.parseDuration(matchStr) * 1000 <=
+                  ctr.data.timeLength!;
+            }
           } catch (e) {
             if (kDebugMode) debugPrint('failed to validate: $e');
           }
@@ -856,7 +858,7 @@ class ReplyItemGrpc extends StatelessWidget {
                         try {
                           SmartDialog.showToast('跳转至：$matchStr');
                           Get.find<VideoDetailController>(
-                            tag: Get.arguments['heroTag'],
+                            tag: tag,
                           ).plPlayerController.seekTo(
                             Duration(
                               seconds: DurationUtils.parseDuration(matchStr),
