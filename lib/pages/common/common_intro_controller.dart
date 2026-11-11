@@ -203,7 +203,7 @@ mixin FavMixin on TripleMixin {
             this.hasFav.value = !hasFav;
             SmartDialog.showToast('${hasFav ? '取消' : ''}收藏成功');
           } else {
-            res.toast();
+            result.toast();
           }
         } else {
           SmartDialog.dismiss();
