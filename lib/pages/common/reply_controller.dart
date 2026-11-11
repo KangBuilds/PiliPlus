@@ -33,6 +33,9 @@ abstract class ReplyController<R> extends CommonListController<R, ReplyInfo> {
   @override
   bool? get hasFooter => true;
 
+  @override
+  bool get endIfNullOrEmpty => false;
+
   // comment antifraud
   late final _enableCommAntifraud = Pref.enableCommAntifraud;
   late final _biliSendCommAntifraud = Pref.biliSendCommAntifraud;

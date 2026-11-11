@@ -48,43 +48,62 @@ abstract final class ReplyGrpc {
     required String? offset,
     required Int64? cursorNext,
   }) async {
-    final res = await GrpcReq.request(
-      GrpcUrl.mainList,
-      MainListReq(
-        oid: Int64(oid),
-        type: Int64(type),
-        rpid: Int64.ZERO,
-        cursor: CursorReq(
-          mode: mode,
-          next: cursorNext,
+    var next = cursorNext;
+    final visited = <Int64>{next ?? Int64.ZERO};
+    MainListReply? firstPage;
+    while (true) {
+      final res = await GrpcReq.request(
+        GrpcUrl.mainList,
+        MainListReq(
+          oid: Int64(oid),
+          type: Int64(type),
+          rpid: Int64.ZERO,
+          cursor: CursorReq(mode: mode, next: next),
         ),
-        // mode: mode,
-        // pagination: offset == null ? null : FeedPagination(offset: offset),
-      ),
-      MainListReply.fromBuffer,
-    );
-    if (res case Success(:final response)) {
-      // keyword filter
-      if (response.hasUpTop()) {
-        final topReply = response.upTop;
-        if (needRemoveGrpc(topReply)) {
-          response.clearUpTop();
-        } else {
-          topReply.replies.removeWhere(needRemoveGrpc);
+        MainListReply.fromBuffer,
+      );
+      if (res case Success(:final response)) {
+        // keyword filter
+        if (response.hasUpTop()) {
+          final topReply = response.upTop;
+          if (needRemoveGrpc(topReply)) {
+            response.clearUpTop();
+          } else {
+            topReply.replies.removeWhere(needRemoveGrpc);
+          }
+        }
+
+        if (response.replies.isNotEmpty) {
+          response.replies.removeWhere((item) {
+            final hasMatch = needRemoveGrpc(item);
+            if (!hasMatch && item.replies.isNotEmpty) {
+              item.replies.removeWhere(needRemoveGrpc);
+            }
+            return hasMatch;
+          });
+        }
+
+        if (response.replies.isEmpty &&
+            !response.hasUpTop() &&
+            !response.cursor.isEnd &&
+            visited.add(response.cursor.next)) {
+          firstPage ??= response;
+          next = response.cursor.next;
+          continue;
+        }
+
+        if (firstPage != null) {
+          // Counts, vote cards and other first-page metadata survive skipped pages.
+          firstPage
+            ..cursor = response.cursor
+            ..paginationReply = response.paginationReply
+            ..replies.addAll(response.replies);
+          if (response.hasUpTop()) firstPage.upTop = response.upTop;
+          return Success(firstPage);
         }
       }
-
-      if (response.replies.isNotEmpty) {
-        response.replies.removeWhere((item) {
-          final hasMatch = needRemoveGrpc(item);
-          if (!hasMatch && item.replies.isNotEmpty) {
-            item.replies.removeWhere(needRemoveGrpc);
-          }
-          return hasMatch;
-        });
-      }
+      return res;
     }
-    return res;
   }
 
   static Future<LoadingState<DetailListReply>> detailList({
