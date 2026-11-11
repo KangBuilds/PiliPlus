@@ -542,12 +542,11 @@ class PlPlayerController with BlockConfigMixin {
   }
 
   void _onOrientationChanged(OrientationParams param) {
-    if (!visible) return;
+    if (!visible || controlsLock.value) return;
     final orientation = param.orientation;
     final isFullScreen = this.isFullScreen.value;
     switch (orientation) {
       case .portraitUp:
-        if (!_isVertical && controlsLock.value) return;
         if (!_isVertical && isFullScreen) {
           if (!isManualFS) {
             triggerFullScreen(status: false, orientation: orientation);
