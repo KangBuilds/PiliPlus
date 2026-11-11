@@ -558,12 +558,12 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
     final frameRate = VideoUtils.formatFrameRate(
       player.getProperty('current-tracks/video/demux-fps'),
     );
-    String hostOf(String path) =>
-        threadRipper.isProxyUrl(path) ? '多 CDN 并行' : VideoUtils.hostOf(path);
-    final videoHost = videoCodec.isEmpty ? '' : hostOf(videoPath);
+    final videoHost = videoCodec.isEmpty
+        ? ''
+        : threadRipper.describeRoute(videoPath);
     final audioHost = audioCodec.isEmpty
         ? ''
-        : hostOf(audioPath.isEmpty ? videoPath : audioPath);
+        : threadRipper.describeRoute(audioPath.isEmpty ? videoPath : audioPath);
     final ripping =
         threadRipper.isProxyUrl(videoPath) ||
         threadRipper.isProxyUrl(audioPath);
@@ -675,7 +675,8 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
                       }).toList(),
                     ),
                     if (ripping)
-                      const RipperStatsRows(
+                      RipperStatsRows(
+                        player: player,
                         labelStyle: labelStyle,
                         valueStyle: valueStyle,
                       ),

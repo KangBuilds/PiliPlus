@@ -350,6 +350,50 @@ void phase2() {
   });
 
   test(
+    'a fast host rescues a trickling head after finishing later bytes',
+    () async {
+      const pieceSize = 64 * 1024;
+      const slow = FakeHost(
+        chunk: 1024,
+        chunkDelay: Duration(milliseconds: 15),
+      );
+      final data = testFile(2 * pieceSize);
+      final fetcher = FakeFetcher(
+        data,
+        hosts: {seedHosts[0]: slow, seedHosts[1]: slow},
+        otherHosts: const FakeHost(
+          chunk: 8192,
+          chunkDelay: Duration(milliseconds: 1),
+        ),
+      );
+      final ripper = job(
+        fetcher,
+        const RipperConfig(
+          minPiece: pieceSize,
+          maxPiece: pieceSize,
+          hostInflight: 1,
+          headStallMs: 150,
+          tickMs: 10,
+        ),
+      );
+      addTearDown(ripper.cancel);
+      await ripper.begin();
+      expect(await _drain(ripper), data);
+      // The host that already finished piece two takes over the unread suffix
+      // of piece one, even though both original racers keep sending bytes.
+      final fast = fetcher.requests
+          .firstWhere((r) => r.$2.start == pieceSize)
+          .$1;
+      expect(
+        fetcher.requests.where(
+          (r) => r.$1 == fast && r.$2.start > 0 && r.$2.end == pieceSize - 1,
+        ),
+        isNotEmpty,
+      );
+    },
+  );
+
+  test(
     'cuts a racer that fell behind, and races the leader once it stalls',
     () async {
       final data = testFile(64 * 1024);

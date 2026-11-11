@@ -993,7 +993,24 @@ class PlPlayerController with BlockConfigMixin {
               event.startsWith("Can not open")) {
             return;
           }
-          Utils.reportError(event);
+          if (dataSource is NetworkSource &&
+              (event.startsWith('tls:') ||
+                  event.startsWith('http:') ||
+                  event.startsWith('Seek failed'))) {
+            final video = threadRipper.describeRoute(
+              player.getProperty('path'),
+            );
+            final audio = threadRipper.describeRoute(
+              player.getProperty('current-tracks/audio/external-filename'),
+            );
+            Utils.reportError(
+              '$event\nvideo=${video.isEmpty ? "unknown" : video}, '
+              'audio=${audio.isEmpty ? "unknown" : audio}, '
+              'position=${position.value}s, buffered=${buffered.value}s',
+            );
+          } else {
+            Utils.reportError(event);
+          }
           // SmartDialog.showToast('视频加载错误, $event');
         }
       }),

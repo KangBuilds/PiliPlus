@@ -103,6 +103,40 @@ void main() {
     expect(await ripper.wrapNow(wrapped), wrapped);
   });
 
+  test('a failed seek redirects when no response bytes went out', () async {
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(
+        testFile(64 * 1024),
+        otherHosts: const FakeHost(failFrom: 8192),
+      ),
+      config: testConfig,
+      wifiOnly: false,
+    );
+    addTearDown(ripper.close);
+    final url = await ripper.wrapNow(kListedUrl);
+    expect((await get(url, range: 'bytes=0-99')).$2.length, 100);
+    final (response, _) = await get(url, range: 'bytes=8192-', follow: false);
+    expect(response.statusCode, 302);
+    expect(response.headers.value('location'), kListedUrl);
+    expect(response.headers.value('content-range'), isNull);
+    expect(ripper.describeRoute(url), contains('首字节前分片失败'));
+  });
+
+  test('seek past a short warmed file returns its actual size', () async {
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(testFile(300)),
+      config: testConfig,
+      wifiOnly: false,
+    );
+    addTearDown(ripper.close);
+    final url = await ripper.wrapNow(kListedUrl);
+    expect((await get(url)).$2.length, 300);
+    final (response, body) = await get(url, range: 'bytes=300-');
+    expect(response.statusCode, 416);
+    expect(response.headers.value('content-range'), 'bytes */300');
+    expect(body, isEmpty);
+  });
+
   test(
     'cuts the body short when every host and the fallback fail mid-way',
     () async {
@@ -351,6 +385,6 @@ void main() {
     await get(url, range: 'bytes=0-');
     expect(reports, hasLength(1));
     expect(reports.single, contains('no host could deliver'));
-    expect(reports.single, contains('upos-sz-mirrorali.bilivideo.com refused'));
+    expect(reports.single, matches(r'[\w.-]+\.bilivideo\.com refused'));
   });
 }

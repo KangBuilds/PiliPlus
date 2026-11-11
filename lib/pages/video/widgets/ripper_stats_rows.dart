@@ -2,16 +2,19 @@ import 'dart:async';
 
 import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart' show NativePlayer;
 
 /// Live rows of what the multi-CDN proxy is doing, for the playback info
 /// panel.
 class RipperStatsRows extends StatefulWidget {
   const RipperStatsRows({
     super.key,
+    required this.player,
     required this.labelStyle,
     required this.valueStyle,
   });
 
+  final NativePlayer player;
   final TextStyle labelStyle;
   final TextStyle valueStyle;
 
@@ -39,7 +42,7 @@ class _RipperStatsRowsState extends State<RipperStatsRows> {
   }
 
   static String _rate(double bytesPerSecond) =>
-      '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(2)} MB/s';
+      '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(2)} MiB/s';
 
   /// `upos-sz-mirrorcosov.bilivideo.com` -> `mirrorcosov`
   static String _short(String host) =>
@@ -48,11 +51,17 @@ class _RipperStatsRowsState extends State<RipperStatsRows> {
   @override
   Widget build(BuildContext context) {
     final stats = _stats;
+    final state = widget.player.state;
+    final ahead = state.buffer - state.position;
+    final buffer = ahead.isNegative
+        ? '—'
+        : '${(ahead.inMilliseconds / 1000).toStringAsFixed(1)} s';
     final rows = <(String, String)>[
-      ('CDN Throughput:', _rate(stats.servedRate)),
+      ('Buffer Ahead:', state.buffering ? '$buffer（缓冲中）' : buffer),
+      ('To Player (2s):', _rate(stats.servedRate)),
       ('CDN Overhead:', '${(stats.overhead * 100).toStringAsFixed(1)}%'),
       (
-        'CDN Hosts:',
+        'CDN Host Estimates:',
         stats.hosts
             .take(4)
             .map((e) => '${_short(e.$1)} ${_rate(e.$2)}')

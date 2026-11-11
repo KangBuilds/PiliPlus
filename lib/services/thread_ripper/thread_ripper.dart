@@ -30,6 +30,9 @@ class _Source {
   /// then.
   int directUntil = 0;
 
+  /// Why the most recent GET was redirected to the original URL.
+  String? redirectReason;
+
   /// The file's first bytes, fetched as soon as the URL is handed out: mpv
   /// reads them (the init segment and the index) before anything else.
   _Head? head;
@@ -153,6 +156,20 @@ class ThreadRipper {
       url.startsWith(
         'http://${InternetAddress.loopbackIPv4.address}:$_port/m/',
       );
+
+  String describeRoute(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || !isProxyUrl(url)) return uri?.host ?? '';
+    final source = _sources[uri.pathSegments.last];
+    if (source == null) return '本地代理';
+    if (source.redirectReason case final reason?) {
+      return '回退直连 ${source.fallback.host}（$reason）';
+    }
+    final host = source.candidates.firstOrNull?.host;
+    return source.candidates.any((c) => c.host != host)
+        ? '多 CDN 并行'
+        : '单 CDN 分片（$host）';
+  }
 
   RipperStats get stats {
     final now = book.clock();
@@ -397,10 +414,22 @@ class ThreadRipper {
       final range = rangeHeader == null
           ? (start: 0, end: null)
           : parseRangeHeader(rangeHeader);
-      if (range == null ||
-          (wifiOnly && !_wifi) ||
-          source.directUntil > book.clock()) {
-        _redirect(response, source.fallback);
+      final file = source;
+      void redirect(String reason) {
+        if (request.method == 'GET') file.redirectReason = reason;
+        _redirect(response, file.fallback);
+      }
+
+      if (range == null) {
+        redirect('Range 不支持');
+        return;
+      }
+      if (wifiOnly && !_wifi) {
+        redirect('非 Wi-Fi');
+        return;
+      }
+      if (source.directUntil > book.clock()) {
+        redirect('分片失败后重试');
         return;
       }
 
@@ -418,6 +447,12 @@ class ThreadRipper {
           left() > Duration.zero) {
         await head.changed.timeout(left(), onTimeout: () {});
       }
+      if (source.total case final total? when range.start >= total) {
+        response
+          ..statusCode = HttpStatus.requestedRangeNotSatisfiable
+          ..headers.set(HttpHeaders.contentRangeHeader, 'bytes */$total');
+        return;
+      }
       final fromHead = head != null && !head.failed && source.total != null;
 
       final int total;
@@ -427,7 +462,7 @@ class ThreadRipper {
         job = _job(source, range.start, range.end);
         try {
           total = await job.begin().timeout(left());
-        } catch (_) {
+        } catch (e) {
           job.cancel();
           if (source.total case final total? when range.start >= total) {
             response
@@ -435,7 +470,7 @@ class ThreadRipper {
               ..headers.set(HttpHeaders.contentRangeHeader, 'bytes */$total');
             return;
           }
-          _redirect(response, source.fallback);
+          redirect(e is TimeoutException ? '等待响应超时' : '无法获取分片');
           return;
         }
       }
@@ -473,7 +508,6 @@ class ThreadRipper {
       RipperJob? gap;
       var pos = range.start;
       final stop = fromHead ? min(end, headEnd) : -1;
-      final file = source;
       Future<Uint8List?> nextBytes() async {
         while (fromHead && pos <= stop) {
           if (gap case final gap?) {
@@ -503,10 +537,11 @@ class ThreadRipper {
       final Uint8List? first;
       try {
         first = await nextBytes().timeout(left());
-      } on TimeoutException {
+      } catch (e) {
+        if (e is! TimeoutException && e is! RipperJobFailed) rethrow;
         job?.cancel();
         gap?.cancel();
-        _redirect(response, source.fallback);
+        redirect(e is TimeoutException ? '等待首字节超时' : '首字节前分片失败');
         return;
       }
 
@@ -515,6 +550,7 @@ class ThreadRipper {
         job?.cancel();
         gap?.cancel();
       }).ignore();
+      source.redirectReason = null;
       for (var bytes = first; bytes != null; bytes = await nextBytes()) {
         _serve(response, bytes);
         await response.flush();

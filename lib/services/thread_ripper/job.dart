@@ -310,7 +310,7 @@ class RipperJob {
       }
       _ticker = Timer.periodic(
         Duration(milliseconds: config.tickMs),
-        (_) => _pump(),
+        (_) => _pump(checkHeadRate: true),
       );
       _pump();
     }
@@ -419,7 +419,7 @@ class RipperJob {
       _inflight < config.jobInflight + (urgent ? config.urgentReserve : 0) &&
       book.inflight < config.globalInflight;
 
-  void _pump() {
+  void _pump({bool checkHeadRate = false}) {
     if (_closed) return;
     _plan();
     final now = book.clock();
@@ -427,7 +427,7 @@ class RipperJob {
     _giveUpSilent(now);
     _cutLaggards();
     // Give the head's rescue a free slot before fetching later pieces.
-    if (racing()) _race(now);
+    if (racing()) _race(now, checkHeadRate: checkHeadRate);
 
     // Owners: every piece without an attempt gets one, in order
     var waiting = false;
@@ -481,7 +481,7 @@ class RipperJob {
     }
   }
 
-  void _race(int now) {
+  void _race(int now, {bool checkHeadRate = false}) {
     var isHead = true;
     for (final piece in _window) {
       final head = isHead;
@@ -499,7 +499,31 @@ class RipperJob {
           if (!a.receiving) book.recordWait(a.host, file, now - a.startedAt);
         }
         _launch(piece, racer: true);
+      } else if (head && checkHeadRate && piece.handedOut == piece.frontier) {
+        _rescueSlowHead(piece, now);
       }
+    }
+  }
+
+  /// Regular small chunks can hold up playback indefinitely while later
+  /// pieces finish. Race from the frontier if a measured host can halve
+  /// the remaining wait, including the cost of its first byte.
+  void _rescueSlowHead(_Piece piece, int now) {
+    var bestRate = 0.0;
+    for (final a in piece.attempts) {
+      if (a.cancel.isCanceled) continue;
+      final rate = a.rate(now);
+      if (rate == null || now - a.firstByteAt < config.headStallMs) return;
+      bestRate = max(bestRate, rate);
+    }
+    if (bestRate == 0) return;
+    final remainingMs = piece.remaining / bestRate;
+    if (remainingMs < config.headStallMs) return;
+    final (candidate, _) = _choose(piece, racer: true);
+    if (candidate != null &&
+        book.isMeasured(candidate.host, file) &&
+        2 * _eta(candidate.host, piece.remaining, now) < remainingMs) {
+      _start(_Attempt(piece, candidate.uri, candidate.host, now));
     }
   }
 
