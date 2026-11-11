@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:PiliPlus/common/style.dart';
+import 'package:PiliPlus/common/widgets/refresh_indicator.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
 import 'package:PiliPlus/common/widgets/flutter/text_field/controller.dart';
@@ -48,29 +49,17 @@ class _DynamicDetailPageState
 
   void _startRefresh() {
     _isRefreshing.value = true;
-    _refreshController.repeat();
   }
 
   void _stopRefresh() {
     if (!mounted) return;
     _isRefreshing.value = false;
-    _refreshController.stop();
   }
 
   void _onRefresh(Future<void> future) {
     _startRefresh();
     future.whenComplete(_stopRefresh);
-    // Future.delayed(
-    //   const Duration(milliseconds: 800),
-    // ).whenComplete(_stopRefresh);
   }
-
-  AnimationController? refreshController;
-  AnimationController get _refreshController =>
-      refreshController ??= AnimationController(
-        vsync: this,
-        duration: CircularProgressIndicator.defaultAnimationDuration,
-      );
 
   @override
   dynamic get arguments => {'item': controller.dynItem};
@@ -94,12 +83,6 @@ class _DynamicDetailPageState
       ),
       tag: id,
     );
-  }
-
-  @override
-  void dispose() {
-    refreshController?.dispose();
-    super.dispose();
   }
 
   @override
@@ -371,30 +354,9 @@ class _DynamicDetailPageState
             left: 0,
             right: 0,
             top: displacement,
-            child: Obx(() {
-              final isRefreshing = _isRefreshing.value;
-              return AnimatedScale(
-                scale: isRefreshing ? 1 : 0,
-                duration: const Duration(milliseconds: 200),
-                child: Center(
-                  child: SizedBox.fromSize(
-                    size: const .square(40),
-                    child: Material(
-                      type: .circle,
-                      color: theme.colorScheme.onSecondary,
-                      elevation: 2.0,
-                      child: Padding(
-                        padding: const .all(6),
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          controller: _refreshController,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
+            child: Obx(
+              () => RefreshStatusIndicator(isRefreshing: _isRefreshing.value),
+            ),
           ),
         ],
       );
