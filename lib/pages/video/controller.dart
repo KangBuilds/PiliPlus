@@ -760,24 +760,45 @@ class VideoDetailController extends GetxController
 
   bool isQuerying = false;
 
+  /// Counts play URL queries: only the latest one started may touch the
+  /// player. An older one still in flight was asked for another episode,
+  /// language or CDN, and its answer is dropped.
+  int _queryGeneration = 0;
+
+  bool _isStaleQuery(int generation) =>
+      isClosed || generation != _queryGeneration;
+
+  /// A query that was to resume from the watch history has not got there
+  /// yet: the one that replaced it resumes in its place.
+  bool _resumePending = false;
+
+  /// The player being opened for a query. Two opens must not overlap.
+  Future<void>? _queryPlayerInit;
+
   /// Fresh URLs for the quality, codec and audio playing now, reopened at
   /// the same position: signed URLs expire. `false` when none came.
   Future<bool> reloadPlayUrl() async {
     if (isFileSource || isQuerying || isClosed) return false;
+    final generation = ++_queryGeneration;
     isQuerying = true;
     try {
       final result = await _getVideoUrl(VideoQuality.hdrVivid.code);
+      // Replaced by a query that opens the player itself: nothing to reopen
       if (isClosed) return false;
+      if (_isStaleQuery(generation)) return true;
       if (result case Success(:final response) when response.dash != null) {
+        final supplement = await _supplementedQualities(response);
+        if (isClosed) return false;
+        if (_isStaleQuery(generation)) return true;
         data = response;
-        await _supplementVideoQualities();
-        if (isClosed || currentVideoQa.value == null) return false;
+        response.dash!.video!.merge(supplement);
+        if (currentVideoQa.value == null) return false;
         await updatePlayer();
         return true;
       }
       return false;
     } finally {
-      isQuerying = false;
+      if (generation == _queryGeneration) isQuerying = false;
     }
   }
 
@@ -806,13 +827,12 @@ class VideoDetailController extends GetxController
     );
   }
 
-  Future<void> _supplementVideoQualities() async {
-    final quality = data.missingVideoQualityBelowHighest;
-    if (quality == -1) return;
+  /// The streams of the qualities [playUrl] leaves out, to merge into it.
+  Future<List<VideoItem>?> _supplementedQualities(PlayUrlModel playUrl) async {
+    final quality = playUrl.missingVideoQualityBelowHighest;
+    if (quality == -1) return null;
     final result = await _getVideoUrl(quality);
-    if (result case Success(:final response)) {
-      data.dash!.video!.merge(response.dash?.video);
-    }
+    return result.dataOrNull?.dash?.video;
   }
 
   // 视频链接
@@ -824,19 +844,50 @@ class VideoDetailController extends GetxController
     if (isFileSource) {
       return _initPlayerIfNeeded(autoFullScreenFlag);
     }
-    if (isQuerying) {
-      return;
-    }
+    // Never dropped while another is in flight: that one may be for the
+    // episode just left, and would play it under this one
+    final generation = ++_queryGeneration;
+    if (!fromReset) _resumePending = true;
     isQuerying = true;
     try {
-      await _queryVideoUrl(fromReset, autoFullScreenFlag);
+      await _queryVideoUrl(generation, fromReset, autoFullScreenFlag);
     } finally {
-      isQuerying = false;
+      if (generation == _queryGeneration) isQuerying = false;
+    }
+  }
+
+  /// Opens the player for the query [generation], after the one an older
+  /// query may still be opening.
+  Future<void> _initPlayerForQuery(
+    int generation,
+    bool autoFullScreenFlag,
+  ) async {
+    for (
+      var pending = _queryPlayerInit;
+      pending != null;
+      pending = _queryPlayerInit
+    ) {
+      try {
+        await pending;
+      } catch (_) {}
+    }
+    if (_isStaleQuery(generation)) return;
+    final init = _initPlayerIfNeeded(autoFullScreenFlag);
+    if (init == null) return;
+    _queryPlayerInit = init;
+    try {
+      await init;
+    } finally {
+      if (identical(_queryPlayerInit, init)) _queryPlayerInit = null;
     }
   }
 
   @pragma('vm:prefer-inline')
-  Future<void> _queryVideoUrl(bool fromReset, bool autoFullScreenFlag) async {
+  Future<void> _queryVideoUrl(
+    int generation,
+    bool fromReset,
+    bool autoFullScreenFlag,
+  ) async {
     if (plPlayerController.enableSponsorBlock && !fromReset) {
       querySponsorBlock(bvid: bvid, cid: cid.value);
     }
@@ -851,16 +902,24 @@ class VideoDetailController extends GetxController
             : Pref.defaultAudioQaCellular;
     }
 
+    if (_isStaleQuery(generation)) return;
+
     final result = await _getVideoUrl(VideoQuality.hdrVivid.code);
+    if (_isStaleQuery(generation)) return;
 
     if (result case Success(:final response)) {
+      if (response.dash != null) {
+        final supplement = await _supplementedQualities(response);
+        if (_isStaleQuery(generation)) return;
+        response.dash!.video!.merge(supplement);
+      }
       data = response;
-      if (data.dash != null) await _supplementVideoQualities();
 
       languages.value = data.language?.items;
       currLang.value = data.curLanguage;
 
-      if (!fromReset) {
+      if (_resumePending) {
+        _resumePending = false;
         final progress = args.remove('progress');
         if (progress != null) {
           defaultST = Duration(milliseconds: progress);
@@ -891,8 +950,7 @@ class VideoDetailController extends GetxController
         _setVideoHeight();
         currentDecodeFormats = VideoDecodeFormatType.AVC;
         currentVideoQa.value = videoQuality;
-        await _initPlayerIfNeeded(autoFullScreenFlag);
-        isQuerying = false;
+        await _initPlayerForQuery(generation, autoFullScreenFlag);
         return;
       }
       if (data.dash == null) {
@@ -902,7 +960,6 @@ class VideoDetailController extends GetxController
         if (plPlayerController.isFullScreen.value) {
           plPlayerController.triggerFullScreen(status: false);
         }
-        isQuerying = false;
         return;
       }
       final targetVideoQa = data.findAvailableVideoQuality(
@@ -960,7 +1017,7 @@ class VideoDetailController extends GetxController
       } else {
         audioUrl = '';
       }
-      await _initPlayerIfNeeded(autoFullScreenFlag);
+      await _initPlayerForQuery(generation, autoFullScreenFlag);
     } else {
       _autoPlay.value = false;
       videoState.value = false;
