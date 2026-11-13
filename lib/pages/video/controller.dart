@@ -790,7 +790,7 @@ class VideoDetailController extends GetxController
         if (isClosed) return false;
         if (_isStaleQuery(generation)) return true;
         data = response;
-        response.dash!.video!.merge(supplement);
+        response.dash!.video?.merge(supplement);
         if (currentVideoQa.value == null) return false;
         await updatePlayer();
         return true;
@@ -910,7 +910,7 @@ class VideoDetailController extends GetxController
       if (response.dash != null) {
         final supplement = await _supplementedQualities(response);
         if (_isStaleQuery(generation)) return;
-        response.dash!.video!.merge(supplement);
+        response.dash!.video?.merge(supplement);
       }
       data = response;
 
@@ -961,6 +961,21 @@ class VideoDetailController extends GetxController
         }
         return;
       }
+      final dashVideo = data.dash!.video;
+      if (dashVideo == null || dashVideo.isEmpty) {
+        Utils.reportError(
+          'null or empty dash video:\n'
+          'bvid: $bvid, cid: ${cid.value}, seasonId: $seasonId, epId: $epId, '
+          'videoType: $videoType',
+        );
+        SmartDialog.showToast('视频资源不存在');
+        _autoPlay.value = false;
+        videoState.value = false;
+        if (plPlayerController.isFullScreen.value) {
+          plPlayerController.triggerFullScreen(status: false);
+        }
+        return;
+      }
       final targetVideoQa = data.findAvailableVideoQuality(
         plPlayerController.cacheVideoQa!,
       );
@@ -981,7 +996,7 @@ class VideoDetailController extends GetxController
       );
 
       /// 取出符合当前画质的videoList
-      final videosList = data.dash!.video!
+      final videosList = dashVideo
           .where((e) => e.quality.code == targetVideoQa)
           .toList();
 
