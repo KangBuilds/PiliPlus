@@ -825,6 +825,19 @@ class VideoDetailController extends GetxController
     maxAge: const Duration(minutes: 30),
   );
 
+  // Resume progress belongs to the media, not a language-specific URL answer.
+  static final _resumeProgressCache = TimedCache<int>(
+    maxAge: const Duration(minutes: 30),
+  );
+
+  String _resumeProgressKey() => [
+    Accounts.video.mid,
+    Accounts.history.mid,
+    videoType.name,
+    bvid,
+    cid.value,
+  ].join('|');
+
   /// When the play URLs in [data] were fetched, if they came from the cache:
   /// the player counts their age from then.
   DateTime? _playUrlFetchedAt;
@@ -842,18 +855,18 @@ class VideoDetailController extends GetxController
     plPlayerController.tryLook,
   ].join('|');
 
-  /// Where playback of the part stands, for the next time its cached answer
-  /// is used: the one it carries dates from when it was fetched.
+  /// Keep the last watched position even when URL parameters have changed.
   void _rememberProgress() {
     final played = playedTime;
     if (isFileSource || played == null) return;
-    final cached = _playUrlCache.get(_playUrlKey())?.value;
-    if (cached == null) return;
-    final length = cached.timeLength;
+    final length = _playUrlLength;
     final finished =
         plPlayerController.playerStatus.isCompleted ||
         (length != null && (length - played.inMilliseconds).abs() <= 1000);
-    cached.lastPlayTime = finished ? 0 : played.inMilliseconds;
+    _resumeProgressCache.put(
+      _resumeProgressKey(),
+      finished ? 0 : played.inMilliseconds,
+    );
   }
 
   Future<LoadingState<PlayUrlModel>> _getVideoUrl(
@@ -1144,11 +1157,14 @@ class VideoDetailController extends GetxController
       if (_resumePending) {
         _resumePending = false;
         final progress = args.remove('progress');
-        if (progress != null) {
-          defaultST = Duration(milliseconds: progress);
-        } else {
-          defaultST = Duration(milliseconds: data.lastPlayTime);
-        }
+        final historyProgress = args.remove('historyProgress');
+        defaultST = Duration(
+          milliseconds:
+              progress ??
+              _resumeProgressCache.get(_resumeProgressKey())?.value ??
+              historyProgress ??
+              data.lastPlayTime,
+        );
       }
 
       if (data.acceptDesc?.contains('试看') == true) {

@@ -80,11 +80,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(opened.last['bvid'], item.history.bvid);
       expect(opened.last['cid'], item.history.cid);
+      expect(opened.last['historyProgress'], 42000);
       expect(
         opened.last.containsKey('progress'),
         isFalse,
-        reason:
-            'The video must use its latest resume position, not the row snapshot',
+        reason: 'A history snapshot is a resume hint, not an explicit seek',
       );
       Get.back<void>();
       await tester.pumpAndSettle();
