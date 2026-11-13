@@ -313,18 +313,34 @@ class PlPlayerController with BlockConfigMixin {
         'PictureInPicture.Update',
         _pictureInPictureState,
       );
+      _lastPipSync = 'ok';
     } catch (error, stackTrace) {
+      _lastPipSync = 'ERR $error';
       _reportSyncFailure('Picture in Picture', error, stackTrace);
     }
     // On its own: a Picture in Picture update that fails must not keep Now
     // Playing from being told, or it stays as the last player left it
     if (videoPlayerController == null) return;
     try {
-      await NativeNowPlaying.update(this, _nowPlayingState);
+      final state = _nowPlayingState;
+      await NativeNowPlaying.update(this, state);
+      _lastNowPlayingSync = NativeNowPlaying.isOwner(this)
+          ? 'sent active=${state['active']} playing=${state['playing']}'
+          : 'not sent: another player owns Now Playing';
     } catch (error, stackTrace) {
+      _lastNowPlayingSync = 'ERR $error';
       _reportSyncFailure('Now Playing', error, stackTrace);
     }
   }
+
+  String _lastPipSync = 'never';
+  String _lastNowPlayingSync = 'never';
+
+  /// Where the last Now Playing update got to, for the playback info panel:
+  /// what iOS shows cannot be read back, what it was told can.
+  String get nowPlayingDebug =>
+      '$_lastNowPlayingSync; data=${dataStatus.value.name}, '
+      'status=${playerStatus.value.name}, pip=$_lastPipSync';
 
   /// What already failed to sync: reported once, not every second.
   static final _reportedSyncFailures = <String>{};
@@ -735,7 +751,13 @@ class PlPlayerController with BlockConfigMixin {
       await _initializePlayer();
       onInit?.call();
     } catch (err, stackTrace) {
-      dataStatus.value = DataStatus.error;
+      // Once the media is loaded, a failure in what follows (fullscreen, the
+      // page's own set-up) is not a failure to load: marked as one, Now
+      // Playing and Picture in Picture were told nothing plays
+      if (dataStatus.value != DataStatus.loaded) {
+        dataStatus.value = DataStatus.error;
+      }
+      Utils.reportError('plPlayer setDataSource: $err', stackTrace);
       if (kDebugMode) {
         debugPrint(stackTrace.toString());
         debugPrint('plPlayer err:  $err');

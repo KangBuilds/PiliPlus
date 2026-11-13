@@ -584,6 +584,7 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
       ('Video Host:', videoHost),
       ('Audio Host:', audioHost),
       ('HW Decode:', hwdec),
+      ('Now Playing:', PlPlayerController.instance?.nowPlayingDebug ?? ''),
     ];
     const labelStyle = TextStyle(
       color: Colors.white,

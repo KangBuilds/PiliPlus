@@ -9,6 +9,9 @@ abstract final class NativeNowPlaying {
     channel.setMethodCallHandler(handler);
   }
 
+  /// Whether [owner]'s updates reach the system.
+  static bool isOwner(Object owner) => identical(_owner, owner);
+
   static Future<void> update(Object owner, Map<String, Object> state) async {
     if (identical(_owner, owner)) {
       await channel.invokeMethod('NowPlaying.Update', state);
