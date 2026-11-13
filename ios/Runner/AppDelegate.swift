@@ -7,6 +7,7 @@ import UIKit
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var nowPlayingChannel: FlutterMethodChannel?
   private var remoteCommandTargets: [(MPRemoteCommand, Any)] = []
+  private var audioSessionState = NowPlayingAudioSessionState()
   private var artworkURL: String?
   private var artworkTask: URLSessionDataTask?
   private var artwork: MPMediaItemArtwork?
@@ -104,24 +105,23 @@ import UIKit
     let rate = arguments["rate"] as? Double ?? 1
     let audioSession = AVAudioSession.sharedInstance()
     var sessionError: FlutterError?
-    // The system only lists an app in Now Playing whose audio session is
-    // the playback category and does not mix with others. Only when it is
-    // wrong: setting it every second disturbs playback
-    if playing,
-      audioSession.category != .playback
-        || audioSession.categoryOptions.contains(.mixWithOthers)
-    {
-      do {
-        try audioSession.setCategory(.playback, mode: audioSession.mode, options: [])
-        try audioSession.setActive(true)
-      } catch {
-        let error = error as NSError
-        sessionError = FlutterError(
-          code: "audio_session_error",
-          message: error.localizedDescription,
-          details: ["domain": error.domain, "code": error.code]
-        )
-      }
+    do {
+      try audioSessionState.update(
+        playing: playing,
+        needsConfiguration: audioSession.category != .playback
+          || audioSession.categoryOptions.contains(.mixWithOthers),
+        configure: {
+          try audioSession.setCategory(.playback, mode: audioSession.mode, options: [])
+        },
+        activate: { try audioSession.setActive(true) }
+      )
+    } catch {
+      let error = error as NSError
+      sessionError = FlutterError(
+        code: "audio_session_error",
+        message: error.localizedDescription,
+        details: ["domain": error.domain, "code": error.code]
+      )
     }
     let commands = MPRemoteCommandCenter.shared()
     commands.playCommand.isEnabled = !playing
@@ -170,6 +170,7 @@ import UIKit
   }
 
   private func clearNowPlaying() {
+    audioSessionState = NowPlayingAudioSessionState()
     let commands = MPRemoteCommandCenter.shared()
     commands.playCommand.isEnabled = false
     commands.pauseCommand.isEnabled = false
