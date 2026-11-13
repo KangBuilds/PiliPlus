@@ -1,3 +1,4 @@
+import AVFoundation
 import Flutter
 import MediaPlayer
 import UIKit
@@ -38,8 +39,7 @@ import UIKit
     channel.setMethodCallHandler { [weak self] call, result in
       switch call.method {
       case "NowPlaying.Update":
-        self?.updateNowPlaying(call.arguments as? [String: Any])
-        result(nil)
+        result(self?.updateNowPlaying(call.arguments as? [String: Any]))
       case "NowPlaying.Clear":
         self?.clearNowPlaying()
         result(nil)
@@ -48,6 +48,7 @@ import UIKit
       }
     }
     nowPlayingChannel = channel
+    UIApplication.shared.beginReceivingRemoteControlEvents()
 
     for (command, target) in remoteCommandTargets {
       command.removeTarget(target)
@@ -93,14 +94,35 @@ import UIKit
     }
   }
 
-  private func updateNowPlaying(_ arguments: [String: Any]?) {
+  /// Sets what Now Playing shows. Returns the audio session's state as it
+  /// was found, for the playback info panel: the system only lists an app
+  /// whose session is active and does not mix with others.
+  private func updateNowPlaying(_ arguments: [String: Any]?) -> String? {
     guard let arguments, arguments["active"] as? Bool == true else {
       clearNowPlaying()
-      return
+      return nil
     }
 
     let playing = arguments["playing"] as? Bool == true
     let rate = arguments["rate"] as? Double ?? 1
+    let audioSession = AVAudioSession.sharedInstance()
+    let found =
+      "cat=\(audioSession.category.rawValue) opts=\(audioSession.categoryOptions.rawValue)"
+      + " mode=\(audioSession.mode.rawValue)"
+    var fixed = ""
+    // Only when it is wrong: setting it every second disturbs playback
+    if playing,
+      audioSession.category != .playback
+        || audioSession.categoryOptions.contains(.mixWithOthers)
+    {
+      do {
+        try audioSession.setCategory(.playback, mode: audioSession.mode, options: [])
+        try audioSession.setActive(true)
+        fixed = " -> playback"
+      } catch {
+        fixed = " -> failed: \(error.localizedDescription)"
+      }
+    }
     let commands = MPRemoteCommandCenter.shared()
     commands.playCommand.isEnabled = !playing
     commands.pauseCommand.isEnabled = playing
@@ -122,6 +144,7 @@ import UIKit
     info[MPMediaItemPropertyArtwork] = artwork
     MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     MPNowPlayingInfoCenter.default().playbackState = playing ? .playing : .paused
+    return found + fixed
   }
 
   private func loadArtwork(_ value: String?) {

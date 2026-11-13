@@ -323,9 +323,10 @@ class PlPlayerController with BlockConfigMixin {
     if (videoPlayerController == null) return;
     try {
       final state = _nowPlayingState;
-      await NativeNowPlaying.update(this, state);
+      final session = await NativeNowPlaying.update(this, state);
       _lastNowPlayingSync = NativeNowPlaying.isOwner(this)
           ? 'sent active=${state['active']} playing=${state['playing']}'
+                ', session: ${session ?? 'none'}'
           : 'not sent: another player owns Now Playing';
     } catch (error, stackTrace) {
       _lastNowPlayingSync = 'ERR $error';
