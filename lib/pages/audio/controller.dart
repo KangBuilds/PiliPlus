@@ -95,21 +95,30 @@ class AudioController extends GetxController
     }
   }
 
+  bool _reportedNowPlayingFailure = false;
+
   Future<void> _updateNowPlaying() async {
     if (isClosed || player == null) return;
     final state = player!.state;
-    await NativeNowPlaying.update(this, {
-      'active': true,
-      'audioOnly': true,
-      'title': audioItem.value?.arc.title ?? 'PiliPlus',
-      'artwork': audioItem.value?.arc.cover ?? '',
-      'position': state.position.inMilliseconds / 1000,
-      'duration': state.duration.inMilliseconds / 1000,
-      'playing': state.playing,
-      'rate': state.rate,
-      'canSkipNext': index != null && index! + 1 < (playlist?.length ?? 0),
-      'canSkipPrevious': index != null && index! > 0,
-    });
+    try {
+      await NativeNowPlaying.update(this, {
+        'active': true,
+        'audioOnly': true,
+        'title': audioItem.value?.arc.title ?? 'PiliPlus',
+        'artwork': audioItem.value?.arc.cover ?? '',
+        'position': state.position.inMilliseconds / 1000,
+        'duration': state.duration.inMilliseconds / 1000,
+        'playing': state.playing,
+        'rate': state.rate,
+        'canSkipNext': index != null && index! + 1 < (playlist?.length ?? 0),
+        'canSkipPrevious': index != null && index! > 0,
+      });
+    } catch (error, stackTrace) {
+      if (!_reportedNowPlayingFailure) {
+        _reportedNowPlayingFailure = true;
+        Utils.reportError('Now Playing state sync failed: $error', stackTrace);
+      }
+    }
   }
 
   int? index;
