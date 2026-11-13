@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
+import 'package:PiliPlus/utils/utils.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/widgets.dart' show ScrollController;
 import 'package:get/get.dart';
@@ -46,6 +47,16 @@ abstract class CommonController<R, T> extends GetxController
 
   bool handleError(String? errMsg) {
     return false;
+  }
+
+  /// The request or the handling of its answer threw (an answer that is not
+  /// the expected JSON, a field of another type): shown like a failed
+  /// request on a refresh, and reported.
+  void onQueryFailed(bool isRefresh, Object error, StackTrace stackTrace) {
+    Utils.reportError(error, stackTrace);
+    if (isRefresh && !handleError(error.toString())) {
+      loadingState.value = Error(error.toString());
+    }
   }
 
   @override

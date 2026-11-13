@@ -10,17 +10,23 @@ abstract class CommonDataController<R, T> extends CommonController<R, T> {
   Future<void> queryData([bool isRefresh = true]) async {
     if (isLoading) return;
     isLoading = true;
-    final LoadingState<R> res = await customGetData();
-    if (res is Success<R>) {
-      if (!customHandleResponse(isRefresh, res)) {
-        loadingState.value = res as LoadingState<T>;
+    try {
+      final LoadingState<R> res = await customGetData();
+      if (res is Success<R>) {
+        if (!customHandleResponse(isRefresh, res)) {
+          loadingState.value = res as LoadingState<T>;
+        }
+      } else {
+        if (isRefresh && !handleError(res is Error ? res.errMsg : null)) {
+          loadingState.value = res as Error;
+        }
       }
-    } else {
-      if (isRefresh && !handleError(res is Error ? res.errMsg : null)) {
-        loadingState.value = res as Error;
-      }
+    } catch (e, s) {
+      onQueryFailed(isRefresh, e, s);
+    } finally {
+      // Also after a throw: left set, no refresh would ever run again
+      isLoading = false;
     }
-    isLoading = false;
   }
 
   @override

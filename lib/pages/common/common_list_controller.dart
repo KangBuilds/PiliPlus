@@ -24,37 +24,42 @@ abstract class CommonListController<R, T> extends CommonController<R, T> {
   Future<void> queryData([bool isRefresh = true]) async {
     if (isLoading || (!isRefresh && isEnd)) return;
     isLoading = true;
-    final LoadingState<R> res = await customGetData();
-    if (res case Success(:final response)) {
-      if (!customHandleResponse(isRefresh, res)) {
-        final dataList = getDataList(response);
-        if (dataList == null || dataList.isEmpty) {
-          if (endIfNullOrEmpty) isEnd = true;
+    try {
+      final LoadingState<R> res = await customGetData();
+      if (res case Success(:final response)) {
+        if (!customHandleResponse(isRefresh, res)) {
+          final dataList = getDataList(response);
+          if (dataList == null || dataList.isEmpty) {
+            if (endIfNullOrEmpty) isEnd = true;
+            if (isRefresh) {
+              loadingState.value = Success(dataList);
+            } else if (hasFooter == true) {
+              loadingState.refresh();
+            }
+            return;
+          }
+          handleListResponse(dataList);
           if (isRefresh) {
+            checkIsEnd(dataList.length);
             loadingState.value = Success(dataList);
-          } else if (hasFooter == true) {
+          } else if (loadingState.value case Success(:final response)) {
+            response!.addAll(dataList);
+            checkIsEnd(response.length);
             loadingState.refresh();
           }
-          isLoading = false;
-          return;
         }
-        handleListResponse(dataList);
-        if (isRefresh) {
-          checkIsEnd(dataList.length);
-          loadingState.value = Success(dataList);
-        } else if (loadingState.value case Success(:final response)) {
-          response!.addAll(dataList);
-          checkIsEnd(response.length);
-          loadingState.refresh();
+        page++;
+      } else {
+        if (isRefresh && !handleError(res is Error ? res.errMsg : null)) {
+          loadingState.value = res as Error;
         }
       }
-      page++;
-    } else {
-      if (isRefresh && !handleError(res is Error ? res.errMsg : null)) {
-        loadingState.value = res as Error;
-      }
+    } catch (e, s) {
+      onQueryFailed(isRefresh, e, s);
+    } finally {
+      // Also after a throw: left set, no refresh would ever run again
+      isLoading = false;
     }
-    isLoading = false;
   }
 
   @override
