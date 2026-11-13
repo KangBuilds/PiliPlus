@@ -1161,15 +1161,28 @@ class PlPlayerController with BlockConfigMixin {
     final refreshVideo = _refreshVideoOnNextPlay;
     _refreshVideoOnNextPlay = false;
     final player = _videoPlayerController;
-    Future<void>? refresh;
     if (refreshVideo && player != null && dataSource is! FileSource) {
       await player.command(const ['set', 'hwdec', 'no']);
-      refresh = refreshPlayer();
-    }
-    if (refresh != null) {
-      await refresh;
+      final openedAt = _mediaOpenedAt;
+      final Future<void>? refresh =
+          shouldFetchFreshUrls(
+            openFailed: false,
+            age: openedAt == null ? null : DateTime.now().difference(openedAt),
+          )
+          // The URLs may have expired while away: the media is opened anew
+          ? refreshPlayer()
+          : null;
+      if (refresh != null) {
+        await refresh;
+      } else {
+        // The video output did not survive the background, the media did:
+        // the decoder and output are set up again on the same stream, and
+        // what is buffered stays
+        await _reinitVideo(player);
+        await player.play();
+      }
       if (hwdec != null) {
-        await player!.command(['set', 'hwdec', hwdec!]);
+        await player.command(['set', 'hwdec', hwdec!]);
       }
     } else {
       await player?.play();
@@ -1177,6 +1190,18 @@ class PlPlayerController with BlockConfigMixin {
 
     playerStatus.value = PlayerStatus.playing;
     // screenManager.setOverlays(false);
+  }
+
+  /// Takes the video track off and puts it back: mpv sets up its decoder
+  /// and output again, and goes on from the demuxer's cache.
+  Future<void> _reinitVideo(Player player) async {
+    final vid = player.getProperty('vid');
+    await player.command(const ['set', 'vid', 'no']);
+    await player.command([
+      'set',
+      'vid',
+      vid.isEmpty || vid == 'no' ? 'auto' : vid,
+    ]);
   }
 
   /// 暂停播放
