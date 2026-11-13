@@ -31,6 +31,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+  adaptive_platform_ui: 1.0.2
   app_links: ^7.1.1
   archive: ^4.0.0
   audio_session: ^0.2.2

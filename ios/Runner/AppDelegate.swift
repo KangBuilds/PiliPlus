@@ -21,13 +21,9 @@ import UIKit
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     guard let registrar = engineBridge.pluginRegistry.registrar(
-      forPlugin: "PiliNativeGlassTabBar"
+      forPlugin: "PiliPlusNative"
     ) else { return }
     configureNowPlaying(messenger: registrar.messenger())
-    registrar.register(
-      PiliNativeGlassTabBarFactory(messenger: registrar.messenger()),
-      withId: "pili/native_glass_tab_bar"
-    )
     registrar.register(
       PiliNativeSegmentedControlFactory(messenger: registrar.messenger()),
       withId: "pili/native_segmented_control"

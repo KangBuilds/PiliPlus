@@ -1,83 +1,80 @@
 import 'package:PiliPlus/common/widgets/pili_native_glass_tab_bar.dart';
-import 'package:flutter/services.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  test('configures the three requested tab items in order', () {
-    final params = piliNativeGlassTabBarCreationParams(
-      selectedIndex: 1,
-      labels: const ['Home', 'Dynamics', 'Mine'],
-      searchLabel: 'Search',
-    );
-
-    expect(params['selectedIndex'], 1);
-    expect(params['searchLabel'], 'Search');
-    expect(params['items'], const <Map<String, String>>[
-      <String, String>{
-        'label': 'Home',
-        'symbol': 'house',
-        'selectedSymbol': 'house.fill',
-      },
-      <String, String>{
-        'label': 'Dynamics',
-        'symbol': 'square.stack',
-        'selectedSymbol': 'square.stack.fill',
-      },
-      <String, String>{
-        'label': 'Mine',
-        'symbol': 'person.crop.circle',
-        'selectedSymbol': 'person.crop.circle.fill',
-      },
-    ]);
-  });
-
-  test(
-    'forwards repeat taps and deduplicates selected-index updates',
-    () async {
-      final messenger =
-          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-      const methodChannel = MethodChannel('pili_native_glass_tab_bar_7');
-      final outgoingCalls = <MethodCall>[];
-      messenger.setMockMethodCallHandler(methodChannel, (call) async {
-        outgoingCalls.add(call);
-        return null;
-      });
-
+  testWidgets(
+    'preserves content selection after search and forwards repeat taps',
+    (
+      tester,
+    ) async {
       final tappedIndices = <int>[];
       var searchTapCount = 0;
-      final channel = PiliNativeGlassTabBarChannel(
-        onTap: tappedIndices.add,
-        onSearchTap: () => searchTapCount++,
-        binaryMessenger: messenger,
-      )..attach(7, 0);
+      late StateSetter rebuild;
+      var selectedIndex = 1;
 
-      await channel.handleMethodCall(const MethodCall('searchTapped'));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(),
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              rebuild = setState;
+              return Scaffold(
+                bottomNavigationBar: PiliNativeGlassTabBar(
+                  selectedIndex: selectedIndex,
+                  labels: const ['Home', 'Dynamics', 'Mine'],
+                  searchLabel: 'Search',
+                  onTap: (index) {
+                    tappedIndices.add(index);
+                    setState(() => selectedIndex = index);
+                  },
+                  onSearchTap: () => searchTapCount++,
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+      final finder = find.byType(IOS26NativeTabBar);
+      IOS26NativeTabBar bar() => tester.widget<IOS26NativeTabBar>(finder);
+      final nativeState = tester.state(finder);
+      final beforeSearch = bar();
+
+      await tester.tap(find.text('Search'));
+      await tester.pump();
+
       expect(searchTapCount, 1);
       expect(tappedIndices, isEmpty);
-
-      await channel.setSelectedIndex(0);
-      expect(outgoingCalls, isEmpty);
+      expect(bar().selectedIndex, 1);
+      expect(identical(bar(), beforeSearch), isFalse);
+      expect(tester.state(finder), same(nativeState));
+      expect(
+        MediaQuery.platformBrightnessOf(tester.element(finder)),
+        Brightness.dark,
+      );
 
       for (var count = 0; count < 2; count++) {
-        await channel.handleMethodCall(
-          const MethodCall('valueChanged', <String, int>{'index': 1}),
-        );
+        await tester.tap(find.text('Dynamics'));
+        await tester.pump();
       }
-      expect(tappedIndices, <int>[1, 1]);
+      expect(tappedIndices, [1, 1]);
 
-      await channel.setSelectedIndex(1);
-      expect(outgoingCalls, isEmpty);
+      await tester.tap(find.text('Mine'));
+      await tester.pump();
+      expect(tappedIndices, [1, 1, 2]);
+      expect(bar().selectedIndex, 2);
 
-      await channel.setSelectedIndex(2);
-      await channel.setSelectedIndex(2);
-      expect(outgoingCalls, hasLength(1));
-      expect(outgoingCalls.single.method, 'setSelectedIndex');
-      expect(outgoingCalls.single.arguments, <String, int>{'index': 2});
+      rebuild(() => selectedIndex = 0);
+      await tester.pump();
+      expect(bar().selectedIndex, 0);
 
-      channel.dispose();
-      messenger.setMockMethodCallHandler(methodChannel, null);
+      bar().onTap(3);
+      await tester.pump();
+      expect(searchTapCount, 2);
+      expect(bar().selectedIndex, 0);
+      expect(tappedIndices, [1, 1, 2]);
     },
   );
 }
