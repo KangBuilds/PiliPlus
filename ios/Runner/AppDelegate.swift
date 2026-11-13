@@ -49,7 +49,6 @@ import UIKit
       }
     }
     nowPlayingChannel = channel
-    UIApplication.shared.beginReceivingRemoteControlEvents()
 
     for (command, target) in remoteCommandTargets {
       command.removeTarget(target)
