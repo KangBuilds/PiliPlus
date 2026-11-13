@@ -27,12 +27,17 @@ concurrency:
 jobs:
   build-ios-app:
     name: Release IOS
-    runs-on: macos-26
+    runs-on: xcode-27
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
+      - name: Verify Xcode 27
+        run: |
+          xcodebuild -version
+          [[ "$(xcodebuild -version)" == "Xcode 27"* ]]
 
       - name: Setup flutter
         uses: subosito/flutter-action@v2
