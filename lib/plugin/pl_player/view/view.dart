@@ -2002,9 +2002,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
               () {
                 final videoFit = plPlayerController.videoFit.value;
                 final controller = plPlayerController.videoController!;
-                final rect = controller.rect.value;
-                final textureId = controller.id.value;
-                final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
                 _syncVideoOutputSize();
                 return Transform.flip(
                   flipX: plPlayerController.flipX.value,
@@ -2012,25 +2009,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   child: FittedBox(
                     fit: videoFit.boxFit,
                     alignment: widget.alignment,
-                    child:
-                        defaultTargetPlatform == TargetPlatform.iOS &&
-                            plPlayerController.longPressStatus.value &&
-                            rect != null &&
-                            textureId != null
-                        ? SizedBox(
-                            width: videoFit.aspectRatio == null
-                                ? rect.width / devicePixelRatio
-                                : rect.height /
-                                      devicePixelRatio *
-                                      videoFit.aspectRatio!,
-                            height: rect.height / devicePixelRatio,
-                            child: Texture(textureId: textureId),
-                          )
-                        : SimpleVideo(
-                            controller: controller,
-                            fill: widget.fill,
-                            aspectRatio: videoFit.aspectRatio,
-                          ),
+                    child: SimpleVideo(
+                      controller: controller,
+                      fill: widget.fill,
+                      aspectRatio: videoFit.aspectRatio,
+                    ),
                   ),
                 );
               },
