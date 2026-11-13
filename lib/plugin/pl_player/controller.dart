@@ -313,9 +313,30 @@ class PlPlayerController with BlockConfigMixin {
         'PictureInPicture.Update',
         _pictureInPictureState,
       );
+    } catch (error, stackTrace) {
+      _reportSyncFailure('Picture in Picture', error, stackTrace);
+    }
+    // On its own: a Picture in Picture update that fails must not keep Now
+    // Playing from being told, or it stays as the last player left it
+    if (videoPlayerController == null) return;
+    try {
       await NativeNowPlaying.update(this, _nowPlayingState);
-    } catch (error) {
-      if (kDebugMode) debugPrint('[PiP] state sync failed: $error');
+    } catch (error, stackTrace) {
+      _reportSyncFailure('Now Playing', error, stackTrace);
+    }
+  }
+
+  /// What already failed to sync: reported once, not every second.
+  static final _reportedSyncFailures = <String>{};
+
+  static void _reportSyncFailure(
+    String what,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    if (kDebugMode) debugPrint('[$what] state sync failed: $error');
+    if (_reportedSyncFailures.add(what)) {
+      Utils.reportError('$what state sync failed: $error', stackTrace);
     }
   }
 
