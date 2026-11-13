@@ -271,6 +271,8 @@ class PlPlayerController with BlockConfigMixin {
         _pictureInPictureTransitionState ==
         PictureInPictureState.restoringInline;
     _applicationInBackground = args['background'] == true;
+    // It was not told the position while inline: it counts from it now
+    unawaited(_syncNativePictureInPicture());
     if (kDebugMode) {
       debugPrint('[PiP] state=${args['state']}, reason=${args['reason']}');
     }
@@ -306,8 +308,57 @@ class PlPlayerController with BlockConfigMixin {
     }
   }
 
+  /// Where the Now Playing clock was last set, and when: the system runs
+  /// it on from there by itself.
+  int _nowPlayingSyncedPosition = 0;
+  final _sinceNowPlayingSync = Stopwatch();
+
+  /// Whether the Now Playing clock has to be set again at [position]
+  /// (seconds): after a seek or a stall it is off, and now and then it is
+  /// set anyway. While playback just runs on, it needs nothing.
+  @visibleForTesting
+  static bool nowPlayingNeedsSync({
+    required int position,
+    required int syncedPosition,
+    required int elapsedMs,
+    required double rate,
+    required bool playing,
+  }) {
+    if (elapsedMs >= 10000) return true;
+    final expected = syncedPosition + (playing ? elapsedMs / 1000 * rate : 0);
+    return (position - expected).abs() >= 2;
+  }
+
+  /// Once a second of playback. Picture in Picture counts from the position
+  /// it is told, so it is told while it shows; Now Playing only when its
+  /// own clock is off.
+  void _syncNativePosition(int position) {
+    final player = videoPlayerController;
+    if (player == null) return;
+    if (nowPlayingNeedsSync(
+      position: position,
+      syncedPosition: _nowPlayingSyncedPosition,
+      elapsedMs: _sinceNowPlayingSync.elapsedMilliseconds,
+      rate: playbackSpeed,
+      playing: player.state.playing && playerStatus.isPlaying,
+    )) {
+      unawaited(_syncNativePictureInPicture());
+    } else if (isPictureInPictureTransitioning || _applicationInBackground) {
+      _pictureInPictureChannel
+          .invokeMapMethod<String, Object?>(
+            'PictureInPicture.Update',
+            _pictureInPictureState,
+          )
+          .then((_) {}, onError: (_) {});
+    }
+  }
+
   Future<void> _syncNativePictureInPicture() async {
     if (videoPlayerController == null) return;
+    _nowPlayingSyncedPosition = positionInMilliseconds ~/ 1000;
+    _sinceNowPlayingSync
+      ..reset()
+      ..start();
     try {
       await _pictureInPictureChannel.invokeMapMethod<String, Object?>(
         'PictureInPicture.Update',
@@ -757,6 +808,37 @@ class PlPlayerController with BlockConfigMixin {
     return player;
   }
 
+  Future<Player?>? _creatingPlayer;
+
+  /// The player, created if there is none yet; `null` when every page
+  /// using it left meanwhile. Whoever asks while it is being created waits
+  /// for the same one: there is never a second.
+  Future<Player?> _ensurePlayer() {
+    if (_videoPlayerController case final player?) return Future.value(player);
+    return _creatingPlayer ??= () async {
+      try {
+        final player = await _initPlayer();
+        if (_playerCount == 0) {
+          _removeListeners();
+          player.dispose();
+          _videoController = null;
+          return null;
+        }
+        return _videoPlayerController = player;
+      } finally {
+        _creatingPlayer = null;
+      }
+    }();
+  }
+
+  /// Creates the player ahead of the media: it takes a while, and what to
+  /// play is often still being asked for.
+  void warmUpPlayer() {
+    if (_playerCount == 0) return;
+    // A failure shows when the media is opened
+    _ensurePlayer().then((_) {}, onError: (_) {});
+  }
+
   // 配置播放器
   Future<void> _createVideoController(
     DataSource dataSource,
@@ -766,19 +848,8 @@ class PlPlayerController with BlockConfigMixin {
     _heartDuration = 0;
     danmakuController?.clear();
 
-    var player = _videoPlayerController;
-
-    if (player == null) {
-      player = await _initPlayer();
-      if (_playerCount == 0) {
-        _removeListeners();
-        player.dispose();
-        player = null;
-        _videoController = null;
-        return;
-      }
-      _videoPlayerController = player;
-    }
+    final player = await _ensurePlayer();
+    if (player == null) return;
 
     final Map<String, String> extras = {};
 
@@ -932,7 +1003,7 @@ class PlPlayerController with BlockConfigMixin {
           this.position.value = posInSeconds;
 
           makeHeartBeat(posInSeconds);
-          unawaited(_syncNativePictureInPicture());
+          _syncNativePosition(posInSeconds);
         }
 
         for (final element in _positionListeners) {
@@ -948,6 +1019,8 @@ class PlPlayerController with BlockConfigMixin {
       }),
       stream.buffering.listen((bool buffering) {
         isBuffering.value = buffering;
+        // Stalled, the lock screen's clock ran on: set it right
+        if (!buffering) unawaited(_syncNativePictureInPicture());
       }),
       if (kDebugMode)
         stream.log.listen(((PlayerLog log) {
@@ -1061,6 +1134,7 @@ class PlPlayerController with BlockConfigMixin {
       _videoPlayerController!.state.rate = speed;
     }
     _playbackSpeed.value = speed;
+    unawaited(_syncNativePictureInPicture());
     if (danmakuController != null) {
       try {
         DanmakuOption updatedOption = danmakuController!.option.copyWith(

@@ -892,6 +892,19 @@ class VideoDetailController extends GetxController
     return result.dataOrNull?.dash?.video;
   }
 
+  /// Whether [playUrl] already lists a stream of the quality the settings
+  /// pick, so playback need not wait for the qualities it leaves out.
+  bool _hasPreferredQuality(PlayUrlModel playUrl) {
+    try {
+      final quality = playUrl.findAvailableVideoQuality(
+        plPlayerController.cacheVideoQa!,
+      );
+      return playUrl.dash!.video!.any((e) => e.quality.code == quality);
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// The streams of [playUrl] the settings pick: quality, codec, audio.
   /// Needs a DASH answer with video.
   ({
@@ -1036,6 +1049,10 @@ class VideoDetailController extends GetxController
     final generation = ++_queryGeneration;
     if (!fromReset) _resumePending = true;
     isQuerying = true;
+    // The player is created while the play URL is on its way, not after
+    if (_autoPlay.value || plPlayerController.preInitPlayer) {
+      plPlayerController.warmUpPlayer();
+    }
     try {
       await _queryVideoUrl(generation, fromReset, autoFullScreenFlag);
     } finally {
@@ -1101,13 +1118,22 @@ class VideoDetailController extends GetxController
     if (_isStaleQuery(generation)) return;
 
     if (result case Success(:final response)) {
-      if (cached == null && response.dash != null) {
-        final supplement = await _supplementedQualities(response);
-        if (_isStaleQuery(generation)) return;
-        response.dash!.video?.merge(supplement);
-        if (response.dash!.video?.isNotEmpty ?? false) {
-          _playUrlCache.put(playUrlKey, response);
+      final video = cached == null ? response.dash?.video : null;
+      if (video != null && video.isNotEmpty) {
+        if (_hasPreferredQuality(response)) {
+          // What plays is there already: the qualities left out only fill
+          // the quality list, and the player does not wait for them
+          unawaited(
+            _supplementedQualities(
+              response,
+            ).then(video.merge, onError: (_) {}),
+          );
+        } else {
+          final supplement = await _supplementedQualities(response);
+          if (_isStaleQuery(generation)) return;
+          video.merge(supplement);
         }
+        _playUrlCache.put(playUrlKey, response);
       }
       _playUrlFetchedAt = cached?.at;
       data = response;

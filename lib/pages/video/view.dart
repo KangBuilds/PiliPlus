@@ -147,8 +147,14 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     }
   }
 
+  int _lastPositionSecond = -1;
+
   void positionListener(Duration position) {
     videoDetailController.playedTime = position;
+    // Position events come many times a second: the rest once a second
+    final second = position.inSeconds;
+    if (second == _lastPositionSecond) return;
+    _lastPositionSecond = second;
     if (videoDetailController.shouldWarmUpNext(position)) {
       if (introController.peekNext() case final next?) {
         videoDetailController.warmUpNext(bvid: next.bvid, cid: next.cid);
