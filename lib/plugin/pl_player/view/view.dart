@@ -962,7 +962,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
       feedBack();
       plPlayerController
         ..position.value = seekToPos.inSeconds
-        ..seekTo(seekToPos, isSeek: false)
+        ..seekTo(seekToPos)
         ..seekToPos = null;
     } else {
       plPlayerController.position.value =
@@ -1715,7 +1715,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                                   if (!plPlayerController.controlsLock.value) {
                                     plPlayerController.seekTo(
                                       position,
-                                      isSeek: false,
                                     );
                                   }
                                 }
@@ -2170,7 +2169,6 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                   ),
                   onTap: () => plPlayerController.seekTo(
                     Duration(seconds: seekOffset),
-                    isSeek: false,
                   ),
                 ),
             ],

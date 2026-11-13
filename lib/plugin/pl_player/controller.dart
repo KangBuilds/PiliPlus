@@ -133,8 +133,6 @@ class PlPlayerController with BlockConfigMixin {
   late DataSource dataSource;
 
   Timer? _timer;
-  StreamSubscription? _subForSeek;
-
   Box setting = GStorage.setting;
 
   // final Durations durations;
@@ -1024,45 +1022,17 @@ class PlPlayerController with BlockConfigMixin {
     _subscriptions = null;
   }
 
-  void _cancelSubForSeek() {
-    if (_subForSeek != null) {
-      _subForSeek!.cancel();
-      _subForSeek = null;
-    }
-  }
-
   /// 跳转至指定位置
-  Future<void> seekTo(Duration position, {bool isSeek = true}) async {
-    if (_playerCount == 0) {
-      return;
-    }
-    if (position < Duration.zero) {
-      position = Duration.zero;
-    }
+  Future<void> seekTo(Duration position) async {
+    if (_playerCount == 0) return;
+
     _heartDuration = position.inSeconds;
 
-    Future<void> seek() async {
-      final player = _videoPlayerController;
-      if (player == null) return;
-      final buffer = isSeek ? player.stream.buffer.first : null;
-      danmakuController?.clear();
-      try {
-        await player.seek(position);
-        if (buffer != null) await buffer;
-      } catch (e) {
-        if (kDebugMode) debugPrint('seek failed: $e');
-      }
-    }
-
-    if (duration.value != 0) {
-      await seek();
-    } else {
-      // if (kDebugMode) debugPrint('seek duration else');
-      _subForSeek?.cancel();
-      _subForSeek = duration.listen((_) {
-        unawaited(seek());
-        _cancelSubForSeek();
-      });
+    danmakuController?.clear();
+    try {
+      await _videoPlayerController?.seek(position);
+    } catch (e) {
+      if (kDebugMode) debugPrint('seek failed: $e');
     }
   }
 
@@ -1102,7 +1072,7 @@ class PlPlayerController with BlockConfigMixin {
     // repeat为true，将从头播放
     if (repeat) {
       // await seekTo(Duration.zero);
-      await seekTo(Duration.zero, isSeek: false);
+      await seekTo(Duration.zero);
     }
 
     await audioSessionHandler?.setActive(true);
@@ -1287,7 +1257,6 @@ class PlPlayerController with BlockConfigMixin {
   void onForwardBackward(Duration duration) {
     seekTo(
       duration.clamp(Duration.zero, videoPlayerController!.state.duration),
-      isSeek: false,
     ).whenComplete(play);
   }
 
@@ -1495,7 +1464,6 @@ class PlPlayerController with BlockConfigMixin {
     // 每次减1，最后销毁
     resetScreenRotation();
     cancelLongPressTimer();
-    _cancelSubForSeek();
     if (!_isCloseAll && _playerCount > 1) {
       _playerCount -= 1;
       _heartDuration = 0;

@@ -21,11 +21,11 @@ class _SettingsBox implements Box<dynamic> {
 }
 
 class _Player implements PlPlayerController {
-  final seeks = <(Duration, bool)>[];
+  final seeks = <Duration>[];
 
   @override
-  Future<void> seekTo(Duration position, {bool isSeek = true}) async {
-    seeks.add((position, isSeek));
+  Future<void> seekTo(Duration position) async {
+    seeks.add(position);
   }
 
   @override
@@ -147,7 +147,7 @@ void main() {
       expect(span.recognizer, isNotNull);
       await tapTimestamp(tester, span);
       expect(controller.plPlayerController.seeks, [
-        (const Duration(seconds: 83), false),
+        const Duration(seconds: 83),
       ]);
       expect(tester.takeException(), isNull);
     },
@@ -161,7 +161,7 @@ void main() {
     final span = await renderTimestamp(tester, arguments: {'heroTag': 'video'});
     await tapTimestamp(tester, span);
     expect(controller.plPlayerController.seeks, [
-      (const Duration(seconds: 83), false),
+      const Duration(seconds: 83),
     ]);
   });
 

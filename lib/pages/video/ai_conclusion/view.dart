@@ -108,7 +108,6 @@ class AiConclusionPanel extends CommonSlidePage {
                                                   Duration(
                                                     seconds: item.timestamp!,
                                                   ),
-                                                  isSeek: false,
                                                 );
                                               } catch (_) {}
                                             })

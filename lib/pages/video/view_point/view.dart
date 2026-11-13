@@ -134,7 +134,6 @@ class _ViewPointsPageState extends State<ViewPointsPage>
                 Get.back();
                 plPlayerController?.seekTo(
                   Duration(seconds: segment.from!),
-                  isSeek: false,
                 );
               }
             : null,
