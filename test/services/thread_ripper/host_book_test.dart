@@ -136,4 +136,51 @@ void main() {
     expect(book.mayProbe('f'), isFalse);
     expect(book.mayProbe('g'), isTrue);
   });
+
+  group('across launches', () {
+    test('a snapshot restores what each host did over every file', () {
+      book
+        ..recordRate('fast', 'file1', 400 * 1024, 100)
+        ..recordTtfb('fast', 'file1', 50)
+        ..recordRate('slow', 'file1', 400 * 1024, 1000)
+        ..recordTtfb('slow', 'file1', 300)
+        // Never delivered enough to be measured: not worth keeping
+        ..recordTtfb('silent', 'file1', 900);
+
+      final snapshot = book.snapshot();
+      expect(snapshot.keys, unorderedEquals(['fast', 'slow']));
+
+      final next = HostBook(clock: () => now)..restore(snapshot);
+      expect(next['fast'].rate, closeTo(4096, 1));
+      expect(next['fast'].ttfb, 50);
+      // Known from before, still unmeasured on any file of this launch
+      expect(next.isMeasured('fast', 'file2'), isFalse);
+      expect(next.typicalRate('file2'), greaterThan(HostBook.defaultRate));
+    });
+
+    test('what a host did before decides between hosts that look alike', () {
+      book.restore({
+        'fast': [4096, 50],
+        'slow': [409.6, 300],
+      });
+
+      expect(book.prior('fast'), greaterThan(book.prior('slow')));
+      // A host never seen is taken for the usual one, not the worst
+      expect(book.prior('new'), greaterThan(book.prior('slow')));
+      expect(book.prior('new'), lessThanOrEqualTo(book.prior('fast')));
+    });
+
+    test('a restore does not overwrite what this launch measured', () {
+      book
+        ..recordRate('a', 'file1', 400 * 1024, 100)
+        ..recordTtfb('a', 'file1', 50)
+        ..restore({
+          'a': [1, 999],
+          'bad': [0, -1],
+        });
+
+      expect(book['a'].rate, closeTo(4096, 1));
+      expect(book['bad'].rate, isNull);
+    });
+  });
 }

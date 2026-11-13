@@ -586,6 +586,54 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     }
   }
 
+  /// The part or season episode [nextPlay] goes to next. Play-all lists and
+  /// related videos are left out: they are not known without asking.
+  @override
+  ({String bvid, int cid})? peekNext() {
+    try {
+      final playRepeat = videoDetailCtr.plPlayerController.playRepeat;
+      if (playRepeat == PlayRepeat.pause ||
+          playRepeat == PlayRepeat.singleCycle) {
+        return null;
+      }
+      final videoDetail = this.videoDetail.value;
+      var current = cid.value;
+
+      final pages = videoDetail.pages;
+      if (pages != null && pages.length > 1) {
+        final index = pages.indexWhere((e) => e.cid == current);
+        if (index == -1) return null;
+        if (index + 1 < pages.length) {
+          final next = pages[index + 1].cid;
+          return next == null ? null : (bvid: bvid, cid: next);
+        }
+        // The last part: on to the season, from this video's place in it
+        current = (videoDetail.isPageReversed ? pages.last : pages.first).cid!;
+      }
+      if (videoDetailCtr.isPlayAll) return null;
+
+      final sections = videoDetail.ugcSeason?.sections;
+      if (sections == null) return null;
+      final episodes = [for (final section in sections) ...?section.episodes];
+      final index = episodes.indexWhere((e) => e.cid == current);
+      if (index == -1) return null;
+      var nextIndex = index + 1;
+      if (nextIndex >= episodes.length) {
+        if (playRepeat != PlayRepeat.listCycle) return null;
+        nextIndex = 0;
+      }
+      final next = episodes[nextIndex];
+      final nextCid = next.cid;
+      final nextBvid = next.bvid;
+      if (nextCid == null || nextBvid == null || nextCid == cid.value) {
+        return null;
+      }
+      return (bvid: nextBvid, cid: nextCid);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// 列表循环或者顺序播放时，自动播放下一个
   @override
   bool nextPlay([bool skipPart = false]) {

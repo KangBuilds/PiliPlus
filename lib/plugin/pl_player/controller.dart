@@ -27,6 +27,7 @@ import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:PiliPlus/utils/accounts.dart';
+import 'package:PiliPlus/utils/connectivity_utils.dart';
 import 'package:PiliPlus/utils/extension/box_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/ios/now_playing.dart';
@@ -644,6 +645,8 @@ class PlPlayerController with BlockConfigMixin {
     VoidCallback? onInit,
     bool autoFullScreenFlag = false,
     Future<bool> Function()? reloadMedia,
+    // When the URLs were fetched, if not just now: their age counts from then
+    DateTime? mediaFetchedAt,
   }) async {
     // Whoever opens the media says how to get fresh URLs for it; without
     // that, a refresh reopens the same ones
@@ -686,6 +689,9 @@ class PlPlayerController with BlockConfigMixin {
       }
       // 配置Player 音轨、字幕等等
       await _createVideoController(dataSource, seekTo);
+      if (mediaFetchedAt != null && _mediaOpenedAt != null) {
+        _mediaOpenedAt = mediaFetchedAt;
+      }
 
       if (_playerCount == 0) {
         _removeListeners();
@@ -779,7 +785,9 @@ class PlPlayerController with BlockConfigMixin {
     if (dataSource is FileSource) {
       extras['cache'] = 'no';
     } else {
-      extras.addAll(Pref.initBuffer(_playbackSpeed.value));
+      extras.addAll(
+        Pref.initBuffer(_playbackSpeed.value, await ConnectivityUtils.isWiFi),
+      );
     }
 
     var video = dataSource.videoSource;

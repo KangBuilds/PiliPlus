@@ -60,6 +60,10 @@ abstract class CommonIntroController extends GetxController
   bool prevPlay();
   bool nextPlay();
 
+  /// The part [nextPlay] would go to when this one ends, when that is known
+  /// without asking anything: to get it ready ahead.
+  ({String bvid, int cid})? peekNext() => null;
+
   void actionShareVideo(BuildContext context);
 
   late final RxInt cid;

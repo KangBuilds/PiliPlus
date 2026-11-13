@@ -47,6 +47,7 @@ import 'package:PiliPlus/plugin/pl_player/models/data_source.dart';
 import 'package:PiliPlus/plugin/pl_player/models/heart_beat_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/connectivity_utils.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
@@ -59,6 +60,7 @@ import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
+import 'package:PiliPlus/utils/timed_cache.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
 import 'package:collection/collection.dart';
@@ -736,6 +738,7 @@ class VideoDetailController extends GetxController
       height: firstVideo.height,
       autoFullScreenFlag: autoFullScreenFlag,
       reloadMedia: isFileSource ? null : reloadPlayUrl,
+      mediaFetchedAt: _playUrlFetchedAt,
     );
 
     if (isClosed) return;
@@ -791,6 +794,8 @@ class VideoDetailController extends GetxController
         if (_isStaleQuery(generation)) return true;
         data = response;
         response.dash!.video?.merge(supplement);
+        _playUrlCache.put(_playUrlKey(), response);
+        _playUrlFetchedAt = null;
         if (currentVideoQa.value == null) return false;
         await updatePlayer();
         return true;
@@ -813,25 +818,208 @@ class VideoDetailController extends GetxController
     queryVideoUrl(fromReset: true);
   }
 
-  Future<LoadingState<PlayUrlModel>> _getVideoUrl(int quality) {
+  /// Play URL answers of the last half hour, by [_playUrlKey]: coming back
+  /// to a part, or reaching one warmed up ahead, asks nothing again. Signed
+  /// URLs last longer than that.
+  static final _playUrlCache = TimedCache<PlayUrlModel>(
+    maxAge: const Duration(minutes: 30),
+  );
+
+  /// When the play URLs in [data] were fetched, if they came from the cache:
+  /// the player counts their age from then.
+  DateTime? _playUrlFetchedAt;
+
+  /// What a play URL answer depends on. The part and language playing now
+  /// by default.
+  String _playUrlKey({String? bvid, int? cid, bool current = true}) => [
+    Accounts.get(AccountType.video).mid,
+    videoType.name,
+    bvid ?? this.bvid,
+    cid ?? this.cid.value,
+    epId,
+    seasonId,
+    current ? currLang.value : null,
+    plPlayerController.tryLook,
+  ].join('|');
+
+  /// Where playback of the part stands, for the next time its cached answer
+  /// is used: the one it carries dates from when it was fetched.
+  void _rememberProgress() {
+    final played = playedTime;
+    if (isFileSource || played == null) return;
+    final cached = _playUrlCache.get(_playUrlKey())?.value;
+    if (cached == null) return;
+    final length = cached.timeLength;
+    final finished =
+        plPlayerController.playerStatus.isCompleted ||
+        (length != null && (length - played.inMilliseconds).abs() <= 1000);
+    cached.lastPlayTime = finished ? 0 : played.inMilliseconds;
+  }
+
+  Future<LoadingState<PlayUrlModel>> _getVideoUrl(
+    int quality, {
+    String? bvid,
+    int? cid,
+    bool current = true,
+  }) {
     return VideoHttp.videoUrl(
-      cid: cid.value,
-      bvid: bvid,
+      cid: cid ?? this.cid.value,
+      bvid: bvid ?? this.bvid,
       qn: quality,
       epid: epId,
       seasonId: seasonId,
       tryLook: plPlayerController.tryLook,
       videoType: videoType,
-      language: currLang.value,
+      language: current ? currLang.value : null,
     );
   }
 
   /// The streams of the qualities [playUrl] leaves out, to merge into it.
-  Future<List<VideoItem>?> _supplementedQualities(PlayUrlModel playUrl) async {
+  Future<List<VideoItem>?> _supplementedQualities(
+    PlayUrlModel playUrl, {
+    String? bvid,
+    int? cid,
+    bool current = true,
+  }) async {
     final quality = playUrl.missingVideoQualityBelowHighest;
     if (quality == -1) return null;
-    final result = await _getVideoUrl(quality);
+    final result = await _getVideoUrl(
+      quality,
+      bvid: bvid,
+      cid: cid,
+      current: current,
+    );
     return result.dataOrNull?.dash?.video;
+  }
+
+  /// The streams of [playUrl] the settings pick: quality, codec, audio.
+  /// Needs a DASH answer with video.
+  ({
+    int quality,
+    VideoDecodeFormatType decode,
+    VideoItem video,
+    AudioItem? audio,
+  })
+  _selectStreams(PlayUrlModel playUrl) {
+    final quality = playUrl.findAvailableVideoQuality(
+      plPlayerController.cacheVideoQa!,
+    );
+
+    /// 优先顺序 设置中指定解码格式 -> 当前可选的首个解码格式
+    final supportFormats = playUrl.supportFormats!;
+
+    // 根据画质选编码格式
+    final decode = VideoUtils.selectCodec(
+      supportFormats
+          .firstWhere(
+            (e) => e.quality == quality,
+            orElse: () => supportFormats.first,
+          )
+          .codecs!,
+      preferCodecs,
+    );
+
+    /// 取出符合当前画质的videoList
+    final videosList = playUrl.dash!.video!
+        .where((e) => e.quality.code == quality)
+        .toList();
+
+    /// 取出符合当前解码格式的videoItem
+    final video = videosList.firstWhere(
+      (e) => decode.codes.any(e.codecs!.startsWith),
+      orElse: () => videosList.first,
+    );
+
+    /// 优先顺序 设置中指定质量 -> 当前可选的最高质量
+    AudioItem? audio;
+    final audioList = playUrl.dash?.audio;
+    if (audioList != null && audioList.isNotEmpty) {
+      final audioIds = audioList.map((map) => map.id).toList();
+      int closestNumber = audioIds.findClosestTarget(
+        (e) => e <= plPlayerController.cacheAudioQa,
+        (a, b) => a > b ? a : b,
+      );
+      if (!audioIds.contains(plPlayerController.cacheAudioQa) &&
+          audioIds.any((e) => e > plPlayerController.cacheAudioQa)) {
+        closestNumber = AudioQuality.k192.code;
+      }
+      audio = audioList.firstWhere(
+        (e) => e.id == closestNumber,
+        orElse: () => audioList.first,
+      );
+    }
+    return (quality: quality, decode: decode, video: video, audio: audio);
+  }
+
+  /// The part whose next one was last warmed up: once per part.
+  int? _warmedUpAfterCid;
+
+  /// Whether playback at [position] is about to end and the next part has
+  /// not been warmed up yet. `true` once per part.
+  bool shouldWarmUpNext(Duration position) {
+    if (isFileSource || !isUgc || isQuerying) return false;
+    final current = cid.value;
+    if (_warmedUpAfterCid == current) return false;
+    final length = _playUrlLength;
+    if (length == null ||
+        length < 2 * _warmUpAheadMs ||
+        length - position.inMilliseconds > _warmUpAheadMs) {
+      return false;
+    }
+    _warmedUpAfterCid = current;
+    return true;
+  }
+
+  static const _warmUpAheadMs = 20 * 1000;
+
+  int? get _playUrlLength {
+    try {
+      return data.timeLength;
+    } catch (_) {
+      // Nothing answered yet
+      return null;
+    }
+  }
+
+  /// Gets the part played next ready before it is asked for: its play URL
+  /// goes into the cache, and the proxy fetches its first bytes. Whatever
+  /// fails here is found out again when the part is opened.
+  Future<void> warmUpNext({required String bvid, required int cid}) async {
+    if (plPlayerController.cacheVideoQa == null) return;
+    final key = _playUrlKey(bvid: bvid, cid: cid, current: false);
+    try {
+      var playUrl = _playUrlCache.get(key)?.value;
+      if (playUrl == null) {
+        final result = await _getVideoUrl(
+          VideoQuality.hdrVivid.code,
+          bvid: bvid,
+          cid: cid,
+          current: false,
+        );
+        final response = result.dataOrNull;
+        final video = response?.dash?.video;
+        if (response == null || video == null || video.isEmpty) return;
+        video.merge(
+          await _supplementedQualities(
+            response,
+            bvid: bvid,
+            cid: cid,
+            current: false,
+          ),
+        );
+        if (isClosed) return;
+        _playUrlCache.put(key, playUrl = response);
+      }
+      final streams = _selectStreams(playUrl);
+      await threadRipper.wrap(VideoUtils.getCdnUrl(streams.video.playUrls));
+      if (streams.audio case final audio?) {
+        await threadRipper.wrap(
+          VideoUtils.getCdnUrl(audio.playUrls, isAudio: true),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('warm up next: $e');
+    }
   }
 
   // 视频链接
@@ -903,15 +1091,25 @@ class VideoDetailController extends GetxController
 
     if (_isStaleQuery(generation)) return;
 
-    final result = await _getVideoUrl(VideoQuality.hdrVivid.code);
+    // The key of what is asked now: the part may change while waiting
+    final playUrlKey = _playUrlKey();
+    // A reload asks for fresh URLs
+    final cached = fromReset ? null : _playUrlCache.get(playUrlKey);
+    final LoadingState<PlayUrlModel> result = cached != null
+        ? Success(cached.value)
+        : await _getVideoUrl(VideoQuality.hdrVivid.code);
     if (_isStaleQuery(generation)) return;
 
     if (result case Success(:final response)) {
-      if (response.dash != null) {
+      if (cached == null && response.dash != null) {
         final supplement = await _supplementedQualities(response);
         if (_isStaleQuery(generation)) return;
         response.dash!.video?.merge(supplement);
+        if (response.dash!.video?.isNotEmpty ?? false) {
+          _playUrlCache.put(playUrlKey, response);
+        }
       }
+      _playUrlFetchedAt = cached?.at;
       data = response;
 
       languages.value = data.language?.items;
@@ -976,56 +1174,15 @@ class VideoDetailController extends GetxController
         }
         return;
       }
-      final targetVideoQa = data.findAvailableVideoQuality(
-        plPlayerController.cacheVideoQa!,
-      );
-      currentVideoQa.value = VideoQuality.fromCode(targetVideoQa);
-
-      /// 优先顺序 设置中指定解码格式 -> 当前可选的首个解码格式
-      final supportFormats = data.supportFormats!;
-
-      // 根据画质选编码格式
-      currentDecodeFormats = VideoUtils.selectCodec(
-        supportFormats
-            .firstWhere(
-              (e) => e.quality == targetVideoQa,
-              orElse: () => supportFormats.first,
-            )
-            .codecs!,
-        preferCodecs,
-      );
-
-      /// 取出符合当前画质的videoList
-      final videosList = dashVideo
-          .where((e) => e.quality.code == targetVideoQa)
-          .toList();
-
-      /// 取出符合当前解码格式的videoItem
-      firstVideo = videosList.firstWhere(
-        (e) => currentDecodeFormats.codes.any(e.codecs!.startsWith),
-        orElse: () => videosList.first,
-      );
+      final streams = _selectStreams(data);
+      currentVideoQa.value = VideoQuality.fromCode(streams.quality);
+      currentDecodeFormats = streams.decode;
+      firstVideo = streams.video;
       _setVideoHeight();
 
       videoUrl = VideoUtils.getCdnUrl(firstVideo.playUrls);
 
-      /// 优先顺序 设置中指定质量 -> 当前可选的最高质量
-      AudioItem? firstAudio;
-      final audioList = data.dash?.audio;
-      if (audioList != null && audioList.isNotEmpty) {
-        final audioIds = audioList.map((map) => map.id).toList();
-        int closestNumber = audioIds.findClosestTarget(
-          (e) => e <= plPlayerController.cacheAudioQa,
-          (a, b) => a > b ? a : b,
-        );
-        if (!audioIds.contains(plPlayerController.cacheAudioQa) &&
-            audioIds.any((e) => e > plPlayerController.cacheAudioQa)) {
-          closestNumber = AudioQuality.k192.code;
-        }
-        firstAudio = audioList.firstWhere(
-          (e) => e.id == closestNumber,
-          orElse: () => audioList.first,
-        );
+      if (streams.audio case final firstAudio?) {
         audioUrl = VideoUtils.getCdnUrl(firstAudio.playUrls, isAudio: true);
         currentAudioQa = AudioQuality.fromCode(firstAudio.id);
       } else {
@@ -1268,6 +1425,7 @@ class VideoDetailController extends GetxController
   }
 
   void makeHeartBeat() {
+    _rememberProgress();
     if (plPlayerController.enableHeart &&
         !plPlayerController.playerStatus.isCompleted &&
         playedTime != null) {

@@ -48,7 +48,10 @@ Map<String, String> buildBufferOptions({
   final forwardBytes = bufferSize == 0
       ? '$wholeVideoBytes'
       : (bufferSize * playbackSpeed * 0x100000).toStringAsFixed(0);
-  final backBytes = bufferSize == 0 ? wholeVideoBytes : 4 * 0x100000;
+  // Behind the playhead a rewind's worth is kept, not the whole video: with
+  // 1 GiB ahead as well, one long video took up to 2 GiB of disk.
+  const wholeVideoBackBytes = 256 * 0x100000;
+  final backBytes = bufferSize == 0 ? wholeVideoBackBytes : 4 * 0x100000;
   return {
     'cache': 'yes',
     'cache-on-disk': 'yes',
@@ -60,6 +63,14 @@ Map<String, String> buildBufferOptions({
     'demuxer-max-back-bytes': '$backBytes',
   };
 }
+
+/// The forward buffer in MB for the network playing: off Wi-Fi the data is
+/// paid for, and a video opened is often not watched to the end.
+double bufferSizeFor({
+  required bool isWiFi,
+  required double wifi,
+  required double cellular,
+}) => isWiFi ? wifi : cellular;
 
 abstract final class Pref {
   static final Box _setting = GStorage.setting;
@@ -549,7 +560,7 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.recordSearchHistory, defaultValue: true);
 
   static num get maxCacheSize =>
-      _setting.get(SettingBoxKey.maxCacheSize) ?? 1 << 30;
+      _setting.get(SettingBoxKey.maxCacheSize) ?? 512 << 20;
 
   static String get banWordForDyn =>
       _setting.get(SettingBoxKey.banWordForDyn, defaultValue: '');
@@ -704,12 +715,22 @@ abstract final class Pref {
   static double get bufferSec =>
       _setting.get(SettingBoxKey.bufferSec, defaultValue: 0.0);
 
-  static Map<String, String> initBuffer([double playbackSpeed = 1.0]) =>
-      buildBufferOptions(
-        bufferSize: Pref.bufferSize,
-        bufferSec: Pref.bufferSec,
-        playbackSpeed: playbackSpeed,
-      );
+  /// Off Wi-Fi a bounded window by default, not the whole video.
+  static double get bufferSizeCellular =>
+      _setting.get(SettingBoxKey.bufferSizeCellular, defaultValue: 64.0);
+
+  static Map<String, String> initBuffer([
+    double playbackSpeed = 1.0,
+    bool isWiFi = true,
+  ]) => buildBufferOptions(
+    bufferSize: bufferSizeFor(
+      isWiFi: isWiFi,
+      wifi: Pref.bufferSize,
+      cellular: Pref.bufferSizeCellular,
+    ),
+    bufferSec: Pref.bufferSec,
+    playbackSpeed: playbackSpeed,
+  );
 
   static String get audioOutput => _setting.get(
     SettingBoxKey.audioOutput,

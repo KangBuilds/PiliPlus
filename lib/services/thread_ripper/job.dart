@@ -781,16 +781,26 @@ class RipperJob {
         final load = book[c.host].inflight;
         final bestLoad = book[best.host].inflight;
         if (load != bestLoad) return load < bestLoad ? c : best;
-        return _eta(c.host, bytes, now) < _eta(best.host, bytes, now)
-            ? c
-            : best;
+        return _sooner(c, best, bytes, now);
       });
 
   MediaCandidate _fastest(List<MediaCandidate> options, int bytes, int now) =>
-      options.reduce(
-        (best, c) =>
-            _eta(c.host, bytes, now) < _eta(best.host, bytes, now) ? c : best,
-      );
+      options.reduce((best, c) => _sooner(c, best, bytes, now));
+
+  /// [c] if it is expected to deliver [bytes] before [best]. Hosts not
+  /// measured on this file all look alike: there, how fast each was on
+  /// other files decides.
+  MediaCandidate _sooner(
+    MediaCandidate c,
+    MediaCandidate best,
+    int bytes,
+    int now,
+  ) {
+    final eta = _eta(c.host, bytes, now);
+    final bestEta = _eta(best.host, bytes, now);
+    if (eta != bestEta) return eta < bestEta ? c : best;
+    return book.prior(c.host) > book.prior(best.host) ? c : best;
+  }
 
   void _start(_Attempt attempt) {
     final piece = attempt.piece;

@@ -301,6 +301,39 @@ class HostBook {
     return ttfb + bytes / rate;
   }
 
+  /// How fast [host] was over every file, for choosing between hosts that
+  /// look alike on this one; a host never seen counts as the usual one.
+  double prior(String host) =>
+      this[host].rate ??
+      _medianOf([for (final s in _hosts.values) ?s.rate]) ??
+      0;
+
+  static const _maxSnapshotHosts = 32;
+
+  /// Each measured host's rate and time to first byte over every file, the
+  /// most recently useful first: what the next launch starts from.
+  Map<String, List<double>> snapshot() {
+    final measured = [
+      for (final MapEntry(key: host, value: stats) in _hosts.entries)
+        if (stats.rate != null && stats.ttfb != null) (host, stats),
+    ]..sort((a, b) => b.$2.activeAt.compareTo(a.$2.activeAt));
+    return {
+      for (final (host, stats) in measured.take(_maxSnapshotHosts))
+        host: [stats.rate!, stats.ttfb!],
+    };
+  }
+
+  /// Starts from a [snapshot] of an earlier launch. What was measured since
+  /// is kept: it is newer.
+  void restore(Map<String, List<double>> snapshot) {
+    for (final MapEntry(key: host, value: speeds) in snapshot.entries) {
+      if (speeds.length < 2 || !(speeds[0] > 0) || !(speeds[1] >= 0)) continue;
+      this[host]
+        ..rate ??= speeds[0]
+        ..ttfb ??= speeds[1];
+    }
+  }
+
   static double? _medianOf(List<double> values) {
     if (values.isEmpty) return null;
     values.sort();

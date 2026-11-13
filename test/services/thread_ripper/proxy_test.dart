@@ -387,4 +387,52 @@ void main() {
     expect(reports.single, contains('no host could deliver'));
     expect(reports.single, matches(r'[\w.-]+\.bilivideo\.com refused'));
   });
+
+  test('a URL asked for again gets the proxy URL it already has', () async {
+    final fetcher = FakeFetcher(testFile(90 * 1024));
+    final ripper = ThreadRipper(
+      fetcher: fetcher,
+      config: testConfig,
+      wifiOnly: false,
+    );
+    addTearDown(ripper.close);
+
+    // Warmed up ahead, then opened: one file, its first bytes fetched once
+    final warmed = await ripper.wrapNow(kListedUrl);
+    final opened = await ripper.wrapNow(kListedUrl);
+    expect(opened, warmed);
+
+    final (response, body) = await get(opened, range: 'bytes=0-');
+    expect(response.statusCode, 206);
+    expect(body, testFile(90 * 1024));
+  });
+
+  test('host speeds are read once and saved after a request', () async {
+    var loads = 0;
+    Map<String, List<double>>? saved;
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(testFile(90 * 1024)),
+      config: testConfig,
+      wifiOnly: false,
+      loadHosts: () {
+        loads++;
+        return {
+          'remembered.bilivideo.com': [4096, 50],
+        };
+      },
+      saveHosts: (hosts) => saved = hosts,
+      saveHostsAfter: const Duration(milliseconds: 20),
+    );
+    addTearDown(ripper.close);
+
+    final url = await ripper.wrapNow(kListedUrl);
+    await ripper.wrapNow(kListedUrl);
+    expect(loads, 1);
+    expect(ripper.book['remembered.bilivideo.com'].rate, 4096);
+
+    await get(url, range: 'bytes=0-');
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(saved, isNotNull);
+    expect(saved, contains('remembered.bilivideo.com'));
+  });
 }

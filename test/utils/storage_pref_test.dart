@@ -13,7 +13,7 @@ void main() {
     expect(options['demuxer-cache-unlink-files'], 'immediate');
     expect(options.containsKey('cache-secs'), false);
     expect(options['demuxer-max-bytes'], '${1 << 30}');
-    expect(options['demuxer-max-back-bytes'], '${1 << 30}');
+    expect(options['demuxer-max-back-bytes'], '${256 * 0x100000}');
   });
 
   test('scales forward buffer with playback speed', () {
@@ -26,6 +26,20 @@ void main() {
     expect(options['cache-secs'], '32.000');
     expect(options['demuxer-hysteresis-secs'], '4.000');
     expect(options['demuxer-max-bytes'], '${32 * 0x100000}');
+    expect(options['demuxer-max-back-bytes'], '${4 * 0x100000}');
+  });
+
+  test('off Wi-Fi the cellular buffer applies, a bounded window', () {
+    expect(bufferSizeFor(isWiFi: true, wifi: 0, cellular: 64), 0);
+    expect(bufferSizeFor(isWiFi: false, wifi: 0, cellular: 64), 64);
+
+    final options = buildBufferOptions(
+      bufferSize: bufferSizeFor(isWiFi: false, wifi: 0, cellular: 64),
+      bufferSec: 0,
+      playbackSpeed: 1,
+    );
+
+    expect(options['demuxer-max-bytes'], '${64 * 0x100000}');
     expect(options['demuxer-max-back-bytes'], '${4 * 0x100000}');
   });
 }

@@ -9,17 +9,58 @@ import 'package:PiliPlus/services/thread_ripper/host_book.dart';
 import 'package:PiliPlus/services/thread_ripper/job.dart';
 import 'package:PiliPlus/services/thread_ripper/range.dart';
 import 'package:PiliPlus/utils/connectivity_utils.dart';
+import 'package:PiliPlus/utils/storage.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
-final threadRipper = ThreadRipper(report: Utils.reportError);
+final threadRipper = ThreadRipper(
+  report: Utils.reportError,
+  loadHosts: _loadHosts,
+  saveHosts: _saveHosts,
+);
+
+/// Host speeds older than this say little about the network of today.
+const _hostsMaxAgeMs = 3 * 24 * 60 * 60 * 1000;
+
+Map<String, List<double>>? _loadHosts() {
+  try {
+    final saved = GStorage.localCache.get(LocalCacheKey.ripperHosts);
+    if (saved is! Map) return null;
+    final at = saved['at'];
+    final hosts = saved['hosts'];
+    if (at is! int || hosts is! Map) return null;
+    if (DateTime.now().millisecondsSinceEpoch - at > _hostsMaxAgeMs) {
+      return null;
+    }
+    return {
+      for (final MapEntry(:key, :value) in hosts.entries)
+        if (key is String && value is List)
+          key: [for (final v in value) (v as num).toDouble()],
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+void _saveHosts(Map<String, List<double>> hosts) {
+  if (hosts.isEmpty) return;
+  try {
+    GStorage.localCache.put(LocalCacheKey.ripperHosts, {
+      'at': DateTime.now().millisecondsSinceEpoch,
+      'hosts': hosts,
+    });
+  } catch (_) {}
+}
 
 /// One file the player was handed a proxy URL for.
 class _Source {
-  _Source(this.fallback, this.candidates);
+  _Source(this.fallback, this.candidates, {this.url});
 
+  /// The URL it was handed out for, while that URL leads to it.
+  final String? url;
   final Uri fallback;
   final List<MediaCandidate> candidates;
   final excluded = <String>{};
@@ -113,6 +154,9 @@ class ThreadRipper {
     this.wifiOnly = true,
     this.commitTimeout = const Duration(seconds: 5),
     this.report,
+    this.loadHosts,
+    this.saveHosts,
+    this.saveHostsAfter = const Duration(seconds: 10),
   }) : fetcher = fetcher ?? HttpRangeFetcher(),
        book = book ?? HostBook();
 
@@ -123,6 +167,30 @@ class ThreadRipper {
   final void Function(String message)? report;
   final RipperConfig config;
   final bool wifiOnly;
+
+  /// Host speeds of an earlier launch, read once before the first file: the
+  /// first video starts on hosts known to be fast.
+  final Map<String, List<double>>? Function()? loadHosts;
+
+  /// Where host speeds go, [saveHostsAfter] a request ended.
+  final void Function(Map<String, List<double>> hosts)? saveHosts;
+  final Duration saveHostsAfter;
+  bool _hostsLoaded = false;
+  Timer? _saveHostsTimer;
+
+  void _restoreHosts() {
+    if (_hostsLoaded) return;
+    _hostsLoaded = true;
+    if (loadHosts?.call() case final hosts?) book.restore(hosts);
+  }
+
+  void _scheduleSaveHosts() {
+    final save = saveHosts;
+    if (save == null || _shutDown || (_saveHostsTimer?.isActive ?? false)) {
+      return;
+    }
+    _saveHostsTimer = Timer(saveHostsAfter, () => save(book.snapshot()));
+  }
 
   /// A request gets no validated response from any host by then: mpv is sent
   /// to its own URL.
@@ -141,6 +209,11 @@ class ThreadRipper {
   int? _port;
   int _seq = 0;
   final _sources = <String, _Source>{};
+
+  /// URL -> the id of the file kept for it: asked for again (a part warmed
+  /// up ahead, a quality gone back to), it gets the same proxy URL, with
+  /// the first bytes already there.
+  final _ids = <String, String>{};
   final _alternatives = <String, List<String>>{};
   bool _wifi = true;
 
@@ -222,11 +295,24 @@ class ThreadRipper {
       if (kDebugMode) debugPrint('thread ripper: $e');
       return url;
     }
-    final id = (++_seq).toString();
-    final source = _keep(id, _Source(uri, candidates));
-    _warmUp(source);
     final original = base64Url.encode(utf8.encode(url));
-    return 'http://${InternetAddress.loopbackIPv4.address}:${server.port}/m/$id?u=$original';
+    String proxyUrl(String id) =>
+        'http://${InternetAddress.loopbackIPv4.address}:${server.port}/m/$id?u=$original';
+
+    if (_ids[url] case final id?) {
+      // Not one whose warm-up broke off or that fell back: those start anew
+      if (_sources[id] case final kept?
+          when kept.head?.failed != true && kept.directUntil <= book.clock()) {
+        _keep(id, kept);
+        return proxyUrl(id);
+      }
+    }
+    _restoreHosts();
+    final id = (++_seq).toString();
+    final source = _keep(id, _Source(uri, candidates, url: url));
+    _ids[url] = id;
+    _warmUp(source);
+    return proxyUrl(id);
   }
 
   _Source _keep(String id, _Source source) {
@@ -234,7 +320,9 @@ class ThreadRipper {
       ..remove(id)
       ..[id] = source;
     while (_sources.length > _maxSources) {
-      _sources.remove(_sources.keys.first);
+      final oldest = _sources.keys.first;
+      final dropped = _sources.remove(oldest);
+      if (_ids[dropped?.url] == oldest) _ids.remove(dropped?.url);
     }
     return source;
   }
@@ -389,6 +477,7 @@ class ThreadRipper {
   @visibleForTesting
   Future<void> close() async {
     _shutDown = true;
+    _saveHostsTimer?.cancel();
     await _connectivity?.cancel();
     _connectivity = null;
     final server = _server;
@@ -564,6 +653,7 @@ class ThreadRipper {
       // Committed: closing short of Content-Length drops the connection, mpv
       // sees the body end early and opens the range again
     } finally {
+      _scheduleSaveHosts();
       try {
         await response.close();
       } catch (_) {}

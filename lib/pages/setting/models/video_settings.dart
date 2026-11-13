@@ -111,9 +111,17 @@ List<SettingsModel> get videoSettings => [
     title: '缓冲大小',
     leading: const Icon(Icons.storage_outlined),
     getSubtitle: () => Pref.bufferSize == 0
-        ? '当前：预加载整个视频（0 = 整个视频）'
+        ? '当前：预加载整个视频，后向缓存256MB（0 = 整个视频）。蜂窝网络另设'
         : '当前前向缓存：${Pref.bufferSize}MB，后向缓存固定为4MB（0 = 整个视频）',
     onTap: _showBufferSizeDialog,
+  ),
+  NormalModel(
+    title: '蜂窝网络缓冲大小',
+    leading: const Icon(Icons.signal_cellular_alt_outlined),
+    getSubtitle: () => Pref.bufferSizeCellular == 0
+        ? '当前：预加载整个视频（0 = 整个视频），将消耗较多流量'
+        : '当前前向缓存：${Pref.bufferSizeCellular}MB，后向缓存固定为4MB（0 = 整个视频）',
+    onTap: _showBufferSizeCellularDialog,
   ),
   NormalModel(
     title: '缓冲时长',
@@ -405,6 +413,18 @@ void _showBufferSizeDialog(BuildContext context, VoidCallback setState) =>
       title: '缓冲大小',
       suffix: 'MB',
     );
+
+void _showBufferSizeCellularDialog(
+  BuildContext context,
+  VoidCallback setState,
+) => _showDecimalDialog(
+  context,
+  setState,
+  key: SettingBoxKey.bufferSizeCellular,
+  defVal: Pref.bufferSizeCellular,
+  title: '蜂窝网络缓冲大小',
+  suffix: 'MB',
+);
 
 void _showBufferSecDialog(BuildContext context, VoidCallback setState) =>
     _showDecimalDialog(

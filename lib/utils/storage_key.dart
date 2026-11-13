@@ -14,6 +14,7 @@ abstract final class SettingBoxKey {
       enableHA = 'enableHA',
       audioOutput = 'audioOutput',
       bufferSize = 'bufferSize',
+      bufferSizeCellular = 'bufferSizeCellular',
       bufferSec = 'bufferSec',
       hardwareDecoding = 'hardwareDecoding',
       videoSync = 'videoSync',
@@ -188,7 +189,8 @@ abstract final class LocalCacheKey {
       danmakuFilterRules = 'danmakuFilterRules',
       mixinKey = 'mixinKey',
       timeStamp = 'timeStamp',
-      buvid = 'buvid';
+      buvid = 'buvid',
+      ripperHosts = 'ripperHosts';
 }
 
 abstract final class VideoBoxKey {

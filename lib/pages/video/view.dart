@@ -149,6 +149,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
 
   void positionListener(Duration position) {
     videoDetailController.playedTime = position;
+    if (videoDetailController.shouldWarmUpNext(position)) {
+      if (introController.peekNext() case final next?) {
+        videoDetailController.warmUpNext(bvid: next.bvid, cid: next.cid);
+      }
+    }
   }
 
   @override
