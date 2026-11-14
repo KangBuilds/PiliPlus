@@ -49,6 +49,49 @@ void main() {
       );
     });
 
+    test('crops to both sides, keeping the aspect ratio asked', () {
+      expect(
+        ImageUtils.buildThumbnailUrl(
+          cover,
+          10,
+          width: 570,
+          height: 321,
+          crop: true,
+        ),
+        '$https@600w_338h_1c_10q.webp',
+      );
+    });
+
+    test('does not crop with one side', () {
+      expect(
+        ImageUtils.buildThumbnailUrl(cover, 10, width: 570, crop: true),
+        '$https@600w_10q.webp',
+      );
+    });
+
+    test('adds no second crop to parameters already there', () {
+      expect(
+        ImageUtils.buildThumbnailUrl(
+          '$cover@1c.png',
+          10,
+          width: 100,
+          height: 100,
+          crop: true,
+        ),
+        '$https@1c_100w_100h_10q.png',
+      );
+      expect(
+        ImageUtils.buildThumbnailUrl(
+          '$cover@1e.png',
+          10,
+          width: 100,
+          height: 100,
+          crop: true,
+        ),
+        '$https@1e_100w_100h_1c_10q.png',
+      );
+    });
+
     test('does not resize GIFs', () {
       expect(
         ImageUtils.buildThumbnailUrl(

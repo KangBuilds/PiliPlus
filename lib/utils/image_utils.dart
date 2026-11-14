@@ -203,18 +203,25 @@ abstract final class ImageUtils {
     r'(@(\d+[a-z]_?)*)(\..*)?$',
     caseSensitive: false,
   );
-  static String thumbnailUrl(
-    String? src, [
-    int maxQuality = 1,
+  static String thumbnailUrl(String? src, [int maxQuality = 1]) =>
+      sizedThumbnailUrl(src, maxQuality);
+
+  /// [thumbnailUrl], scaled by the image server to [width] or [height]
+  /// pixels, or cropped to both when [crop]: see [buildThumbnailUrl].
+  static String sizedThumbnailUrl(
+    String? src,
+    int maxQuality, {
     int? width,
     int? height,
-  ]) {
+    bool crop = false,
+  }) {
     if (src == null || maxQuality == 100) return src.http2https;
     return buildThumbnailUrl(
       src,
       math.max(maxQuality, GlobalData().imgQuality),
       width: width,
       height: height,
+      crop: crop,
     );
   }
 
@@ -223,9 +230,15 @@ abstract final class ImageUtils {
   static const sizeStep = 50;
 
   static final _sizeParamRegex = RegExp(r'\d+[wh](_|$)');
+  static final _cropParamRegex = RegExp(r'[@_]1c(_|$)');
 
   /// The URL of [src] at [quality] from the image server, scaled down by it
   /// to [width] or [height] pixels (rounded up to [sizeStep]) when given.
+  ///
+  /// With [crop] and both sides given, the server scales the image to cover
+  /// [width] by [height] and cuts it to that from the center, the way
+  /// [BoxFit.cover] shows it: the width is rounded up, and the height keeps
+  /// the asked aspect ratio. An image smaller than that is sent whole.
   ///
   /// The server keeps the aspect ratio when only one side is given, and never
   /// scales up. GIFs and URLs that already ask for a size are not resized.
@@ -234,12 +247,20 @@ abstract final class ImageUtils {
     int quality, {
     int? width,
     int? height,
+    bool crop = false,
   }) {
     String size = '';
+    bool cropped = false;
     if ((width ?? height) != null &&
         !src.split('@').first.toLowerCase().endsWith('.gif')) {
-      if (width != null && width > 0) size += '${_roundUpSize(width)}w_';
-      if (height != null && height > 0) size += '${_roundUpSize(height)}h_';
+      if (crop && width != null && width > 0 && height != null && height > 0) {
+        final w = _roundUpSize(width);
+        size = '${w}w_${(w * height / width).round()}h_';
+        cropped = true;
+      } else {
+        if (width != null && width > 0) size += '${_roundUpSize(width)}w_';
+        if (height != null && height > 0) size += '${_roundUpSize(height)}h_';
+      }
     }
     bool hasMatch = false;
     src = src.splitMapJoin(
@@ -248,13 +269,18 @@ abstract final class ImageUtils {
         hasMatch = true;
         final params = match.group(1)!;
         final suffix = match.group(3) ?? '.webp';
-        final sized = _sizeParamRegex.hasMatch(params) ? '' : size;
+        String sized = '';
+        if (!_sizeParamRegex.hasMatch(params)) {
+          sized = cropped && !_cropParamRegex.hasMatch(params)
+              ? '${size}1c_'
+              : size;
+        }
         return '${params}_$sized${quality}q$suffix';
       },
       onNonMatch: (String str) => str,
     );
     if (!hasMatch) {
-      src += '@$size${quality}q.webp';
+      src += '@$size${cropped ? '1c_' : ''}${quality}q.webp';
     }
     return src.http2https;
   }

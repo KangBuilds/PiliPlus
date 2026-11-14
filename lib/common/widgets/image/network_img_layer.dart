@@ -64,21 +64,41 @@ class NetworkImgLayer extends StatelessWidget {
     required bool isEmote,
     required bool isAvatar,
   }) {
+    final String imageUrl;
     int? memCacheWidth, memCacheHeight;
-    if (cacheWidth ?? width <= height) {
-      memCacheWidth = width.cacheSize(context);
-    } else {
-      memCacheHeight = height.cacheSize(context);
-    }
-    return CachedNetworkImage(
-      // The server scales the image to what is decoded, instead of sending
-      // the full size for the device to scale down
-      imageUrl: ImageUtils.thumbnailUrl(
+    // The server scales the image to what is decoded, instead of sending the
+    // full size for the device to scale down. What a centered cover shows,
+    // it also cuts out: the image then fills the box at full sharpness
+    // whatever its own aspect ratio.
+    final pixelWidth = width.cacheSize(context);
+    final pixelHeight = height.cacheSize(context);
+    if (fit == BoxFit.cover &&
+        alignment == Alignment.center &&
+        pixelWidth != null &&
+        pixelHeight != null) {
+      memCacheWidth = pixelWidth;
+      imageUrl = ImageUtils.sizedThumbnailUrl(
         src,
         quality,
-        memCacheWidth,
-        memCacheHeight,
-      ),
+        width: pixelWidth,
+        height: pixelHeight,
+        crop: true,
+      );
+    } else {
+      if (cacheWidth ?? width <= height) {
+        memCacheWidth = pixelWidth;
+      } else {
+        memCacheHeight = pixelHeight;
+      }
+      imageUrl = ImageUtils.sizedThumbnailUrl(
+        src,
+        quality,
+        width: memCacheWidth,
+        height: memCacheHeight,
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
       width: width,
       height: height,
       memCacheWidth: memCacheWidth,
