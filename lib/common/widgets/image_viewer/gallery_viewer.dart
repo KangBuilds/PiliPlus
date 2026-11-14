@@ -15,6 +15,7 @@
  * along with PiliPlus.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'dart:async' show unawaited;
 import 'dart:io' show File;
 
 import 'package:PiliPlus/common/widgets/colored_box_transition.dart';
@@ -28,6 +29,8 @@ import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/main.dart' show tmpPadding;
 import 'package:PiliPlus/models/common/image_preview_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
+import 'package:PiliPlus/services/audio_session.dart';
+import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
@@ -107,7 +110,11 @@ class _GalleryViewerState extends State<GalleryViewer>
 
   Future<void> _initPlayer() async {
     assert(_player == null);
-    final player = await Player.create();
+    final player = await Player.create(
+      configuration: const PlayerConfiguration(
+        options: AudioSessionHandler.mpvOptions,
+      ),
+    );
     _videoController = await VideoController.create(player);
     if (!mounted) {
       player.dispose();
@@ -266,7 +273,11 @@ class _GalleryViewerState extends State<GalleryViewer>
 
   @override
   void dispose() {
-    _player?.dispose();
+    if (_player case final player?) {
+      unawaited(
+        player.dispose().then((_) => audioSessionHandler?.deactivate()),
+      );
+    }
     _player = null;
     _videoController = null;
     _pageController.dispose();

@@ -112,7 +112,15 @@ import UIKit
         configure: {
           try audioSession.setCategory(.playback, mode: audioSession.mode, options: [])
         },
-        activate: { try audioSession.setActive(true) }
+        activate: {
+          try audioSession.setActive(true)
+          // mpv asked for this while it managed the session (see
+          // AudioSessionHandler.mpvOptions); it keeps Dolby multichannel
+          // audio from being downmixed on AirPlay and HDMI.
+          try? audioSession.setPreferredOutputNumberOfChannels(
+            audioSession.maximumOutputNumberOfChannels
+          )
+        }
       )
     } catch {
       let error = error as NSError

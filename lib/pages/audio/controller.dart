@@ -22,6 +22,7 @@ import 'package:PiliPlus/pages/main_reply/view.dart';
 import 'package:PiliPlus/pages/sponsor_block/block_mixin.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/triple_mixin.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
+import 'package:PiliPlus/services/audio_session.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/services/shutdown_timer_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -312,7 +313,9 @@ class AudioController extends GetxController
     await setupAudioSession();
     assert(player == null, _subscriptions = null);
     player = await Player.create(
-      configuration: PlayerConfiguration(options: Pref.initBuffer()),
+      configuration: PlayerConfiguration(
+        options: {...Pref.initBuffer(), ...AudioSessionHandler.mpvOptions},
+      ),
     );
     if (isClosed) {
       player!.dispose();
@@ -719,7 +722,11 @@ class AudioController extends GetxController
     _subscriptions?.forEach((e) => e.cancel());
     _subscriptions?.clear();
     _subscriptions = null;
-    player?.dispose();
+    if (player case final player?) {
+      unawaited(
+        player.dispose().then((_) => audioSessionHandler?.deactivate()),
+      );
+    }
     player = null;
     animController.dispose();
     super.onClose();

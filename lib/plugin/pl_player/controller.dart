@@ -24,6 +24,7 @@ import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/danmaku_options.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
+import 'package:PiliPlus/services/audio_session.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -754,7 +755,10 @@ class PlPlayerController with BlockConfigMixin {
   Future<Player> _initPlayer() async {
     assert(_videoPlayerController == null);
     await setupAudioSession();
-    final opt = {'video-sync': Pref.videoSync};
+    final opt = {
+      'video-sync': Pref.videoSync,
+      ...AudioSessionHandler.mpvOptions,
+    };
     final autosync = Pref.autosync;
     if (autosync != '0') {
       opt['autosync'] = autosync;
@@ -1588,7 +1592,11 @@ class PlPlayerController with BlockConfigMixin {
     }
     _pictureInPictureEventChannel.setMethodCallHandler(null);
     unawaited(NativeNowPlaying.release(this));
-    _videoPlayerController?.dispose();
+    if (_videoPlayerController case final player?) {
+      unawaited(
+        player.dispose().then((_) => audioSessionHandler?.deactivate()),
+      );
+    }
     _videoPlayerController = null;
     _videoController = null;
     _instance = null;
