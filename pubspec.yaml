@@ -141,7 +141,7 @@ dependency_overrides:
     git:
       url: https://github.com/KangBuilds/media-kit.git
       path: libs/ios/media_kit_libs_ios_video
-      ref: 962cb53c6f345e4904208e8455e112218116d264
+      ref: 428043651b54afb6d9381b8a69b0b3e1d7a5f9b5
   media_kit_video:
     git:
       url: https://github.com/KangBuilds/media-kit.git

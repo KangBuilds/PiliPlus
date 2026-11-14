@@ -1076,8 +1076,8 @@ packages:
     dependency: "direct main"
     description:
       path: "libs/ios/media_kit_libs_ios_video"
-      ref: "962cb53c6f345e4904208e8455e112218116d264"
-      resolved-ref: "962cb53c6f345e4904208e8455e112218116d264"
+      ref: "428043651b54afb6d9381b8a69b0b3e1d7a5f9b5"
+      resolved-ref: "428043651b54afb6d9381b8a69b0b3e1d7a5f9b5"
       url: "https://github.com/KangBuilds/media-kit.git"
     source: git
     version: "1.1.4"
