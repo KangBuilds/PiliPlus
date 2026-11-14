@@ -48,6 +48,7 @@ abstract final class VideoHttp {
     required int ps,
     required int freshIdx,
     bool desktop = false,
+    void Function(List items)? onItems,
   }) async {
     final params = desktop
         ? <String, Object>{
@@ -75,27 +76,36 @@ abstract final class VideoHttp {
       queryParameters: await WbiSign.makSign(params),
     );
     if (res.data['code'] == 0) {
-      List<RcmdVideoItemModel> list = <RcmdVideoItemModel>[];
-      for (final i in res.data['data']['item']) {
-        //过滤掉live与ad，以及拉黑用户
-        if (i['goto'] == 'av' &&
-            (i['owner'] != null &&
-                !GlobalData().blackMids.contains(i['owner']['mid']))) {
-          RcmdVideoItemModel videoItem = RcmdVideoItemModel.fromJson(i);
-          if (!RecommendFilter.filter(videoItem)) {
-            list.add(videoItem);
-          }
-        }
-      }
-      return Success(list);
+      final List items = res.data['data']['item'];
+      onItems?.call(items);
+      return Success(rcmdItemsWeb(items));
     } else {
       return Error(res.data['message']);
     }
   }
 
+  /// The videos to show from the items of a web feed answer: without live
+  /// rooms, ads, and what is blocked or filtered.
+  static List<RcmdVideoItemModel> rcmdItemsWeb(List items) {
+    final list = <RcmdVideoItemModel>[];
+    for (final i in items) {
+      //过滤掉live与ad，以及拉黑用户
+      if (i['goto'] == 'av' &&
+          (i['owner'] != null &&
+              !GlobalData().blackMids.contains(i['owner']['mid']))) {
+        RcmdVideoItemModel videoItem = RcmdVideoItemModel.fromJson(i);
+        if (!RecommendFilter.filter(videoItem)) {
+          list.add(videoItem);
+        }
+      }
+    }
+    return list;
+  }
+
   // 添加额外的loginState变量模拟未登录状态
   static Future<LoadingState<List<RcmdVideoItemAppModel>>> rcmdVideoListApp({
     required int freshIdx,
+    void Function(List items)? onItems,
   }) async {
     final params = {
       'build': 8430300,
@@ -148,31 +158,39 @@ abstract final class VideoHttp {
       ),
     );
     if (res.data['code'] == 0) {
-      final list = <RcmdVideoItemAppModel>[];
-      for (final i in res.data['data']['items']) {
-        // 屏蔽推广和拉黑用户
-        if (i['goto'] != 'bangumi' &&
-            i['card_goto'] != 'ad_av' &&
-            i['card_goto'] != 'ad_web_s' &&
-            i['ad_info'] == null &&
-            i['can_play'] == 1 &&
-            (i['args'] != null &&
-                !GlobalData().blackMids.contains(i['args']['up_id']))) {
-          if (enableFilter &&
-              i['args']?['tname'] != null &&
-              zoneRegExp.hasMatch(i['args']['tname'])) {
-            continue;
-          }
-          RcmdVideoItemAppModel videoItem = RcmdVideoItemAppModel.fromJson(i);
-          if (!RecommendFilter.filter(videoItem)) {
-            list.add(videoItem);
-          }
-        }
-      }
-      return Success(list);
+      final List items = res.data['data']['items'];
+      onItems?.call(items);
+      return Success(rcmdItemsApp(items));
     } else {
       return Error(res.data['message']);
     }
+  }
+
+  /// The videos to show from the items of an app feed answer: without ads,
+  /// bangumi, and what is blocked or filtered.
+  static List<RcmdVideoItemAppModel> rcmdItemsApp(List items) {
+    final list = <RcmdVideoItemAppModel>[];
+    for (final i in items) {
+      // 屏蔽推广和拉黑用户
+      if (i['goto'] != 'bangumi' &&
+          i['card_goto'] != 'ad_av' &&
+          i['card_goto'] != 'ad_web_s' &&
+          i['ad_info'] == null &&
+          i['can_play'] == 1 &&
+          (i['args'] != null &&
+              !GlobalData().blackMids.contains(i['args']['up_id']))) {
+        if (enableFilter &&
+            i['args']?['tname'] != null &&
+            zoneRegExp.hasMatch(i['args']['tname'])) {
+          continue;
+        }
+        RcmdVideoItemAppModel videoItem = RcmdVideoItemAppModel.fromJson(i);
+        if (!RecommendFilter.filter(videoItem)) {
+          list.add(videoItem);
+        }
+      }
+    }
+    return list;
   }
 
   // 最热视频
