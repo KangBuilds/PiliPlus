@@ -7,6 +7,7 @@ import 'package:PiliPlus/models_new/follow/list.dart';
 import 'package:PiliPlus/pages/follow/widgets/follow_item.dart';
 import 'package:PiliPlus/pages/follow_type/controller.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart'
     hide SliverGridDelegateWithMaxCrossAxisExtent;
 import 'package:get/get.dart';
@@ -59,7 +60,7 @@ abstract class FollowTypePageState<T extends StatefulWidget> extends State<T> {
             ? SliverGrid.builder(
                 gridDelegate: gridDelegate,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     controller.onLoadMore();
                   }
                   return buildItem(index, response[index]);

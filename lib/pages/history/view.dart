@@ -13,6 +13,7 @@ import 'package:PiliPlus/pages/history/controller.dart';
 import 'package:PiliPlus/pages/history/widgets/item.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart' hide TabBarView;
 import 'package:get/get.dart';
 
@@ -213,7 +214,7 @@ class _HistoryPageState extends State<HistoryPage>
             ? SliverGrid.builder(
                 gridDelegate: gridDelegate,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _historyController.onLoadMore();
                   }
                   final item = response[index];

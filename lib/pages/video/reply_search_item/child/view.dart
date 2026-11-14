@@ -7,6 +7,7 @@ import 'package:PiliPlus/models/common/reply/reply_search_type.dart';
 import 'package:PiliPlus/pages/video/reply_search_item/child/controller.dart';
 import 'package:PiliPlus/pages/video/reply_search_item/child/widgets/item.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -57,7 +58,7 @@ class _ReplySearchChildPageState extends State<ReplySearchChildPage>
             ? SliverGrid.builder(
                 gridDelegate: gridDelegate,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _controller.onLoadMore();
                   }
                   return ReplySearchItem(

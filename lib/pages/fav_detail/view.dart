@@ -16,6 +16,7 @@ import 'package:PiliPlus/pages/fav_detail/controller.dart';
 import 'package:PiliPlus/pages/fav_detail/widget/fav_video_card.dart';
 import 'package:PiliPlus/utils/bili_utils.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/share_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
@@ -481,8 +482,10 @@ class _FavDetailPageState extends State<FavDetailPage> with GridMixin {
             ? SliverGrid.builder(
                 gridDelegate: gridDelegate,
                 itemBuilder: (context, index) {
-                  if (index == response.length) {
+                  if (isNearEnd(index, response.length)) {
                     _favDetailController.onLoadMore();
+                  }
+                  if (index == response.length) {
                     return Container(
                       height: 60,
                       alignment: Alignment.center,

@@ -7,6 +7,7 @@ import 'package:PiliPlus/models_new/sub/sub_detail/media.dart';
 import 'package:PiliPlus/pages/subscription_detail/controller.dart';
 import 'package:PiliPlus/pages/subscription_detail/widget/sub_video_card.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -84,7 +85,7 @@ class _SubDetailPageState extends State<SubDetailPage> with GridMixin {
             ? SliverGrid.builder(
                 gridDelegate: gridDelegate,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _subDetailController.onLoadMore();
                   }
                   return SubVideoCardH(

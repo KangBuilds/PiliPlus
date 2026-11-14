@@ -13,6 +13,7 @@ import 'package:PiliPlus/pages/follow/controller.dart';
 import 'package:PiliPlus/pages/follow/widgets/follow_item.dart';
 import 'package:PiliPlus/pages/follow_type/follow_same/view.dart';
 import 'package:PiliPlus/pages/share/view.dart' show UserModel;
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -165,7 +166,7 @@ class _FollowChildPageState extends State<FollowChildPage>
             ? SliverList.builder(
                 itemCount: response.length,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _followController.onLoadMore();
                   }
                   final item = response[index];

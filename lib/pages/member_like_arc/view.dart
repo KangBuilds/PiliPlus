@@ -8,6 +8,7 @@ import 'package:PiliPlus/pages/member_coin_arc/widgets/item.dart';
 import 'package:PiliPlus/pages/member_like_arc/controller.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -90,7 +91,7 @@ class _MemberLikeArcPageState extends State<MemberLikeArcPage> {
                 gridDelegate: gridDelegate,
                 itemCount: response.length,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _ctr.onLoadMore();
                   }
                   return MemberCoinLikeItem(item: response[index]);

@@ -6,6 +6,7 @@ import 'package:PiliPlus/pages/search/widgets/search_text.dart';
 import 'package:PiliPlus/pages/search_panel/video/controller.dart';
 import 'package:PiliPlus/pages/search_panel/view.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -106,7 +107,7 @@ class _SearchVideoPanelState
     return SliverGrid.builder(
       gridDelegate: gridDelegate,
       itemBuilder: (context, index) {
-        if (index == list.length - 1) {
+        if (isNearEnd(index, list.length)) {
           controller.onLoadMore();
         }
         return VideoCardH(

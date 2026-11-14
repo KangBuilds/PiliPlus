@@ -15,6 +15,7 @@ import 'package:PiliPlus/pages/msg_feed_top/like_me/controller.dart';
 import 'package:PiliPlus/pages/whisper_settings/view.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:flutter/material.dart' hide ListTile;
 import 'package:get/get.dart';
@@ -95,7 +96,7 @@ class _LikeMePageState extends State<LikeMePage> {
                   _buildHeader(theme, '最新'),
                   SliverList.separated(
                     itemBuilder: (context, index) {
-                      if (total.isEmpty && index == latest.length - 1) {
+                      if (total.isEmpty && isNearEnd(index, latest.length)) {
                         _likeMeController.onLoadMore();
                       }
                       return _buildItem(theme, latest[index], (id) {
@@ -110,7 +111,7 @@ class _LikeMePageState extends State<LikeMePage> {
                   _buildHeader(theme, '累计'),
                   SliverList.separated(
                     itemBuilder: (context, index) {
-                      if (index == total.length - 1) {
+                      if (isNearEnd(index, total.length)) {
                         _likeMeController.onLoadMore();
                       }
                       return _buildItem(theme, total[index], (id) {

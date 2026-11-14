@@ -5,6 +5,7 @@ import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/dynamic_panel.dart';
 import 'package:PiliPlus/pages/member_dynamics/controller.dart';
 import 'package:PiliPlus/utils/global_data.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:PiliPlus/utils/waterfall.dart';
 import 'package:flutter/material.dart';
@@ -103,7 +104,7 @@ class _MemberDynamicsPageState extends State<MemberDynamicsPage>
   }
 
   Widget _itemBuilder(List<DynamicItemModel> list, int index) {
-    if (index == list.length - 1) {
+    if (isNearEnd(index, list.length)) {
       _memberDynamicController.onLoadMore();
     }
     return DynamicPanel(

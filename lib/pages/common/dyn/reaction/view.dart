@@ -7,6 +7,7 @@ import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/dynamic/dyn_reaction/item.dart';
 import 'package:PiliPlus/pages/common/dyn/common_dyn_page.dart';
 import 'package:PiliPlus/pages/common/dyn/reaction/controller.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart' hide ListTile;
 import 'package:get/get.dart';
 
@@ -39,7 +40,7 @@ class DynReactPage extends StatelessWidget {
               ? SliverList.builder(
                   itemCount: response.length,
                   itemBuilder: (context, index) {
-                    if (index == response.length - 1) {
+                    if (isNearEnd(index, response.length)) {
                       controller.onLoadMore();
                     }
 

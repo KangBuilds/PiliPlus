@@ -9,6 +9,7 @@ import 'package:PiliPlus/models_new/msg/msg_sys/data.dart';
 import 'package:PiliPlus/pages/msg_feed_top/sys_msg/controller.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:flutter/material.dart' hide ListTile;
@@ -76,7 +77,7 @@ class _SysMsgPageState extends State<SysMsgPage> {
             ? SliverList.separated(
                 itemCount: response.length,
                 itemBuilder: (context, int index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _sysMsgController.onLoadMore();
                   }
                   final item = response[index];

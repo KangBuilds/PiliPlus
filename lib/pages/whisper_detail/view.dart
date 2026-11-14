@@ -18,6 +18,7 @@ import 'package:PiliPlus/pages/whisper_link_setting/view.dart';
 import 'package:PiliPlus/utils/extension/file_ext.dart';
 import 'package:PiliPlus/utils/extension/widget_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
@@ -151,7 +152,7 @@ class _WhisperDetailPageState
                 ),
                 controller: _whisperDetailController.scrollController,
                 itemBuilder: (context, int index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _whisperDetailController.onLoadMore();
                   }
                   final item = response[index];

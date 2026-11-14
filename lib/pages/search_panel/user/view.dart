@@ -5,6 +5,7 @@ import 'package:PiliPlus/pages/search_panel/user/controller.dart';
 import 'package:PiliPlus/pages/search_panel/user/widgets/item.dart';
 import 'package:PiliPlus/pages/search_panel/view.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart'
     hide SliverGridDelegateWithMaxCrossAxisExtent;
 import 'package:get/get.dart';
@@ -100,7 +101,7 @@ class _SearchUserPanelState
     return SliverGrid.builder(
       gridDelegate: gridDelegate,
       itemBuilder: (BuildContext context, int index) {
-        if (index == list.length - 1) {
+        if (isNearEnd(index, list.length)) {
           controller.onLoadMore();
         }
         return SearchUserItem(

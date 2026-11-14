@@ -5,6 +5,7 @@ import 'package:PiliPlus/models_new/fav/fav_folder/list.dart';
 import 'package:PiliPlus/pages/fav/video/controller.dart';
 import 'package:PiliPlus/pages/fav/video/widgets/item.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -54,7 +55,7 @@ class _FavVideoPageState extends State<FavVideoPage>
             ? SliverGrid.builder(
                 gridDelegate: gridDelegate,
                 itemBuilder: (BuildContext context, int index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _favController.onLoadMore();
                   }
                   final item = response[index];

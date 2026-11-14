@@ -7,6 +7,7 @@ import 'package:PiliPlus/pages/member_search/child/controller.dart';
 import 'package:PiliPlus/pages/member_search/child/widgets/search_archive_grpc.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/waterfall.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -75,7 +76,7 @@ class _MemberSearchChildPageState extends State<MemberSearchChildPage>
                 MemberSearchType.archive => SliverGrid.builder(
                   gridDelegate: gridDelegate,
                   itemBuilder: (context, index) {
-                    if (index == response.length - 1) {
+                    if (isNearEnd(index, response.length)) {
                       _controller.onLoadMore();
                     }
                     return SearchArchiveGrpc(item: response[index]);
@@ -106,7 +107,7 @@ class _MemberSearchChildPageState extends State<MemberSearchChildPage>
   }
 
   Widget _itemBuilder(List list, int index) {
-    if (index == list.length - 1) {
+    if (isNearEnd(index, list.length)) {
       _controller.onLoadMore();
     }
     return DynamicPanel(item: list[index]);

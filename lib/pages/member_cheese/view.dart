@@ -5,6 +5,7 @@ import 'package:PiliPlus/models_new/space/space_cheese/item.dart';
 import 'package:PiliPlus/pages/member_cheese/controller.dart';
 import 'package:PiliPlus/pages/member_cheese/widgets/item.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -66,7 +67,7 @@ class _MemberCheeseState extends State<MemberCheese>
             ? SliverGrid.builder(
                 gridDelegate: gridDelegate,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _controller.onLoadMore();
                   }
                   return MemberCheeseItem(item: response[index]);

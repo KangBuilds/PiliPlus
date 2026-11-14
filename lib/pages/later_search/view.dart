@@ -5,6 +5,7 @@ import 'package:PiliPlus/pages/common/search/common_search_page.dart';
 import 'package:PiliPlus/pages/later/widgets/video_card_h_later.dart';
 import 'package:PiliPlus/pages/later_search/controller.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
@@ -67,7 +68,7 @@ class _LaterSearchPageState
     return SliverGrid.builder(
       gridDelegate: gridDelegate,
       itemBuilder: (context, index) {
-        if (index == list.length - 1) {
+        if (isNearEnd(index, list.length)) {
           controller.onLoadMore();
         }
         final item = list[index];

@@ -8,6 +8,7 @@ import 'package:PiliPlus/models_new/blacklist/list.dart';
 import 'package:PiliPlus/pages/blacklist/controller.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/global_data.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -75,7 +76,7 @@ class _BlackListPageState extends State<BlackListPage> {
             ? SliverList.builder(
                 itemCount: response.length,
                 itemBuilder: (BuildContext context, int index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _blackListController.onLoadMore();
                   }
                   final item = response[index];

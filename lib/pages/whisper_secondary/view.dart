@@ -6,6 +6,7 @@ import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/pages/whisper/widgets/item.dart';
 import 'package:PiliPlus/pages/whisper_secondary/controller.dart';
 import 'package:PiliPlus/utils/extension/three_dot_ext.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -105,7 +106,7 @@ class _WhisperSecPageState extends State<WhisperSecPage> {
             ? SliverList.separated(
                 itemCount: response.length,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _controller.onLoadMore();
                   }
                   final item = response[index];

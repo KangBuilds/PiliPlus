@@ -9,6 +9,7 @@ import 'package:PiliPlus/models_new/msg/msg_like_detail/item.dart';
 import 'package:PiliPlus/pages/msg_feed_top/like_detail/controller.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -80,7 +81,7 @@ class _LikeDetailPageState extends State<LikeDetailPage> {
           SliverList.separated(
             itemCount: response!.length,
             itemBuilder: (context, index) {
-              if (index == response.length - 1) {
+              if (isNearEnd(index, response.length)) {
                 _controller.onLoadMore();
               }
               return _buildItem(theme, response[index]);

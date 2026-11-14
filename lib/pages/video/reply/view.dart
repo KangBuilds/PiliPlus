@@ -12,6 +12,7 @@ import 'package:PiliPlus/pages/video/reply/vote/reply_vote_item.dart';
 import 'package:PiliPlus/pages/video/reply/widgets/reply_item_grpc.dart';
 import 'package:PiliPlus/pages/video/reply_reply/view.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:flutter/material.dart';
@@ -194,8 +195,10 @@ class _VideoReplyPanelState extends State<VideoReplyPanel>
                   index--;
                 }
               }
-              if (index == response.length) {
+              if (isNearEnd(index, response.length)) {
                 _videoReplyController.onLoadMore();
+              }
+              if (index == response.length) {
                 return Container(
                   height: 125,
                   alignment: .center,

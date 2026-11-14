@@ -10,6 +10,7 @@ import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/models_new/upower_rank/rank_info.dart';
 import 'package:PiliPlus/pages/member_upower_rank/controller.dart';
 import 'package:PiliPlus/utils/extension/widget_ext.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart' hide ListTile;
 import 'package:get/get.dart';
 
@@ -186,7 +187,7 @@ class _UpowerRankPageState extends State<UpowerRankPage>
             ? SliverList.builder(
                 itemCount: response.length,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _controller.onLoadMore();
                   }
                   final item = response[index];

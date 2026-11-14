@@ -9,6 +9,7 @@ import 'package:PiliPlus/models_new/bubble/dyn_list.dart';
 import 'package:PiliPlus/pages/bubble/controller.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart'
     hide ListTile, SliverGridDelegateWithMaxCrossAxisExtent;
@@ -193,7 +194,7 @@ class _BubblePageState extends State<BubblePage>
           return SliverGrid.builder(
             gridDelegate: gridDelegate,
             itemBuilder: (context, index) {
-              if (index == response.length - 1) {
+              if (isNearEnd(index, response.length)) {
                 _controller.onLoadMore();
               }
               final item = response[index];

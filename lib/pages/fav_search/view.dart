@@ -6,6 +6,7 @@ import 'package:PiliPlus/pages/fav_detail/widget/fav_video_card.dart';
 import 'package:PiliPlus/pages/fav_search/controller.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -90,7 +91,7 @@ class _FavSearchPageState
     return SliverGrid.builder(
       gridDelegate: gridDelegate,
       itemBuilder: (context, index) {
-        if (index == list.length - 1) {
+        if (isNearEnd(index, list.length)) {
           controller.onLoadMore();
         }
         final item = list[index];

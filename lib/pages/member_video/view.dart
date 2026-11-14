@@ -11,6 +11,7 @@ import 'package:PiliPlus/pages/member/controller.dart';
 import 'package:PiliPlus/pages/member_video/controller.dart';
 import 'package:PiliPlus/pages/member_video/widgets/video_card_h_member_video.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -197,7 +198,7 @@ class _MemberVideoState extends State<MemberVideo>
                     gridDelegate: gridDelegate,
                     itemBuilder: (context, index) {
                       if (widget.type != .season &&
-                          index == response.length - 1) {
+                          isNearEnd(index, response.length)) {
                         _controller.onLoadMore();
                       }
                       return VideoCardHMemberVideo(

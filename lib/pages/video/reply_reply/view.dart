@@ -13,6 +13,7 @@ import 'package:PiliPlus/pages/video/reply/widgets/reply_item_grpc.dart';
 import 'package:PiliPlus/pages/video/reply_reply/controller.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/extension/widget_ext.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
@@ -292,8 +293,10 @@ class _VideoReplyReplyPanelState extends State<VideoReplyReplyPanel>
       Success(:final response!) => SuperSliverList.builder(
         listController: _controller.listController,
         itemBuilder: (context, index) {
-          if (index == response.length) {
+          if (isNearEnd(index, response.length)) {
             _controller.onLoadMore();
+          }
+          if (index == response.length) {
             return Container(
               height: 125,
               alignment: Alignment.center,

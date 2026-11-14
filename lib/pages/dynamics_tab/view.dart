@@ -10,6 +10,7 @@ import 'package:PiliPlus/pages/dynamics/widgets/dynamic_panel.dart';
 import 'package:PiliPlus/pages/dynamics_tab/controller.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/waterfall.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -94,7 +95,7 @@ class _DynamicsTabPageState extends State<DynamicsTabPage>
   }
 
   Widget _itemBuilder(List<DynamicItemModel> list, int index) {
-    if (index == list.length - 1) {
+    if (isNearEnd(index, list.length)) {
       controller.onLoadMore();
     }
     final item = list[index];

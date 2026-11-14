@@ -8,6 +8,7 @@ import 'package:PiliPlus/pages/member_season_series/controller.dart';
 import 'package:PiliPlus/pages/member_season_series/widget/season_series_card.dart';
 import 'package:PiliPlus/pages/member_video/view.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -66,7 +67,7 @@ class _SeasonSeriesPageState extends State<SeasonSeriesPage>
             ? SliverGrid.builder(
                 gridDelegate: gridDelegate,
                 itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
+                  if (isNearEnd(index, response.length)) {
                     _controller.onLoadMore();
                   }
                   SpaceSsModel item = response[index];

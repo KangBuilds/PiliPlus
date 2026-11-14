@@ -8,6 +8,7 @@ import 'package:PiliPlus/pages/common/fab_mixin.dart';
 import 'package:PiliPlus/pages/member_opus/controller.dart';
 import 'package:PiliPlus/pages/member_opus/widgets/space_opus_item.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/waterfall.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -162,7 +163,7 @@ class _MemberOpusState extends State<MemberOpus>
                 gridDelegate: gridDelegate,
                 delegate: SliverChildBuilderDelegate(
                   (_, index) {
-                    if (index == response.length - 1) {
+                    if (isNearEnd(index, response.length)) {
                       _controller.onLoadMore();
                     }
                     return SpaceOpusItem(item: response[index]);

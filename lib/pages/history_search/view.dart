@@ -4,6 +4,7 @@ import 'package:PiliPlus/pages/common/search/common_search_page.dart';
 import 'package:PiliPlus/pages/history/widgets/item.dart';
 import 'package:PiliPlus/pages/history_search/controller.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -30,7 +31,7 @@ class _HistorySearchPageState
     return SliverGrid.builder(
       gridDelegate: gridDelegate,
       itemBuilder: (context, index) {
-        if (index == list.length - 1) {
+        if (isNearEnd(index, list.length)) {
           controller.onLoadMore();
         }
         final item = list[index];

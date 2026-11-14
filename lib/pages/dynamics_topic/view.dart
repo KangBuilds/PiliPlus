@@ -17,6 +17,7 @@ import 'package:PiliPlus/pages/dynamics_create/view.dart';
 import 'package:PiliPlus/pages/dynamics_topic/controller.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:PiliPlus/utils/share_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
@@ -382,7 +383,7 @@ class _DynTopicPageState extends State<DynTopicPage>
   }
 
   Widget _itemBuilder(List<TopicCardItem> list, int index) {
-    if (index == list.length - 1) {
+    if (isNearEnd(index, list.length)) {
       _controller.onLoadMore();
     }
 

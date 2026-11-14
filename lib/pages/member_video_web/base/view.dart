@@ -11,6 +11,7 @@ import 'package:PiliPlus/models/horizontal_video_model.dart';
 import 'package:PiliPlus/pages/member_video_web/base/controller.dart';
 import 'package:PiliPlus/pages/search/widgets/search_text.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/load_more.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -96,7 +97,7 @@ abstract class BaseVideoWebState<
                     gridDelegate: gridDelegate,
                     itemCount: response.length,
                     itemBuilder: (context, index) {
-                      if (index == response.length - 1) {
+                      if (isNearEnd(index, response.length)) {
                         controller.onLoadMore();
                       }
                       // TODO: dimension
