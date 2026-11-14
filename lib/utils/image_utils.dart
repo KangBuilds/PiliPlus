@@ -203,27 +203,64 @@ abstract final class ImageUtils {
     r'(@(\d+[a-z]_?)*)(\..*)?$',
     caseSensitive: false,
   );
-  static String thumbnailUrl(String? src, [int maxQuality = 1]) {
-    if (src != null && maxQuality != 100) {
-      maxQuality = math.max(maxQuality, GlobalData().imgQuality);
-      bool hasMatch = false;
-      src = src.splitMapJoin(
-        _thumbRegex,
-        onMatch: (match) {
-          hasMatch = true;
-          String suffix = match.group(3) ?? '.webp';
-          return '${match.group(1)}_${maxQuality}q$suffix';
-        },
-        onNonMatch: (String str) {
-          return str;
-        },
-      );
-      if (!hasMatch) {
-        src += '@${maxQuality}q.webp';
-      }
+  static String thumbnailUrl(
+    String? src, [
+    int maxQuality = 1,
+    int? width,
+    int? height,
+  ]) {
+    if (src == null || maxQuality == 100) return src.http2https;
+    return buildThumbnailUrl(
+      src,
+      math.max(maxQuality, GlobalData().imgQuality),
+      width: width,
+      height: height,
+    );
+  }
+
+  /// Sizes asked of the image server are rounded up to a step of this many
+  /// pixels, so that slightly different layouts share one cached file.
+  static const sizeStep = 50;
+
+  static final _sizeParamRegex = RegExp(r'\d+[wh](_|$)');
+
+  /// The URL of [src] at [quality] from the image server, scaled down by it
+  /// to [width] or [height] pixels (rounded up to [sizeStep]) when given.
+  ///
+  /// The server keeps the aspect ratio when only one side is given, and never
+  /// scales up. GIFs and URLs that already ask for a size are not resized.
+  static String buildThumbnailUrl(
+    String src,
+    int quality, {
+    int? width,
+    int? height,
+  }) {
+    String size = '';
+    if ((width ?? height) != null &&
+        !src.split('@').first.toLowerCase().endsWith('.gif')) {
+      if (width != null && width > 0) size += '${_roundUpSize(width)}w_';
+      if (height != null && height > 0) size += '${_roundUpSize(height)}h_';
+    }
+    bool hasMatch = false;
+    src = src.splitMapJoin(
+      _thumbRegex,
+      onMatch: (match) {
+        hasMatch = true;
+        final params = match.group(1)!;
+        final suffix = match.group(3) ?? '.webp';
+        final sized = _sizeParamRegex.hasMatch(params) ? '' : size;
+        return '${params}_$sized${quality}q$suffix';
+      },
+      onNonMatch: (String str) => str,
+    );
+    if (!hasMatch) {
+      src += '@$size${quality}q.webp';
     }
     return src.http2https;
   }
+
+  static int _roundUpSize(int px) =>
+      (px + sizeStep - 1) ~/ sizeStep * sizeStep;
 
   static Future<SaveResult?> saveByteImg({
     required Uint8List bytes,
