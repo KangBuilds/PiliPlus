@@ -27,7 +27,7 @@ import 'package:flutter/services.dart';
 /// created by bggRGjQaUbCoE on 2025/6/27
 ///
 
-enum RichTextType { text, composing, at, emoji, vote, common }
+enum RichTextType { text, composing, at, emoji, common }
 
 class Emote {
   late String url;
@@ -775,26 +775,6 @@ class RichTextEditingController extends TextEditingController {
               );
             }
             return TextSpan(text: e.text);
-          case RichTextType.vote:
-            richStyle ??= (style ?? const TextStyle()).copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            );
-            return TextSpan(
-              children: [
-                WidgetSpan(
-                  alignment: PlaceholderAlignment.middle,
-                  child: Icon(
-                    Icons.bar_chart_rounded,
-                    size: 22,
-                    color: richStyle!.color,
-                  ),
-                ),
-                TextSpan(
-                  text: '${e.rawText} ',
-                  style: richStyle,
-                ),
-              ],
-            );
         }
       }).toList(),
     );

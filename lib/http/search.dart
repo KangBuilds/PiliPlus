@@ -5,7 +5,6 @@ import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/search/search_type.dart';
 import 'package:PiliPlus/models/search/result.dart';
 import 'package:PiliPlus/models/search/suggest.dart';
-import 'package:PiliPlus/models_new/dynamic/dyn_topic_pub_search/data.dart';
 import 'package:PiliPlus/models_new/pagelist/page_item.dart';
 import 'package:PiliPlus/models_new/pugv/season_info/result.dart';
 import 'package:PiliPlus/models_new/search/search_rcmd/data.dart';
@@ -272,31 +271,6 @@ abstract final class SearchHttp {
     );
     if (res.data['code'] == 0) {
       return Success(SearchRcmdData.fromJson(res.data['data']));
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<TopicPubSearchData>> topicPubSearch({
-    required String keywords,
-    String content = '',
-    required int pageNum,
-  }) async {
-    final res = await Request().get(
-      Api.topicPubSearch,
-      queryParameters: {
-        'keywords': keywords,
-        'content': content,
-        if (pageNum == 1) ...{
-          'page_size': 20,
-          'page_num': 1,
-        } else
-          'offset': 20 * (pageNum - 1),
-        'web_location': 333.1365,
-      },
-    );
-    if (res.data['code'] == 0) {
-      return Success(TopicPubSearchData.fromJson(res.data['data']));
     } else {
       return Error(res.data['message']);
     }

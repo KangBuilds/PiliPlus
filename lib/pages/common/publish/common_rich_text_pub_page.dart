@@ -38,14 +38,12 @@ abstract class CommonRichTextPubPage
   const CommonRichTextPubPage({
     super.key,
     this.items,
-    this.pics,
     super.onSave,
     super.autofocus,
     super.imageLengthLimit,
   });
 
   final List<RichTextItem>? items;
-  final List<PicModel>? pics;
 }
 
 abstract class CommonRichTextPubPageState<T extends CommonRichTextPubPage>
@@ -67,7 +65,7 @@ abstract class CommonRichTextPubPageState<T extends CommonRichTextPubPage>
     if (editController.rawText.trim().isNotEmpty) {
       enablePublish.value = true;
     }
-    imageList = RxList<PicModel>(widget.pics ?? <PicModel>[]);
+    imageList = <PicModel>[].obs;
   }
 
   @override
@@ -286,18 +284,6 @@ abstract class CommonRichTextPubPageState<T extends CommonRichTextPubPage>
             "type": 9,
             "biz_id": "",
           });
-        case RichTextType.vote:
-          list
-            ..add({
-              "raw_text": e.rawText,
-              "type": 4,
-              "biz_id": e.id,
-            })
-            ..add({
-              "raw_text": ' ',
-              "type": 1,
-              "biz_id": "",
-            });
       }
     }
     return list;

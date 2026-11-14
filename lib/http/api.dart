@@ -617,9 +617,7 @@ abstract final class Api {
 
   static const String setTop = '/session_svr/v1/session_svr/set_top';
 
-  static const String createDynamic = '/x/dynamic/feed/create/dyn';
-
-  static const String createTextDynamic = '/dynamic_svr/v1/dynamic_svr/create';
+  static const String repostDynamic = '/x/dynamic/feed/create/dyn';
 
   // static const String removeDynamic = '${HttpString.tUrl}/dynamic_svr/v1/dynamic_svr/rm_dynamic';
 
@@ -731,9 +729,6 @@ abstract final class Api {
 
   static const String likeTopic = '/x/topic/like';
 
-  static const String topicPubSearch =
-      '${HttpString.appBaseUrl}/x/topic/pub/search';
-
   static const String upowerRank = '/x/upower/up/member/rank/v2';
 
   static const String favFavFolder = '/x/v3/fav/folder/fav';
@@ -767,10 +762,6 @@ abstract final class Api {
   static const String spaceCheese = '/pugv/app/web/season/page';
 
   static const String dynMention = '/x/polymer/web-dynamic/v1/mention/search';
-
-  static const String createVote = '/x/vote/create';
-
-  static const String updateVote = '/x/vote/update';
 
   static const String loginLog = '/x/member/web/login/log';
 
@@ -816,8 +807,6 @@ abstract final class Api {
 
   static const String dynPrivatePubSetting =
       '/x/dynamic/feed/dyn/private_pub_setting';
-
-  static const String editDyn = '/x/dynamic/feed/edit/dyn';
 
   static const String replyInteraction =
       '/x/v2/reply/subject/interaction-status';

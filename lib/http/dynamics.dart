@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:PiliPlus/common/constants.dart';
-import 'package:PiliPlus/common/widgets/pair.dart';
 import 'package:PiliPlus/http/api.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/error_msg.dart';
@@ -9,7 +8,6 @@ import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/reply.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
-import 'package:PiliPlus/models/common/reply/reply_option_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/models/dynamics/up.dart';
 import 'package:PiliPlus/models/dynamics/vote_model.dart';
@@ -173,23 +171,19 @@ abstract final class DynamicsHttp {
     }
   }
 
-  static Future<LoadingState<Map?>> createDynamic({
+  static Future<LoadingState<Map?>> repostDynamic({
     dynamic mid,
     dynamic dynIdStr, // repost dyn
     dynamic rid, // repost video
     dynamic dynType,
     dynamic rawText,
-    List? pics,
-    int? publishTime,
-    ReplyOptionType? replyOption,
-    int? privatePub,
     List<Map<String, dynamic>>? extraContent,
-    Pair<int, String>? topic,
-    String? title,
-    Map? attachCard,
   }) async {
+    if (dynIdStr == null && rid == null) {
+      return const Error('缺少转发来源');
+    }
     final res = await Request().post(
-      Api.createDynamic,
+      Api.repostDynamic,
       queryParameters: {
         'platform': 'web',
         'csrf': Accounts.main.csrf,
@@ -208,48 +202,23 @@ abstract final class DynamicsHttp {
                 },
               ...?extraContent,
             ],
-            if (title != null && title.isNotEmpty) 'title': title,
           },
-          if (privatePub != null || replyOption != null || publishTime != null)
-            "option": {
-              'private_pub': ?privatePub,
-              "timer_pub_time": ?publishTime,
-              if (replyOption == ReplyOptionType.close)
-                "close_comment": 1
-              else if (replyOption == ReplyOptionType.choose)
-                "up_choose_comment": 1,
-            },
-          "scene": rid != null
-              ? 5
-              : dynIdStr != null
-              ? 4
-              : pics != null
-              ? 2
-              : 1,
-          'pics': ?pics,
-          "attach_card": attachCard,
+          "scene": rid != null ? 5 : 4,
+          "attach_card": null,
           "upload_id":
               "${rid != null ? 0 : mid}_${DateTime.now().millisecondsSinceEpoch ~/ 1000}_${Utils.random.nextInt(9000) + 1000}",
           "meta": {
             "app_meta": {"from": "create.dynamic.web", "mobi_app": "web"},
           },
-          if (topic != null)
-            "topic": {
-              "id": topic.first,
-              "name": topic.second,
-              "from_source": "dyn.web.list",
-              "from_topic_id": 0,
+        },
+        "web_repost_src": {
+          "dyn_id_str": ?dynIdStr,
+          if (rid != null)
+            "revs_id": {
+              "dyn_type": dynType,
+              "rid": rid,
             },
         },
-        if (dynIdStr != null || rid != null)
-          "web_repost_src": {
-            "dyn_id_str": ?dynIdStr,
-            if (rid != null)
-              "revs_id": {
-                "dyn_type": dynType,
-                "rid": rid,
-              },
-          },
       },
     );
     if (res.data['code'] == 0) {
@@ -580,32 +549,6 @@ abstract final class DynamicsHttp {
     }
   }
 
-  static Future<LoadingState<int?>> createVote(VoteInfo voteInfo) async {
-    final res = await Request().post(
-      Api.createVote,
-      queryParameters: {'csrf': Accounts.main.csrf},
-      data: {'vote_info': voteInfo.toJson()},
-    );
-    if (res.data['code'] == 0) {
-      return Success(res.data['data']?['vote_id']);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<int?>> updateVote(VoteInfo voteInfo) async {
-    final res = await Request().post(
-      Api.updateVote,
-      queryParameters: {'csrf': Accounts.main.csrf},
-      data: {'vote_info': voteInfo.toJson()},
-    );
-    if (res.data['code'] == 0) {
-      return Success(res.data['data']?['vote_id']);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
   static Future<LoadingState<List<FolloweeVote>?>> followeeVotes({
     required dynamic voteId,
   }) async {
@@ -643,85 +586,6 @@ abstract final class DynamicsHttp {
           "dyn_type": ?dynType,
         }),
         "action": action,
-      },
-      options: Options(contentType: Headers.jsonContentType),
-    );
-    if (res.data['code'] == 0) {
-      return const Success(null);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
-  static Future<LoadingState<void>> editDyn({
-    required Object dynId,
-    Object? repostDynId,
-    dynamic rawText,
-    List? pics,
-    ReplyOptionType? replyOption,
-    int? privatePub,
-    List<Map<String, dynamic>>? extraContent,
-    Pair<int, String>? topic,
-    String? title,
-    Map? attachCard,
-  }) async {
-    final uploadId =
-        "${Accounts.main.mid}_${DateTime.now().millisecondsSinceEpoch ~/ 1000}_${Utils.random.nextInt(9000) + 1000}";
-    final res = await Request().post(
-      Api.editDyn,
-      queryParameters: await WbiSign.makSign({
-        'platform': 'web',
-        'csrf': Accounts.main.csrf,
-        'x-bili-device-req-json':
-            '{"platform":"web","device":"pc","spmid":"333.1368"}',
-        'w_dyn_req.upload_id': uploadId,
-        'w_dyn_req.meta':
-            '{"app_meta":{"from":"create.dynamic.web","mobi_app":"web"}}',
-      }),
-      data: {
-        "dyn_req": {
-          "content": {
-            "contents": [
-              if (rawText != null)
-                {
-                  "raw_text": rawText,
-                  "type": 1,
-                  "biz_id": "",
-                },
-              ...?extraContent,
-            ],
-            if (title != null && title.isNotEmpty) 'title': title,
-          },
-          if (privatePub != null || replyOption != null)
-            "option": {
-              'private_pub': ?privatePub,
-              if (replyOption == ReplyOptionType.close)
-                "close_comment": 1
-              else if (replyOption == ReplyOptionType.choose)
-                "up_choose_comment": 1,
-            },
-          "scene": repostDynId != null
-              ? 4
-              : pics != null
-              ? 2
-              : 1,
-          'pics': ?pics,
-          "attach_card": attachCard,
-          "upload_id": uploadId,
-          "meta": {
-            "app_meta": {"from": "create.dynamic.web", "mobi_app": "web"},
-          },
-          if (topic != null)
-            "topic": {
-              "id": topic.first,
-              "name": topic.second,
-              "from_source": "dyn.web.list",
-              "from_topic_id": 0,
-            },
-        },
-        "dyn_id_str": dynId.toString(),
-        if (repostDynId != null)
-          "web_repost_src": {"dyn_id_str": repostDynId.toString()},
       },
       options: Options(contentType: Headers.jsonContentType),
     );

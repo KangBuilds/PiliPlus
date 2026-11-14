@@ -38,7 +38,6 @@ class AuthorPanel extends StatelessWidget {
   final VoidCallback? onBlock;
   final Future<LoadingState> Function(bool isPrivate, Object dynId)?
   onSetPubSetting;
-  final VoidCallback? onEdit;
   final ValueChanged<int>? onSetReplySubject;
 
   const AuthorPanel({
@@ -50,7 +49,6 @@ class AuthorPanel extends StatelessWidget {
     this.onSetTop,
     this.onBlock,
     this.onSetPubSetting,
-    this.onEdit,
     this.onSetReplySubject,
   });
 
@@ -527,16 +525,6 @@ class AuthorPanel extends StatelessWidget {
                     minLeadingWidth: 0,
                     leading: const Icon(Icons.visibility, size: 19),
                     title: Text('可见范围', style: theme.textTheme.titleSmall!),
-                  ),
-                if (onEdit != null)
-                  ListTile(
-                    onTap: () {
-                      Get.back();
-                      onEdit!();
-                    },
-                    minLeadingWidth: 0,
-                    leading: const Icon(Icons.edit_note, size: 19),
-                    title: Text('编辑动态', style: theme.textTheme.titleSmall!),
                   ),
                 if (onRemove != null)
                   ListTile(

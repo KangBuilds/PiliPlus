@@ -6,11 +6,10 @@ import 'package:PiliPlus/models/dynamics/up.dart';
 import 'package:PiliPlus/pages/common/common_page.dart';
 import 'package:PiliPlus/pages/dynamics/controller.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/up_panel.dart';
-import 'package:PiliPlus/pages/dynamics_create/view.dart';
 import 'package:PiliPlus/pages/dynamics_tab/view.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
-import 'package:flutter/material.dart' hide DraggableScrollableSheet;
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class DynamicsPage extends StatefulWidget {
@@ -28,29 +27,6 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
 
   @override
   bool get wantKeepAlive => true;
-
-  Widget _createDynamicBtn(ThemeData theme, {bool isRight = true}) => Center(
-    child: Container(
-      width: 34,
-      height: 34,
-      margin: EdgeInsets.only(left: !isRight ? 16 : 0, right: isRight ? 16 : 0),
-      child: IconButton(
-        tooltip: '发布动态',
-        style: ButtonStyle(
-          padding: const WidgetStatePropertyAll(EdgeInsets.zero),
-          backgroundColor: WidgetStatePropertyAll(
-            theme.colorScheme.secondaryContainer,
-          ),
-        ),
-        onPressed: () => CreateDynPanel.onCreateDyn(context),
-        icon: Icon(
-          Icons.add,
-          size: 18,
-          color: theme.colorScheme.onSecondaryContainer,
-        ),
-      ),
-    ),
-  );
 
   Widget upPanelPart(ThemeData theme) {
     final isTop = upPanelPosition == .top;
@@ -111,9 +87,6 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
     Widget? drawer;
     Widget? endDrawer;
 
-    Widget? leading;
-    List<Widget>? actions;
-
     Widget child = tabBarView(
       controller: _dynamicsController.tabController,
       children: DynamicsTabType.values
@@ -129,7 +102,6 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
             Expanded(child: child),
           ],
         );
-        actions = [_createDynamicBtn(theme)];
       case UpPanelPosition.leftFixed:
         child = Row(
           children: [
@@ -137,7 +109,6 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
             Expanded(child: child),
           ],
         );
-        actions = [_createDynamicBtn(theme)];
       case UpPanelPosition.rightFixed:
         child = Row(
           children: [
@@ -145,13 +116,10 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
             upPanelPart(theme),
           ],
         );
-        actions = [_createDynamicBtn(theme)];
       case UpPanelPosition.leftDrawer:
         drawer = upPanelPart(theme);
-        actions = [_createDynamicBtn(theme)];
       case UpPanelPosition.rightDrawer:
         endDrawer = upPanelPart(theme);
-        leading = _createDynamicBtn(theme, isRight: false);
     }
 
     return Scaffold(
@@ -159,7 +127,6 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         primary: false,
-        leading: leading,
         leadingWidth: 50,
         toolbarHeight: 50,
         backgroundColor: Colors.transparent,
@@ -187,7 +154,6 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
             },
           ),
         ),
-        actions: actions,
       ),
       drawer: drawer,
       endDrawer: endDrawer,

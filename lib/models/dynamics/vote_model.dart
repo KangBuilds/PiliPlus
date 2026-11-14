@@ -46,31 +46,6 @@ class VoteInfo extends SimpleVoteInfo {
   // 0 文字, 1 图片
   int? type;
   int? votePublisher;
-  int? duration;
-  int? onlyFansLevel;
-
-  VoteInfo({
-    super.choiceCnt,
-    super.defaultShare,
-    super.desc,
-    super.endTime,
-    super.status,
-    super.uid,
-    super.voteId,
-    super.joinNum = 0,
-    this.title,
-    this.ctime,
-    this.myVotes,
-    List<Option>? options,
-    this.optionsCnt,
-    this.voterLevel,
-    this.face,
-    this.name,
-    this.type,
-    this.votePublisher,
-    this.duration,
-    this.onlyFansLevel,
-  }) : options = options ?? <Option>[];
 
   VoteInfo.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
     title = json['title'];
@@ -92,18 +67,6 @@ class VoteInfo extends SimpleVoteInfo {
     return VoteInfo.fromJson(json['vote_info'])
       ..myVotes = (json['my_votes'] as List?)?.fromCast(); // voteInfo
   }
-
-  Map<String, dynamic> toJson() => {
-    'title': title,
-    'desc': desc,
-    'type': type,
-    'choice_cnt': choiceCnt,
-    'duration': duration,
-    'options': options.map((e) => e.toJson()).toList(),
-    'only_fans_level': onlyFansLevel,
-    'vote_publisher': votePublisher,
-    if (voteId != null) 'vote_id': voteId,
-  };
 }
 
 class Option {
@@ -112,20 +75,10 @@ class Option {
   late int cnt;
   String? imgUrl;
 
-  Option({
-    this.optDesc,
-    this.imgUrl,
-  });
-
   Option.fromJson(Map<String, dynamic> json) {
     optIdx = json['opt_idx'];
     optDesc = json['opt_desc'];
     cnt = json['cnt'] ?? 0;
     imgUrl = json['img_url'];
   }
-
-  Map<String, dynamic> toJson() => {
-    'opt_desc': optDesc,
-    'img_url': imgUrl,
-  };
 }

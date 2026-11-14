@@ -22,7 +22,6 @@ class DynamicPanel extends StatelessWidget {
   final bool isDetailPortraitW;
   final Future<LoadingState> Function(bool isPrivate, Object dynId)?
   onSetPubSetting;
-  final VoidCallback? onEdit;
   final ValueChanged<int>? onSetReplySubject;
 
   const DynamicPanel({
@@ -36,7 +35,6 @@ class DynamicPanel extends StatelessWidget {
     this.onUnfold,
     this.isDetailPortraitW = true,
     this.onSetPubSetting,
-    this.onEdit,
     this.onSetReplySubject,
   });
 
@@ -54,7 +52,6 @@ class DynamicPanel extends StatelessWidget {
       onSetTop: onSetTop,
       onBlock: onBlock,
       onSetPubSetting: onSetPubSetting,
-      onEdit: onEdit,
       onSetReplySubject: onSetReplySubject,
     );
 

@@ -417,7 +417,7 @@ class _RepostPanelState extends CommonRichTextPubPageState<RepostPanel> {
     if (hasRichText && repostContent != null) {
       richContent.addAll(repostContent);
     }
-    final res = await DynamicsHttp.createDynamic(
+    final res = await DynamicsHttp.repostDynamic(
       mid: Accounts.main.mid,
       dynIdStr: widget.item?.idStr ?? widget.dynIdStr,
       rid: widget.rid,

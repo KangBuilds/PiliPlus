@@ -193,30 +193,6 @@ abstract final class MsgHttp {
     }
   }
 
-  static Future<LoadingState<void>> createTextDynamic(
-    Object content,
-  ) async {
-    String csrf = Accounts.main.csrf;
-    Map<String, dynamic> data = await WbiSign.makSign({
-      'dynamic_id': 0,
-      'type': 4,
-      'rid': 0,
-      'content': content,
-      'csrf_token': csrf,
-      'csrf': csrf,
-    });
-    final res = await Request().post(
-      HttpString.tUrl + Api.createTextDynamic,
-      data: data,
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    if (res.data['code'] == 0) {
-      return const Success(null);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
   static Future<LoadingState<void>> removeDynamic({
     required Object dynIdStr,
     Object? dynType,
