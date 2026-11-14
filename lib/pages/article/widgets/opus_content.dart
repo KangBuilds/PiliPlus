@@ -13,6 +13,7 @@ import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/models/dynamics/article_content_model.dart'
     show ArticleContentModel, Rich, Style, Word, Node;
 import 'package:PiliPlus/models/dynamics/result.dart';
+import 'package:PiliPlus/pages/article/widgets/code_languages.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/vote.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
@@ -26,7 +27,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:re_highlight/languages/all.dart';
 import 'package:re_highlight/re_highlight.dart';
 import 'package:re_highlight/styles/github-dark.dart';
 import 'package:re_highlight/styles/github.dart';
@@ -169,7 +169,7 @@ class OpusContent extends StatelessWidget {
     double getSurfaceLuminance() =>
         surfaceLuminance ??= colorScheme.surface.computeLuminance();
 
-    late final highlight = Highlight()..registerLanguages(builtinAllLanguages);
+    late final highlight = Highlight()..registerLanguages(codeLanguages);
 
     return SliverList.separated(
       itemCount: opus.length,
