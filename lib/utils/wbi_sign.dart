@@ -75,30 +75,59 @@ abstract final class WbiSign {
         .toString(); // 计算 w_rid
   }
 
+  /// The mixin key from the `wbi_img` of a `nav` answer, which has it whether
+  /// or not anyone is logged in.
+  static String mixinKeyFromNav(Map wbiImg) => getMixinKey(
+    Utils.getFileName(wbiImg['img_url'], fileExt: false) +
+        Utils.getFileName(wbiImg['sub_url'], fileExt: false),
+  );
+
   static Future<String> _getWbiKeys() async {
     final resp = await Request().get(Api.userInfo);
     try {
-      final wbiUrls = resp.data['data']['wbi_img'];
-
-      final mixinKey = getMixinKey(
-        Utils.getFileName(wbiUrls['img_url'], fileExt: false) +
-            Utils.getFileName(wbiUrls['sub_url'], fileExt: false),
-      );
+      final mixinKey = mixinKeyFromNav(resp.data['data']['wbi_img']);
 
       _localCache.put(LocalCacheKey.mixinKey, mixinKey);
 
       return mixinKey;
     } catch (_) {
+      // Asked again by the next request, instead of signing with nothing
+      // for the rest of the day
+      _future = null;
+      _localCache.delete(LocalCacheKey.timeStamp);
       return '';
     }
   }
 
+  /// Keeps today's key from a `nav` answer asked for anyway, so that signing
+  /// does not ask for it again.
+  static void saveFromNav(Object? data) {
+    if (data is! Map || data['wbi_img'] is! Map) return;
+    try {
+      final mixinKey = mixinKeyFromNav(data['wbi_img']);
+      _localCache
+        ..put(LocalCacheKey.mixinKey, mixinKey)
+        ..put(LocalCacheKey.timeStamp, DateTime.now().millisecondsSinceEpoch);
+    } catch (_) {}
+  }
+
+  /// Gets today's key now if it is not there yet: the first signed request of
+  /// a day, often the play URL of a video, would otherwise wait for it.
+  static void warmUp() {
+    if (getWbiKeys() case final Future<String> keys) keys.ignore();
+  }
+
+  static bool isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
   static FutureOr<String> getWbiKeys() {
     final nowDate = DateTime.now();
-    if (DateTime.fromMillisecondsSinceEpoch(
-          _localCache.get(LocalCacheKey.timeStamp, defaultValue: 0) as int,
-        ).day ==
-        nowDate.day) {
+    if (isSameDay(
+      DateTime.fromMillisecondsSinceEpoch(
+        _localCache.get(LocalCacheKey.timeStamp, defaultValue: 0) as int,
+      ),
+      nowDate,
+    )) {
       final String? mixinKey = _localCache.get(LocalCacheKey.mixinKey);
       if (mixinKey != null) return mixinKey;
       return _future ??= _getWbiKeys();

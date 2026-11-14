@@ -23,6 +23,7 @@ import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
+import 'package:PiliPlus/utils/wbi_sign.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +52,7 @@ Future<T> _traceInit<T>(String name, Future<T> Function() init) async {
 void _initAfterFirstFrame(Duration _) {
   setupAudioSession().ignore();
   RequestUtils.syncHistoryStatus().ignore();
+  WbiSign.warmUp();
   ScreenBrightnessPlatform.instance.setAutoReset(false).ignore();
 }
 

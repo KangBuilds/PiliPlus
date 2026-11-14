@@ -37,6 +37,7 @@ abstract final class UserHttp {
 
   static Future<LoadingState<UserInfoData>> userInfo() async {
     final res = await Request().get(Api.userInfo);
+    WbiSign.saveFromNav(res.data['data']);
     if (res.data['code'] == 0) {
       UserInfoData data = UserInfoData.fromJson(res.data['data']);
       GlobalData().coins = data.money;
