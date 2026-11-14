@@ -32,9 +32,6 @@ class ArticleController extends CommonDynController {
 
   late final RxInt topIndex = 0.obs;
 
-  @override
-  dynamic get sourceId => commentType == 12 ? 'cv$commentId' : id;
-
   final RxBool isLoaded = false.obs;
   DynamicItemModel? opusData; // 标题信息从summary获取, 动态没有favorite
   ArticleViewData? articleData;

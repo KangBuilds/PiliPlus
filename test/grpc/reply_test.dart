@@ -30,9 +30,6 @@ class _ReplyController extends ReplyController<MainListReply> {
   late MainListReply response;
 
   @override
-  int get sourceId => 123;
-
-  @override
   Future<LoadingState<MainListReply>> customGetData() async =>
       Success(response);
 

@@ -433,10 +433,6 @@ class _RepostPanelState extends CommonRichTextPubPageState<RepostPanel> {
       widget.onSuccess?.call();
       final id = response?['dyn_id'];
       RequestUtils.insertCreatedDyn(id);
-      RequestUtils.checkCreatedDyn(
-        id: id,
-        dynText: editController.rawText,
-      );
     } else {
       res.toast();
     }

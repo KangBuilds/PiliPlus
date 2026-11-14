@@ -4,7 +4,6 @@ import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
-import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/extra_hit_test_widget.dart';
 import 'package:PiliPlus/common/widgets/flutter/text/text.dart' as custom_text;
@@ -60,7 +59,6 @@ class ReplyItemGrpc extends StatelessWidget {
     this.upMid,
     this.showDialogue,
     this.getTag,
-    this.onCheckReply,
     this.onToggleTop,
     this.jumpToDialogue,
   });
@@ -73,7 +71,6 @@ class ReplyItemGrpc extends StatelessWidget {
   final Int64? upMid;
   final VoidCallback? showDialogue;
   final Function? getTag;
-  final ValueChanged<ReplyInfo>? onCheckReply;
   final ValueChanged<ReplyInfo>? onToggleTop;
   final VoidCallback? jumpToDialogue;
 
@@ -1112,16 +1109,6 @@ class ReplyItemGrpc extends StatelessWidget {
             leading: const Icon(Icons.save_alt, size: 19),
             title: Text('保存评论', style: style),
           ),
-          if (kDebugMode || item.mid == ownerMid)
-            ListTile(
-              onTap: () {
-                Get.back();
-                onCheckReply?.call(item);
-              },
-              minLeadingWidth: 0,
-              leading: const Icon(CustomIcons.shield_reply, size: 19),
-              title: Text('检查评论', style: style),
-            ),
         ],
       ),
     );

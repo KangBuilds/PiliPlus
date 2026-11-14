@@ -241,20 +241,6 @@ List<SettingsModel> get extraSettings => [
     setKey: SettingBoxKey.showDmChart,
     defaultVal: false,
   ),
-  const SwitchModel(
-    title: '发评反诈',
-    subtitle: '发送评论后检查评论是否可见',
-    leading: Icon(CustomIcons.shield_reply),
-    setKey: SettingBoxKey.enableCommAntifraud,
-    defaultVal: false,
-  ),
-  const SwitchModel(
-    title: '转发动态反诈',
-    subtitle: '转发动态后检查动态是否可见',
-    leading: Icon(CustomIcons.shield_published),
-    setKey: SettingBoxKey.enableCreateDynAntifraud,
-    defaultVal: false,
-  ),
   SwitchModel(
     title: '屏蔽带货动态',
     leading: const Icon(CustomIcons.shopping_bag_not_interested),

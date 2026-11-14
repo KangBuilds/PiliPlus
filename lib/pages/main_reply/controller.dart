@@ -10,9 +10,6 @@ class MainReplyController extends ReplyController<MainListReply> {
   late final int replyType;
 
   @override
-  int get sourceId => oid;
-
-  @override
   void onInit() {
     super.onInit();
     final args = Get.arguments;

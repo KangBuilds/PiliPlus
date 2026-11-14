@@ -6,8 +6,6 @@ abstract final class ApiType {
   static const Map<AccountType, Set<String>> apiTypeSet = {
     AccountType.heartbeat: {
       Api.videoIntro,
-      Api.replyList,
-      Api.replyReplyList,
 
       // history
       Api.heartBeat,

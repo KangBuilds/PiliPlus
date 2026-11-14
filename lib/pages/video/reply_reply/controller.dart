@@ -5,7 +5,6 @@ import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/common/reply_controller.dart';
 import 'package:PiliPlus/pages/video/reply_new/view.dart';
-import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:fixnum/fixnum.dart';
@@ -44,9 +43,6 @@ class VideoReplyReplyController extends ReplyController
     duration: const Duration(milliseconds: 1000),
     vsync: this,
   );
-
-  @override
-  dynamic get sourceId => replyType == 1 ? IdUtils.av2bv(oid) : oid;
 
   @override
   void onInit() {
@@ -193,9 +189,6 @@ class VideoReplyReplyController extends ReplyController
             loadingState
               ..value.dataOrNull?.insert(index! + 1, replyInfo)
               ..refresh();
-            if (enableCommAntifraud) {
-              onCheckReply(replyInfo, isManual: false);
-            }
           }
         });
   }

@@ -6,7 +6,6 @@ import 'package:PiliPlus/models/common/video/video_type.dart';
 import 'package:PiliPlus/pages/common/reply_controller.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/reply/vote/reply_vote_mixin.dart';
-import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:get/get.dart';
 
 class VideoReplyController extends ReplyController<MainListReply>
@@ -22,9 +21,6 @@ class VideoReplyController extends ReplyController<MainListReply>
 
   final String heroTag;
   late final videoCtr = Get.find<VideoDetailController>(tag: heroTag);
-
-  @override
-  dynamic get sourceId => IdUtils.av2bv(aid);
 
   @override
   List<ReplyInfo>? getDataList(MainListReply response) {

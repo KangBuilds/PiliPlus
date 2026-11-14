@@ -27,8 +27,6 @@ abstract final class CustomIcons {
   static const IconData replay_rounded = IconData(0xe813, fontFamily: _kFontFam);
   static const IconData share_node = IconData(0xe814, fontFamily: _kFontFam);
   static const IconData shield_play_arrow = IconData(0xe815, fontFamily: _kFontFam);
-  static const IconData shield_published = IconData(0xe816, fontFamily: _kFontFam);
-  static const IconData shield_reply = IconData(0xe817, fontFamily: _kFontFam);
   static const IconData shopping_bag_not_interested = IconData(0xe818, fontFamily: _kFontFam);
   static const IconData splitscreen_rotate_90 = IconData(0xe819, fontFamily: _kFontFam);
   static const IconData star_favorite_line = IconData(0xe81a, fontFamily: _kFontFam);

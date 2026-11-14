@@ -507,14 +507,6 @@ abstract final class Pref {
   static bool get showDmChart =>
       _setting.get(SettingBoxKey.showDmChart, defaultValue: false);
 
-  static bool get enableCommAntifraud =>
-      _setting.get(SettingBoxKey.enableCommAntifraud, defaultValue: false);
-
-  static bool get biliSendCommAntifraud => false;
-
-  static bool get enableCreateDynAntifraud =>
-      _setting.get(SettingBoxKey.enableCreateDynAntifraud, defaultValue: false);
-
   static bool get coinWithLike =>
       _setting.get(SettingBoxKey.coinWithLike, defaultValue: false);
 

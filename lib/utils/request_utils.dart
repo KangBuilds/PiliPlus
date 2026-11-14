@@ -30,14 +30,10 @@ import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
-import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
-import 'package:PiliPlus/utils/theme_utils.dart';
-import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
@@ -306,66 +302,6 @@ abstract final class RequestUtils {
         }
       } catch (e) {
         if (kDebugMode) debugPrint('create dyn $e');
-      }
-    }
-  }
-
-  static Future<void> checkCreatedDyn({
-    dynamic id,
-    String? dynText,
-    bool isManual = false,
-  }) async {
-    if (isManual || Pref.enableCreateDynAntifraud) {
-      try {
-        if (id != null) {
-          if (!isManual) {
-            await Future.delayed(const Duration(seconds: 5));
-          }
-          final res = await DynamicsHttp.dynamicDetail(
-            id: id,
-            clearCookie: true,
-          );
-          final isSuccess = res.isSuccess;
-          final theme = ThemeUtils.theme;
-          final actions = [
-            if (!isSuccess)
-              TextButton(
-                onPressed: () {
-                  Get.back();
-                  Utils.copyText('https://www.bilibili.com/opus/$id');
-                  Get.toNamed(
-                    '/webview',
-                    parameters: {
-                      'url':
-                          'https://www.bilibili.com/h5/comment/appeal?${ThemeUtils.themeUrl(theme.isDark)}',
-                    },
-                  );
-                },
-                child: const Text('申诉'),
-              ),
-            if (!isManual)
-              TextButton(
-                onPressed: Get.back,
-                child: Text(
-                  '关闭',
-                  style: TextStyle(color: theme.colorScheme.outline),
-                ),
-              ),
-          ];
-          showDialog(
-            context: Get.context!,
-            barrierDismissible: isManual,
-            builder: (context) => AlertDialog(
-              title: const Text('动态检查结果'),
-              content: SelectableText(
-                '${isSuccess ? '无账号状态下找到了你的动态，动态正常！' : '你的动态被shadow ban（仅自己可见）！'}${dynText != null ? ' \n\n动态内容: $dynText' : ''}',
-              ),
-              actions: actions.isEmpty ? null : actions,
-            ),
-          );
-        }
-      } catch (e) {
-        if (kDebugMode) debugPrint('check dyn error: $e');
       }
     }
   }

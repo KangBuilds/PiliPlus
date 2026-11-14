@@ -9,7 +9,6 @@ import 'package:PiliPlus/pages/common/common_list_controller.dart';
 import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/video/reply_new/view.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
-import 'package:PiliPlus/utils/reply_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
@@ -35,13 +34,6 @@ abstract class ReplyController<R> extends CommonListController<R, ReplyInfo> {
 
   @override
   bool get endIfNullOrEmpty => false;
-
-  // comment antifraud
-  late final _enableCommAntifraud = Pref.enableCommAntifraud;
-  late final _biliSendCommAntifraud = Pref.biliSendCommAntifraud;
-  bool get enableCommAntifraud =>
-      _enableCommAntifraud || _biliSendCommAntifraud;
-  dynamic get sourceId;
 
   @override
   void onInit() {
@@ -194,11 +186,6 @@ abstract class ReplyController<R> extends CommonListController<R, ReplyInfo> {
                 loadingState.value = Success([replyInfo]);
               }
               count.value += 1;
-
-              // check reply
-              if (enableCommAntifraud) {
-                onCheckReply(replyInfo, isManual: false);
-              }
             }
           },
         );
@@ -214,15 +201,6 @@ abstract class ReplyController<R> extends CommonListController<R, ReplyInfo> {
     }
     count.value -= 1;
     loadingState.refresh();
-  }
-
-  void onCheckReply(ReplyInfo replyInfo, {required bool isManual}) {
-    ReplyUtils.onCheckReply(
-      replyInfo: replyInfo,
-      biliSendCommAntifraud: _biliSendCommAntifraud,
-      sourceId: sourceId,
-      isManual: isManual,
-    );
   }
 
   Future<void> onToggleTop(

@@ -6,7 +6,6 @@ import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/error_msg.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/http/loading_state.dart';
-import 'package:PiliPlus/http/reply.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/models/dynamics/up.dart';
@@ -234,7 +233,6 @@ abstract final class DynamicsHttp {
     dynamic id,
     dynamic rid,
     dynamic type,
-    bool clearCookie = false,
   }) async {
     final res = await Request().get(
       Api.dynamicDetail,
@@ -248,9 +246,8 @@ abstract final class DynamicsHttp {
         'web_location': '333.1330',
         'x-bili-device-req-json':
             '{"platform":"web","device":"pc","spmid":"333.1330"}',
-        if (!clearCookie && Accounts.main.isLogin) 'csrf': Accounts.main.csrf,
+        if (Accounts.main.isLogin) 'csrf': Accounts.main.csrf,
       },
-      options: clearCookie ? ReplyHttp.options : null,
     );
     if (res.data['code'] == 0) {
       try {

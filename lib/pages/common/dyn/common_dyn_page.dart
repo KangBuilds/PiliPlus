@@ -168,8 +168,6 @@ mixin CommonDynPageMixin<T extends StatefulWidget>
                   onDelete: (item, subIndex) =>
                       controller.onRemove(index, item, subIndex),
                   upMid: controller.upMid,
-                  onCheckReply: (item) =>
-                      controller.onCheckReply(item, isManual: true),
                   onToggleTop: (item) => controller.onToggleTop(
                     item,
                     index,

@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/common/style.dart';
-import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/extra_hit_test_widget.dart';
 import 'package:PiliPlus/common/widgets/pendant_avatar.dart';
 import 'package:PiliPlus/http/constants.dart';
@@ -21,7 +20,6 @@ import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
-import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/share_utils.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -383,18 +381,6 @@ class AuthorPanel extends StatelessWidget {
                 minLeadingWidth: 0,
               ),
               if (kDebugMode || moduleAuthor.mid == Accounts.main.mid) ...[
-                ListTile(
-                  onTap: () {
-                    Get.back();
-                    RequestUtils.checkCreatedDyn(
-                      id: item.idStr,
-                      isManual: true,
-                    );
-                  },
-                  minLeadingWidth: 0,
-                  leading: const Icon(CustomIcons.shield_published, size: 19),
-                  title: Text('检查动态', style: theme.textTheme.titleSmall!),
-                ),
                 if (onSetTop != null)
                   ListTile(
                     onTap: () {
