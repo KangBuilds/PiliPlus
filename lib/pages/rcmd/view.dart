@@ -51,6 +51,11 @@ class _RcmdPageState extends State<RcmdPage>
     );
   }
 
+  /// App feed covers are 4:3, web and desktop ones 16:9: each is shown
+  /// whole.
+  double get coverAspectRatio =>
+      controller.appRcmd ? Style.aspectRatio4x3 : Style.aspectRatio16x9;
+
   SliverGridDelegateWithExtentAndRatio get gridDelegate =>
       SliverGridDelegateWithExtentAndRatio(
         mainAxisSpacing: Style.cardSpace,
@@ -59,7 +64,7 @@ class _RcmdPageState extends State<RcmdPage>
         crossAxisCount: Pref.recommendColumnCount == 0
             ? null
             : Pref.recommendColumnCount,
-        childAspectRatio: Style.aspectRatio,
+        childAspectRatio: coverAspectRatio,
         mainAxisExtent: MediaQuery.textScalerOf(
           context,
         ).scale(controller.appRcmd ? 70 : 90),
@@ -105,6 +110,7 @@ class _RcmdPageState extends State<RcmdPage>
                         : index;
                     return VideoCardV(
                       videoItem: response[actualIndex],
+                      coverAspectRatio: coverAspectRatio,
                       onRemove: () {
                         if (controller.lastRefreshAt != null &&
                             actualIndex < controller.lastRefreshAt!) {
@@ -119,6 +125,7 @@ class _RcmdPageState extends State<RcmdPage>
                   } else {
                     return VideoCardV(
                       videoItem: response[index],
+                      coverAspectRatio: coverAspectRatio,
                       onRemove: () => controller.loadingState
                         ..value.data!.removeAt(index)
                         ..refresh(),
@@ -139,7 +146,8 @@ class _RcmdPageState extends State<RcmdPage>
 
   Widget get _buildSkeleton => SliverGrid.builder(
     gridDelegate: gridDelegate,
-    itemBuilder: (context, index) => const VideoCardVSkeleton(),
+    itemBuilder: (context, index) =>
+        VideoCardVSkeleton(coverAspectRatio: coverAspectRatio),
     itemCount: 10,
   );
 }

@@ -23,12 +23,16 @@ import 'package:intl/intl.dart';
 // 视频卡片 - 垂直布局
 class VideoCardV extends StatelessWidget {
   final BaseRcmdVideoItemModel videoItem;
+
+  /// The shape of the cover: that of the covers the feed sends.
+  final double coverAspectRatio;
   final VoidCallback? onRemove;
 
   const VideoCardV({
     super.key,
     required this.videoItem,
     this.onRemove,
+    this.coverAspectRatio = Style.aspectRatio,
   });
 
   Future<void> onPushDetail() async {
@@ -97,7 +101,7 @@ class VideoCardV extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AspectRatio(
-                  aspectRatio: Style.aspectRatio,
+                  aspectRatio: coverAspectRatio,
                   child: LayoutBuilder(
                     builder: (context, boxConstraints) {
                       double maxWidth = boxConstraints.maxWidth;

@@ -8,6 +8,7 @@ abstract final class Style {
   static const imgRadius = Radius.circular(10);
   static const aspectRatio = 16 / 9;
   static const aspectRatio16x9 = 16 / 9;
+  static const aspectRatio4x3 = 4 / 3;
   static const imgMaxRatio = 2.6;
   static const bottomSheetRadius = BorderRadius.vertical(top: .circular(18));
   static const dialogFixedConstraints = BoxConstraints.tightFor(width: 420);
