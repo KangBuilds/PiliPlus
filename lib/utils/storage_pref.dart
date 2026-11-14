@@ -177,8 +177,14 @@ abstract final class Pref {
   static bool get feedBackEnable =>
       _setting.get(SettingBoxKey.feedBackEnable, defaultValue: false);
 
-  static int get picQuality =>
-      _setting.get(SettingBoxKey.defaultPicQa, defaultValue: 10);
+  /// Images are asked for at the size shown, so a quality that keeps detail
+  /// costs less than the full size at 10% used to.
+  static const defaultPicQuality = 80;
+
+  static int get picQuality => _setting.get(
+    SettingBoxKey.defaultPicQa,
+    defaultValue: defaultPicQuality,
+  );
 
   static DynamicBadgeMode get msgBadgeMode =>
       DynamicBadgeMode.values[_setting.get(
@@ -424,8 +430,10 @@ abstract final class Pref {
     return length;
   }
 
-  static int get defaultPicQa =>
-      _setting.get(SettingBoxKey.defaultPicQa, defaultValue: 10);
+  static int get defaultPicQa => _setting.get(
+    SettingBoxKey.defaultPicQa,
+    defaultValue: defaultPicQuality,
+  );
 
   static double get danmakuLineHeight =>
       _setting.get(SettingBoxKey.danmakuLineHeight, defaultValue: 1.6);
