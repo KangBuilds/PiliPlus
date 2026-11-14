@@ -65,9 +65,7 @@ class _RcmdPageState extends State<RcmdPage>
             ? null
             : Pref.recommendColumnCount,
         childAspectRatio: coverAspectRatio,
-        mainAxisExtent: MediaQuery.textScalerOf(
-          context,
-        ).scale(controller.appRcmd ? 70 : 90),
+        mainAxisExtent: MediaQuery.textScalerOf(context).scale(70),
       );
 
   Widget _buildBody(
