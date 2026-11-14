@@ -34,7 +34,8 @@ unlinked_spec.ds
 **/ios/Runner/GeneratedPluginRegistrant.*
 **/ios/xcuserdata/
 /ios/.symlinks/
-/ios/**/swiftpm/
+/ios/**/swiftpm/*
+!/ios/**/swiftpm/Package.resolved
 /ios/**/xcuserdata/
 
 .fvm/
