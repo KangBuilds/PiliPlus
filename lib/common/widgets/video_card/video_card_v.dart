@@ -111,6 +111,20 @@ class VideoCardV extends StatelessWidget {
                             height: maxHeight,
                             type: .emote,
                           ),
+                          if (videoItem is RcmdVideoItemModel &&
+                              videoItem.pubdate != null)
+                            PBadge(
+                              text: DateFormatUtils.dateFormat(
+                                videoItem.pubdate,
+                                short: shortFormat,
+                                long: longFormat,
+                              ),
+                              top: 6,
+                              right: 7,
+                              type: .gray,
+                              size: .small,
+                              isBold: false,
+                            ),
                           Positioned(
                             left: 7,
                             bottom: 6,
@@ -195,7 +209,6 @@ class VideoCardV extends StatelessWidget {
                 ),
               ),
             ),
-            if (videoItem is RcmdVideoItemModel) pubdate(theme),
             Row(
               spacing: 2,
               children: [
@@ -246,22 +259,4 @@ class VideoCardV extends StatelessWidget {
 
   static final shortFormat = DateFormat('M-d');
   static final longFormat = DateFormat('yy-M-d');
-
-  Widget pubdate(ThemeData theme) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Text(
-        DateFormatUtils.dateFormat(
-          videoItem.pubdate,
-          short: shortFormat,
-          long: longFormat,
-        ),
-        maxLines: 1,
-        style: TextStyle(
-          fontSize: theme.textTheme.labelSmall!.fontSize,
-          color: theme.colorScheme.outline.withValues(alpha: 0.8),
-        ),
-      ),
-    );
-  }
 }
