@@ -27,17 +27,19 @@ concurrency:
 jobs:
   build-ios-app:
     name: Release IOS
-    runs-on: xcode-27
+    # Xcode 26: apps linked against the iOS 27 SDK lose the separate Liquid
+    # Glass search button in adaptive_platform_ui's native tab bar.
+    runs-on: macos-26
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Verify Xcode 27
+      - name: Verify Xcode 26
         run: |
           xcodebuild -version
-          [[ "$(xcodebuild -version)" == "Xcode 27"* ]]
+          [[ "$(xcodebuild -version)" == "Xcode 26"* ]]
 
       - name: Setup flutter
         uses: subosito/flutter-action@v2

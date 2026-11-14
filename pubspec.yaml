@@ -132,10 +132,6 @@ dependencies:
   wakelock_plus: ^1.2.8
   waterfall_flow: ^3.1.0
 dependency_overrides:
-  adaptive_platform_ui:
-    git:
-      url: https://github.com/KangBuilds/adaptive_platform_ui.git
-      ref: ce2eb5f0e81694613fa8cacb1de7e1b2c4a08501
   media_kit:
     git:
       url: https://github.com/My-Responsitories/media-kit.git
