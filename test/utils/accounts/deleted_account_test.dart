@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
 import 'package:PiliPlus/utils/storage.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 
@@ -17,6 +21,7 @@ LoginAccount _account() => LoginAccount(
 );
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late Directory tempDir;
 
   setUpAll(() async {
@@ -65,6 +70,57 @@ void main() {
       await deletion;
 
       expect(Accounts.account.containsKey('123'), isFalse);
+    },
+  );
+
+  test(
+    'anonymous reset refreshes server cookies and falls back offline',
+    () async {
+      GStorage.setting = await Hive.openBox('settings');
+      GStorage.localCache = await Hive.openBox('localCache');
+      await GStorage.localCache.put(LocalCacheKey.buvid, 'test-device');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel(
+              'dev.fluttercommunity.plus/connectivity_status',
+            ),
+            (_) async => null,
+          );
+      Request();
+      addTearDown(() => Request.dio.close(force: true));
+      var failed = false;
+      Request.dio.interceptors
+        ..clear()
+        ..add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              expect(options.path, '/x/frontend/finger/spi');
+              expect(options.extra['account'], isA<NoAccount>());
+              handler.resolve(
+                Response<dynamic>(
+                  requestOptions: options,
+                  data: failed
+                      ? {'code': -1}
+                      : {
+                          'code': 0,
+                          'data': {'b_3': 'server-b3', 'b_4': 'server-b4'},
+                        },
+                ),
+              );
+            },
+          ),
+        );
+      final account = AnonymousAccount()..activated = true;
+      await account.delete();
+      expect(account.cookieJar.toJson(), containsPair('buvid3', 'server-b3'));
+      expect(account.cookieJar.toJson(), containsPair('buvid4', 'server-b4'));
+      expect(account.activated, isFalse);
+
+      failed = true;
+      await account.delete();
+      final cookies = account.cookieJar.toJson();
+      expect(cookies['buvid3'], isNotEmpty);
+      expect(cookies, isNot(contains('buvid4')));
     },
   );
 }

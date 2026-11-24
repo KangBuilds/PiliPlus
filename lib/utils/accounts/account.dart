@@ -1,9 +1,11 @@
 import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/models/common/account_type.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/grpc_headers.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio/dio.dart';
 import 'package:hive_ce/hive.dart';
 
 sealed class Account {
@@ -157,7 +159,34 @@ class AnonymousAccount extends Account {
   @override
   Future<void> delete() {
     grpcHeaders['x-bili-fawkes-req-bin'] = GrpcHeaders.fawkes;
-    return cookieJar.deleteAll().whenComplete(cookieJar.setBuvid3);
+    return cookieJar.deleteAll().whenComplete(_refreshBuvid);
+  }
+
+  Future<void> _refreshBuvid() async {
+    try {
+      final response = await Request().get(
+        '/x/frontend/finger/spi',
+        options: Options(extra: {'account': const NoAccount()}),
+      );
+      if (response.data case {
+        'code': 0,
+        'data': {'b_3': final String b3, 'b_4': final String b4},
+      } when b3.isNotEmpty && b4.isNotEmpty) {
+        await cookieJar.saveFromResponse(Uri.https('api.bilibili.com'), [
+          Cookie('buvid3', b3)..setBiliDomain(),
+          Cookie('buvid4', b4)..setBiliDomain(),
+          Cookie(
+            'b_nut',
+            (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(),
+          )..setBiliDomain(),
+        ]);
+      }
+    } catch (_) {
+      // Anonymous requests can still use a local Buvid while offline.
+    } finally {
+      cookieJar.setBuvid3();
+      activated = false;
+    }
   }
 
   static final _instance = AnonymousAccount._();
