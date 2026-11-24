@@ -68,10 +68,10 @@ dependencies:
     git:
       url: https://github.com/bggRGjQaUbCoE/extended_nested_scroll_view.git
       ref: mod
-  file_picker: ^12.0.0
+  file_picker: ^13.3.3
   fixnum: ^1.1.1
   fl_chart: ^1.0.0
-  flex_seed_scheme: ^4.0.1
+  flex_seed_scheme: ^5.0.1
   flutter_html:
     git:
       url: https://github.com/bggRGjQaUbCoE/flutter_html.git
@@ -91,7 +91,7 @@ dependencies:
     git:
       url: https://github.com/bggRGjQaUbCoE/getx.git
       ref: version_4.7.2
-  hive_ce: ^2.19.3
+  hive_ce: ^2.23.3
   html: ^0.15.4
   http2: ^2.3.1
   image_cropper: ^13.0.0
@@ -118,7 +118,7 @@ dependencies:
   permission_handler_apple: ^9.4.7
   permission_handler_platform_interface: ^4.3.0
   pretty_qr_code: ^3.3.0
-  protobuf: ^6.0.0
+  protobuf: ^6.1.0
   re_highlight: ^0.0.3
   saver_gallery: ^5.0.2
   screen_brightness_platform_interface: ^2.1.0

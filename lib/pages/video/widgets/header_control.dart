@@ -1058,7 +1058,6 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
                   StorageUtils.saveBytes2File(
                     name: name,
                     bytes: bytes,
-                    allowedExtensions: [format.name],
                   );
                 } catch (e, s) {
                   Utils.reportError(e, s);

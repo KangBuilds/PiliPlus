@@ -312,7 +312,6 @@ abstract final class ImageUtils {
     } else {
       SmartDialog.dismiss();
       final savePath = await FilePicker.saveFile(
-        type: FileType.image,
         fileName: fileName,
         bytes: Uint8List(0),
       );
@@ -330,7 +329,6 @@ abstract final class ImageUtils {
   static Future<void> saveFileImg({
     required String filePath,
     required String fileName,
-    FileType type = FileType.image,
     bool needToast = false,
   }) async {
     final file = File(filePath);
@@ -348,7 +346,6 @@ abstract final class ImageUtils {
       );
     } else {
       final savePath = await FilePicker.saveFile(
-        type: type,
         fileName: fileName,
         bytes: Uint8List(0),
       );

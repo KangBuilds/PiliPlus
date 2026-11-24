@@ -34,7 +34,6 @@ void exportToLocalFile({
         'piliplus_${localFileName()}_'
         '${DateFormat('yyyyMMddHHmmss').format(DateTime.now())}.json',
     bytes: res,
-    allowedExtensions: const ['json'],
   );
 }
 
