@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:PiliPlus/services/thread_ripper/candidates.dart';
 import 'package:PiliPlus/services/thread_ripper/range.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'fake_cdn.dart';
 
 void main() {
+  test('compares bytes eight at a time and the rest one by one', () {
+    final a = testFile(100);
+    final b = Uint8List.fromList(a);
+    expect(sameBytes(a, 0, b, 0, 100), isTrue);
+    // Unaligned offsets, a length that is no multiple of 8
+    expect(sameBytes(a, 3, b, 3, 61), isTrue);
+    expect(sameBytes(a, 0, Uint8List.sublistView(b, 5), 0, 95), isFalse);
+    expect(sameBytes(a, 5, Uint8List.sublistView(b, 5), 0, 95), isTrue);
+
+    // A difference in a word, and one in the bytes after the last word
+    b[40] ^= 1;
+    expect(sameBytes(a, 0, b, 0, 100), isFalse);
+    expect(sameBytes(a, 41, b, 41, 59), isTrue);
+    b
+      ..[40] ^= 1
+      ..[99] ^= 1;
+    expect(sameBytes(a, 0, b, 0, 100), isFalse);
+    expect(sameBytes(a, 0, b, 0, 99), isTrue);
+    // Too short for words
+    expect(sameBytes(a, 90, b, 90, 9), isTrue);
+    expect(sameBytes(a, 90, b, 90, 10), isFalse);
+  });
+
   group('range', () {
     test('parses the Range headers mpv sends', () {
       expect(parseRangeHeader('bytes=0-'), (start: 0, end: null));

@@ -38,9 +38,14 @@ class FakeHost {
     this.breakAfter,
     this.failFrom,
     this.stallAfter,
+    this.corrupt = false,
   });
 
   static const refusing = FakeHost(status: 403);
+
+  /// Sends other bytes than the file's, of the same size: each such host
+  /// other ones than every other.
+  final bool corrupt;
 
   final Duration ttfb;
   final int chunk;
@@ -80,6 +85,9 @@ class FakeFetcher implements RangeFetcher {
   final requests = <(String, ByteRange)>[];
   final requestUris = <Uri>[];
   final delivered = <String, int>{};
+
+  /// What each corrupt host XORs its bytes with, one value per host.
+  final _corruption = <String, int>{};
 
   @override
   Future<RangeResponse> fetch(
@@ -151,6 +159,15 @@ class FakeFetcher implements RangeFetcher {
       }
       final stop = pos + host.chunk - 1 < end ? pos + host.chunk - 1 : end;
       final chunk = data.sublist(pos, stop + 1);
+      if (host.corrupt) {
+        final xor = _corruption.putIfAbsent(
+          name,
+          () => _corruption.length % 255 + 1,
+        );
+        for (var i = 0; i < chunk.length; i++) {
+          chunk[i] ^= xor;
+        }
+      }
       sent += chunk.length;
       delivered[name] = (delivered[name] ?? 0) + chunk.length;
       yield chunk;

@@ -123,9 +123,13 @@ class RipperConfig {
 }
 
 class RipperJobFailed implements Exception {
-  const RipperJobFailed(this.message);
+  const RipperJobFailed(this.message, {this.mismatch = false});
 
   final String message;
+
+  /// Two hosts sent different bytes for the same range: the hosts cannot be
+  /// trusted to serve one version of the file.
+  final bool mismatch;
 
   @override
   String toString() => 'RipperJobFailed: $message';
@@ -362,9 +366,9 @@ class RipperJob {
     _signal();
   }
 
-  void _fail(String message) {
+  void _fail(String message, {bool mismatch = false}) {
     if (_closed) return;
-    _error = RipperJobFailed(message);
+    _error = RipperJobFailed(message, mismatch: mismatch);
     if (!_totalKnown.isCompleted) _totalKnown.completeError(_error!);
     cancel();
   }
@@ -905,6 +909,23 @@ class RipperJob {
     book.recordBytes(a.host, chunk.length);
     if (a.pos - 1 > a.to) return .badRange;
 
+    // Bytes below the frontier were written by another attempt, which
+    // started at or below it: compared, not written. An attempt only starts
+    // at the frontier, and the frontier only moves forward
+    final duplicateEnd = min(min(a.pos, piece.frontier), piece.end + 1);
+    if (chunkStart < duplicateEnd) {
+      final bytes = chunk is Uint8List ? chunk : Uint8List.fromList(chunk);
+      if (!sameBytes(
+        piece.buffer,
+        chunkStart - piece.start,
+        bytes,
+        0,
+        duplicateEnd - chunkStart,
+      )) {
+        return .mismatch;
+      }
+    }
+
     final from = max(chunkStart, piece.frontier);
     final until = min(a.pos - 1, piece.end);
     if (from <= until) {
@@ -948,6 +969,15 @@ class RipperJob {
         final gaps = [...a.gaps]..sort();
         book.recordGap(a.host, file, gaps[(gaps.length * 9) ~/ 10]);
       }
+    }
+    if (outcome == .mismatch) {
+      // Which of the two is right is unknown: neither host is held to blame
+      _fail(
+        '${a.host} sent other bytes than another host '
+        'at ${piece.start}-${piece.end}',
+        mismatch: true,
+      );
+      return;
     }
     if (outcome == .ok) {
       book.recordSuccess(a.host);

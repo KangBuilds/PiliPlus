@@ -1,6 +1,8 @@
 // Ported from Make-Bilibili-Great-Than-Ever-Before (MIT, SukkaW):
 // src/core/player/range.ts and src/modules/thread-ripper/classify.ts
 
+import 'dart:typed_data';
+
 /// Inclusive byte range, as used by HTTP `Range` / `Content-Range`.
 class ByteRange {
   const ByteRange(this.start, this.end);
@@ -98,6 +100,30 @@ enum MediaOutcome {
   truncated,
   network,
   canceled,
+
+  /// Its bytes differ from another host's for the same range: two versions
+  /// of the file, and which one is right is unknown.
+  mismatch,
+}
+
+/// Whether [length] bytes of [a] from [aStart] are those of [b] from
+/// [bStart]; eight at a time.
+bool sameBytes(Uint8List a, int aStart, Uint8List b, int bStart, int length) {
+  var i = 0;
+  if (length >= 16) {
+    final wordsA = ByteData.sublistView(a, aStart, aStart + length);
+    final wordsB = ByteData.sublistView(b, bStart, bStart + length);
+    for (; i + 8 <= length; i += 8) {
+      if (wordsA.getUint64(i, Endian.host) !=
+          wordsB.getUint64(i, Endian.host)) {
+        return false;
+      }
+    }
+  }
+  for (; i < length; i++) {
+    if (a[aStart + i] != b[bStart + i]) return false;
+  }
+  return true;
 }
 
 class ResponseVerdict {

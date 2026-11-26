@@ -99,6 +99,29 @@ void main() {
     expect(watch.elapsedMilliseconds, lessThan(3000));
   });
 
+  test('fails when racing hosts send different bytes', () async {
+    final data = testFile(48 * 1024);
+    final fetcher = FakeFetcher(
+      data,
+      otherHosts: const FakeHost(
+        chunk: 256,
+        chunkDelay: Duration(milliseconds: 1),
+        corrupt: true,
+      ),
+    );
+    final job = _job(fetcher);
+
+    await job.begin();
+    await expectLater(
+      _drain(job),
+      throwsA(
+        isA<RipperJobFailed>()
+            .having((e) => e.mismatch, 'mismatch', isTrue)
+            .having((e) => e.message, 'message', contains('other bytes')),
+      ),
+    );
+  });
+
   test(
     'drops hosts with another version of the file, or no range support',
     () async {

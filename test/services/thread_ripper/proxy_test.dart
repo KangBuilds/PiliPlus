@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:PiliPlus/services/thread_ripper/host_book.dart';
 import 'package:PiliPlus/services/thread_ripper/job.dart';
 import 'package:PiliPlus/services/thread_ripper/thread_ripper.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -387,6 +388,113 @@ void main() {
     expect(reports.single, contains('no host could deliver'));
     expect(reports.single, matches(r'[\w.-]+\.bilivideo\.com refused'));
   });
+
+  test('hosts sending different bytes turn the proxy off', () async {
+    final reports = <String>[];
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(
+        testFile(64 * 1024),
+        otherHosts: const FakeHost(
+          chunk: 256,
+          chunkDelay: Duration(milliseconds: 1),
+          corrupt: true,
+        ),
+      ),
+      config: testConfig,
+      wifiOnly: false,
+      report: reports.add,
+    );
+    addTearDown(ripper.close);
+    final url = await ripper.wrapNow(kListedUrl);
+
+    // The warm-up races its first piece on two hosts, and they disagree
+    bool seen() => reports.any((r) => r.contains('different bytes'));
+    for (var i = 0; i < 200 && !seen(); i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(seen(), isTrue);
+
+    // From now on: every request, and every URL, goes to its own
+    final (response, _) = await get(url, range: 'bytes=0-', follow: false);
+    expect(response.statusCode, 302);
+    expect(response.headers.value('location'), kListedUrl);
+    expect(ripper.describeRoute(url), contains('不同主机数据不一致'));
+    final other = kListedUrl.replaceFirst('33-1-', '34-1-');
+    expect(await ripper.wrapNow(other), other);
+  });
+
+  test('a mismatch after bytes went out cuts the body short', () async {
+    final data = testFile(64 * 1024);
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(
+        data,
+        otherHosts: const FakeHost(
+          chunk: 256,
+          chunkDelay: Duration(milliseconds: 1),
+          corrupt: true,
+        ),
+      ),
+      config: testConfig,
+      wifiOnly: false,
+    );
+    addTearDown(ripper.close);
+    final url = await ripper.wrapNow(kListedUrl);
+
+    // Whichever comes first, the body never reaches its end
+    final (response, body) = await get(url, range: 'bytes=0-', follow: false);
+    if (response.statusCode == 206) {
+      expect(body.length, lessThan(data.length));
+    } else {
+      expect(response.statusCode, 302);
+    }
+  });
+
+  test(
+    'three failures within a minute send every request to its own URL',
+    () async {
+      final reports = <String>[];
+      var skew = 0;
+      final data = testFile(64 * 1024);
+      final ripper = ThreadRipper(
+        fetcher: FakeFetcher(data, otherHosts: const FakeHost(failFrom: 20000)),
+        book: HostBook(
+          clock: () => DateTime.now().millisecondsSinceEpoch + skew,
+        ),
+        config: testConfig,
+        wifiOnly: false,
+        report: reports.add,
+      );
+      addTearDown(ripper.close);
+      String file(int n) => kListedUrl.replaceFirst('33-1-', '$n-1-');
+
+      // Every host, and each file's own URL, fail past 20000: three files
+      for (var n = 40; n < 43; n++) {
+        final url = await ripper.wrapNow(file(n));
+        final (response, body) = await get(url, range: 'bytes=0-');
+        expect(response.statusCode, 206);
+        expect(body.length, lessThan(data.length));
+      }
+      expect(reports.last, contains('paused for 30 s'));
+
+      // A fourth file still gets a proxy URL, but is sent to its own
+      final fourth = await ripper.wrapNow(file(43));
+      expect(fourth, startsWith('http://127.0.0.1:'));
+      final (paused, _) = await get(
+        fourth,
+        range: 'bytes=0-19999',
+        follow: false,
+      );
+      expect(paused.statusCode, 302);
+      expect(paused.headers.value('location'), file(43));
+      expect(ripper.describeRoute(fourth), contains('连续失败后暂停'));
+
+      // Once the pause is over, the same URL is served again
+      skew += 31 * 1000;
+      final (served, body) = await get(fourth, range: 'bytes=0-19999');
+      expect(served.statusCode, 206);
+      expect(body, data.sublist(0, 20000));
+    },
+  );
 
   test('a URL asked for again gets the proxy URL it already has', () async {
     final fetcher = FakeFetcher(testFile(90 * 1024));

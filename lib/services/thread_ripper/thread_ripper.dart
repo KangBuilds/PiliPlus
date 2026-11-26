@@ -197,6 +197,49 @@ class ThreadRipper {
   final Duration commitTimeout;
   static const _directAfterFailure = 30 * 1000;
 
+  /// Two hosts sent different bytes for one range: which version is right
+  /// is unknown, so every request goes to its own URL until the app
+  /// restarts.
+  bool _mismatchSeen = false;
+
+  /// When requests the proxy could not serve failed, within the last
+  /// `_failureWindowMs`.
+  final _recentFailures = <int>[];
+
+  /// Until then every request goes to its own URL: the proxy failed
+  /// `_failuresToPause` times within a minute.
+  int _pausedUntil = 0;
+  static const _failuresToPause = 3;
+  static const _failureWindowMs = 60 * 1000;
+  static const _pauseMs = 30 * 1000;
+
+  /// A request the proxy could not serve, [failure] saying why when a job
+  /// failed (`null`: no host answered in time).
+  void _noteFailure([RipperJobFailed? failure]) {
+    if (failure?.message == 'canceled') return;
+    if (failure?.mismatch ?? false) {
+      if (!_mismatchSeen) {
+        report?.call(
+          'thread ripper: two hosts sent different bytes, off until restart',
+        );
+      }
+      _mismatchSeen = true;
+      return;
+    }
+    final now = book.clock();
+    _recentFailures
+      ..removeWhere((at) => now - at >= _failureWindowMs)
+      ..add(now);
+    if (_recentFailures.length >= _failuresToPause) {
+      _recentFailures.clear();
+      _pausedUntil = now + _pauseMs;
+      report?.call(
+        'thread ripper: $_failuresToPause failures within a minute, '
+        'paused for ${_pauseMs ~/ 1000} s',
+      );
+    }
+  }
+
   /// Files kept, the least recently used dropped first. A dropped one is
   /// rebuilt from its proxy URL, which carries the original.
   static const _maxSources = 32;
@@ -284,6 +327,7 @@ class ThreadRipper {
 
   @visibleForTesting
   Future<String> wrapNow(String url) async {
+    if (_mismatchSeen) return url;
     final uri = Uri.tryParse(url);
     if (uri == null || !uri.path.startsWith('/upgcxcode/')) return url;
     final candidates = mediaCandidates([url, ...?_alternatives[url]]);
@@ -311,7 +355,9 @@ class ThreadRipper {
     final id = (++_seq).toString();
     final source = _keep(id, _Source(uri, candidates, url: url));
     _ids[url] = id;
-    _warmUp(source);
+    // Paused, requests go to their own URLs: nothing to warm up for. The
+    // proxy URL still serves once the pause is over
+    if (_pausedUntil <= book.clock()) _warmUp(source);
     return proxyUrl(id);
   }
 
@@ -358,7 +404,9 @@ class ThreadRipper {
         head.add(c);
       }
       head.finish(failed: false);
-    } catch (_) {
+    } catch (e) {
+      // Only a mismatch counts: a request for these bytes says how it went
+      if (e is RipperJobFailed && e.mismatch) _noteFailure(e);
       head.finish(failed: true);
     } finally {
       job.cancel();
@@ -521,6 +569,14 @@ class ThreadRipper {
         redirect('分片失败后重试');
         return;
       }
+      if (_mismatchSeen) {
+        redirect('不同主机数据不一致');
+        return;
+      }
+      if (_pausedUntil > book.clock()) {
+        redirect('连续失败后暂停');
+        return;
+      }
 
       // One deadline for the whole wait, however it is spent
       final deadline = book.clock() + commitTimeout.inMilliseconds;
@@ -559,6 +615,7 @@ class ThreadRipper {
               ..headers.set(HttpHeaders.contentRangeHeader, 'bytes */$total');
             return;
           }
+          _noteFailure(e is RipperJobFailed ? e : null);
           redirect(e is TimeoutException ? '等待响应超时' : '无法获取分片');
           return;
         }
@@ -630,6 +687,7 @@ class ThreadRipper {
         if (e is! TimeoutException && e is! RipperJobFailed) rethrow;
         job?.cancel();
         gap?.cancel();
+        _noteFailure(e is RipperJobFailed ? e : null);
         redirect(e is TimeoutException ? '等待首字节超时' : '首字节前分片失败');
         return;
       }
@@ -649,6 +707,7 @@ class ThreadRipper {
       if (e is RipperJobFailed && e.message != 'canceled') {
         source?.directUntil = book.clock() + _directAfterFailure;
         report?.call('thread ripper: ${e.message}');
+        _noteFailure(e);
       }
       // Committed: closing short of Content-Length drops the connection, mpv
       // sees the body end early and opens the range again
