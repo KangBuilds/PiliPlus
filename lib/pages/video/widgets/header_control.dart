@@ -574,6 +574,21 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
         threadRipper.isProxyUrl(videoPath) ||
         threadRipper.isProxyUrl(audioPath);
     final state = player.state;
+    // Frames the decoder skipped, the output dropped, and shown late: what to
+    // compare before and after a change to the player
+    String count(String property) {
+      final value = player.getProperty(property);
+      return value.isEmpty ? '-' : value;
+    }
+
+    final droppedFrames =
+        'decoder ${count('decoder-frame-drop-count')}, '
+        'output ${count('frame-drop-count')}, '
+        'delayed ${count('vo-delayed-frame-count')}';
+    final displayFps = player.getProperty('display-fps');
+    final videoSync =
+        '${player.getProperty('video-sync')}'
+        '${displayFps.isEmpty ? ' (display fps unknown)' : ' @ $displayFps fps'}';
     final rows = <(String, String)>[
       ('Resolution:', '${state.width} x ${state.height}$frameRate'),
       (
@@ -584,6 +599,8 @@ class HeaderControlState extends State<HeaderControl> with HeaderMixin {
       ('Video Host:', videoHost),
       ('Audio Host:', audioHost),
       ('HW Decode:', hwdec),
+      ('Dropped Frames:', droppedFrames),
+      ('Video Sync:', videoSync),
     ];
     const labelStyle = TextStyle(
       color: Colors.white,

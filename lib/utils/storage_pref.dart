@@ -297,7 +297,10 @@ abstract final class Pref {
     if (codecs is List) {
       return codecs.map((i) => VideoDecodeFormatType.values.byName(i)).toList();
     }
-    return const <VideoDecodeFormatType>[.AVC, .AV1];
+    // HEVC before AV1: every iPhone since the A9 decodes HEVC in hardware,
+    // AV1 only the A17 Pro and later; without it AV1 is decoded on the CPU,
+    // which drops frames at 4K and heats the device
+    return const <VideoDecodeFormatType>[.AVC, .HEVC, .AV1];
   }
 
   static String get hardwareDecoding => _setting.get(

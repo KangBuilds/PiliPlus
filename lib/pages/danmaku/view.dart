@@ -11,6 +11,23 @@ import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+/// The 100 ms danmaku slots to add when the position moved from the slot
+/// [previous] (-1 for none yet) to [current]: the slots in between too.
+/// Position comes once a frame, and above about 2.4x, or when frames come
+/// late, it moves more than one slot at a time. A jump back, or ahead by
+/// more than a second, is a seek: only the slot where it landed.
+@visibleForTesting
+Iterable<int> danmakuSlotsSince(int previous, int current) sync* {
+  const maxGap = 1000;
+  final gap = current - previous;
+  final from = previous >= 0 && gap > 0 && gap <= maxGap
+      ? previous + 100
+      : current;
+  for (int slot = from; slot <= current; slot += 100) {
+    yield slot;
+  }
+}
+
 /// 传入播放器控制器，监听播放进度，加载对应弹幕
 class PlDanmaku extends StatefulWidget {
   final int cid;
@@ -111,10 +128,14 @@ class _PlDanmakuState extends State<PlDanmaku> {
     if (currentPosition == latestAddedPosition) {
       return;
     }
+    final previous = latestAddedPosition;
     latestAddedPosition = currentPosition;
+    danmakuSlotsSince(previous, currentPosition).forEach(_addDanmakuAt);
+  }
 
+  void _addDanmakuAt(int slot) {
     List<DanmakuElem>? currentDanmakuList = _plDanmakuController
-        .getCurrentDanmaku(currentPosition);
+        .getCurrentDanmaku(slot);
     if (currentDanmakuList != null) {
       final blockColorful = DanmakuOptions.blockColorful;
       final danmakuWeight = DanmakuOptions.danmakuWeight;

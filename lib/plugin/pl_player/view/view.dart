@@ -153,15 +153,42 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         fit: fit.boxFit,
         aspectRatio: fit.aspectRatio,
       );
-      if (size.isEmpty || size == _videoOutputSize) return;
+      if (size.isEmpty) return;
+      if (size == _videoOutputSize) {
+        // Back to the size already set before the pending one applied
+        _videoOutputResizeTimer?.cancel();
+        _videoOutputResizeTimer = null;
+        return;
+      }
 
-      _videoOutputSize = size;
-      final resize = videoController.setSize(
-        width: size.width.toInt(),
-        height: size.height.toInt(),
-      );
-      if (resize != null) unawaited(resize);
+      // The first size at once; later ones once the size stops changing.
+      // Each resize rebuilds the native frame buffers, and an expand,
+      // collapse or rotation changes the size every frame: the video is
+      // scaled to the viewport meanwhile
+      if (_videoOutputSize == null) {
+        _applyVideoOutputSize(size);
+      } else {
+        _videoOutputResizeTimer?.cancel();
+        _videoOutputResizeTimer = Timer(
+          _videoOutputResizeDelay,
+          () => _applyVideoOutputSize(size),
+        );
+      }
     });
+  }
+
+  static const _videoOutputResizeDelay = Duration(milliseconds: 150);
+  Timer? _videoOutputResizeTimer;
+
+  void _applyVideoOutputSize(Size size) {
+    _videoOutputResizeTimer = null;
+    if (!mounted) return;
+    _videoOutputSize = size;
+    final resize = videoController.setSize(
+      width: size.width.toInt(),
+      height: size.height.toInt(),
+    );
+    if (resize != null) unawaited(resize);
   }
 
   final RxDouble _brightnessValue = 0.0.obs;
@@ -378,6 +405,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     plPlayerController.resetSubtitlePadding();
     _controlsListener?.cancel();
     _videoSizeSubscription?.cancel();
+    _videoOutputResizeTimer?.cancel();
     _animationController.dispose();
     _transformationController.dispose();
     _removeDmAction();
