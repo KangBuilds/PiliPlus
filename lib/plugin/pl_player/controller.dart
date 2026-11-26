@@ -1,4 +1,4 @@
-import 'dart:async' show StreamSubscription, Timer, unawaited;
+import 'dart:async' show FutureRecord2, StreamSubscription, Timer, unawaited;
 import 'dart:convert' show ascii;
 import 'dart:math' show max, sqrt;
 import 'dart:ui' as ui;
@@ -817,6 +817,7 @@ class PlPlayerController with BlockConfigMixin {
     if (_playerCount == 0) return;
     // A failure shows when the media is opened
     _ensurePlayer().then((_) {}, onError: (_) {});
+    unawaited(threadRipper.prepare());
   }
 
   // 配置播放器
@@ -844,10 +845,13 @@ class PlPlayerController with BlockConfigMixin {
     var video = dataSource.videoSource;
     var audio = dataSource.audioSource;
     if (dataSource is NetworkSource) {
-      video = await threadRipper.wrap(video);
-      if (audio != null && audio.isNotEmpty) {
-        audio = await threadRipper.wrap(audio);
-      }
+      // Both at once: each may wait for the proxy's server
+      (video, audio) = await (
+        threadRipper.wrap(video),
+        audio != null && audio.isNotEmpty
+            ? threadRipper.wrap(audio)
+            : Future<String?>.value(audio),
+      ).wait;
     }
     if (audio != null && audio.isNotEmpty) {
       extras['audio-files'] = '"${audio.replaceAll(':', r'\:')}"';

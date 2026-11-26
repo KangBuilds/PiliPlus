@@ -325,6 +325,26 @@ class ThreadRipper {
     return wrapNow(url);
   }
 
+  /// Binds the server and reads the saved host speeds ahead of the first
+  /// [wrap], while the play URL is still on its way.
+  Future<void> prepare() async {
+    if (!enabled) return;
+    if (wifiOnly && !await ConnectivityUtils.isWiFi) return;
+    await prepareNow();
+  }
+
+  @visibleForTesting
+  Future<void> prepareNow() async {
+    if (_mismatchSeen || _shutDown) return;
+    _restoreHosts();
+    try {
+      await _ensureServer();
+    } catch (e) {
+      // wrap() tries again, and hands out the URL itself if it fails
+      if (kDebugMode) debugPrint('thread ripper: $e');
+    }
+  }
+
   @visibleForTesting
   Future<String> wrapNow(String url) async {
     if (_mismatchSeen) return url;

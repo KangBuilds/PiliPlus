@@ -543,4 +543,34 @@ void main() {
     expect(saved, isNotNull);
     expect(saved, contains('remembered.bilivideo.com'));
   });
+
+  test('prepare reads host speeds and binds before the first URL', () async {
+    var loads = 0;
+    final data = testFile(8 * 1024);
+    final ripper = ThreadRipper(
+      fetcher: FakeFetcher(data),
+      config: testConfig,
+      wifiOnly: false,
+      loadHosts: () {
+        loads++;
+        return {
+          'remembered.bilivideo.com': [4096, 50],
+        };
+      },
+    );
+    addTearDown(ripper.close);
+
+    await ripper.prepareNow();
+    expect(loads, 1);
+    expect(ripper.book['remembered.bilivideo.com'].rate, 4096);
+    // Twice, or while wrap() binds as well: still one server
+    await Future.wait([ripper.prepareNow(), ripper.wrapNow(kListedUrl)]);
+
+    final url = await ripper.wrapNow(kListedUrl);
+    expect(loads, 1);
+    expect(ripper.isProxyUrl(url), isTrue);
+    final (response, body) = await get(url, range: 'bytes=0-');
+    expect(response.statusCode, 206);
+    expect(body, data);
+  });
 }

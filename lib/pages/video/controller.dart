@@ -1037,12 +1037,14 @@ class VideoDetailController extends GetxController
         _playUrlCache.put(key, playUrl = response);
       }
       final streams = _selectStreams(playUrl);
-      await threadRipper.wrap(VideoUtils.getCdnUrl(streams.video.playUrls));
-      if (streams.audio case final audio?) {
-        await threadRipper.wrap(
-          VideoUtils.getCdnUrl(audio.playUrls, isAudio: true),
-        );
-      }
+      // Both at once: each warms up on its own
+      await Future.wait([
+        threadRipper.wrap(VideoUtils.getCdnUrl(streams.video.playUrls)),
+        if (streams.audio case final audio?)
+          threadRipper.wrap(
+            VideoUtils.getCdnUrl(audio.playUrls, isAudio: true),
+          ),
+      ]);
     } catch (e) {
       if (kDebugMode) debugPrint('warm up next: $e');
     }
