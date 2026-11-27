@@ -422,6 +422,33 @@ class PlPlayerController with BlockConfigMixin {
 
   late int? cacheVideoQa = PlatformUtils.isMobile ? null : Pref.defaultVideoQa;
   late int cacheAudioQa = Pref.defaultAudioQa;
+
+  /// Where a quality picked in the player is saved as the default; `null`
+  /// keeps it to this player's videos: with player settings for the current
+  /// video only, or on Wi-Fi with 自动, which the pick would end.
+  @visibleForTesting
+  static String? videoQaKeyFor({
+    required bool tempPlayerConf,
+    required bool isWiFi,
+    required bool auto,
+  }) {
+    if (tempPlayerConf) return null;
+    if (!isWiFi) return SettingBoxKey.defaultVideoQaCellular;
+    return auto ? null : SettingBoxKey.defaultVideoQa;
+  }
+
+  /// Saves [quality], picked in the player, as the default where
+  /// [videoQaKeyFor] says to.
+  Future<void> rememberVideoQa(int quality) async {
+    if (tempPlayerConf) return;
+    final key = videoQaKeyFor(
+      tempPlayerConf: false,
+      isWiFi: await ConnectivityUtils.isWiFi,
+      auto: Pref.autoVideoQa,
+    );
+    if (key != null) await setting.put(key, quality);
+  }
+
   bool enableHeart = true;
   late final String? hwdec = Pref.enableHA ? Pref.hardwareDecoding : null;
 

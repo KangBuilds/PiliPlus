@@ -72,6 +72,21 @@ double bufferSizeFor({
   required double cellular,
 }) => isWiFi ? wifi : cellular;
 
+/// The Wi-Fi quality 自动 picks, for a screen whose shorter side has
+/// [screenShortSide] physical pixels: 4K where the screen shows about as
+/// much (an iPad Pro 12.9" and up), else 1080P+.
+///
+/// The video is drawn in 8-bit SDR at the size it is shown: beyond the
+/// screen, resolution is decoded, downloaded and thrown away, and HDR and
+/// Dolby Vision are tone-mapped away, warming the device for nothing. Both,
+/// like 8K and 1080P60, stay for those who choose them. On a 4K screen, a
+/// video with no 4K plays the next best, 1080P60 where it has one.
+VideoQuality defaultVideoQualityFor(double screenShortSide) =>
+    // Scaled down by up to a tenth: 2160 on a 2048 screen
+    screenShortSide * 1.1 >= 2160
+    ? VideoQuality.super4K
+    : VideoQuality.high1080plus;
+
 abstract final class Pref {
   static final Box _setting = GStorage.setting;
   static final Box _video = GStorage.video;
@@ -252,9 +267,20 @@ abstract final class Pref {
   static int get sliderDuration =>
       _setting.get(SettingBoxKey.sliderDuration, defaultValue: 90);
 
+  /// Whether the Wi-Fi quality is 自动, [screenVideoQa]: until one is chosen,
+  /// and again once 自动 is.
+  static bool get autoVideoQa =>
+      !_setting.containsKey(SettingBoxKey.defaultVideoQa);
+
+  /// The Wi-Fi quality 自动 picks for this device's screen.
+  static VideoQuality get screenVideoQa => defaultVideoQualityFor(
+    // Physical pixels; none before the engine reports the screen
+    PlatformDispatcher.instance.displays.firstOrNull?.size.shortestSide ?? 0,
+  );
+
   static int get defaultVideoQa => _setting.get(
     SettingBoxKey.defaultVideoQa,
-    defaultValue: VideoQuality.super8k.code,
+    defaultValue: screenVideoQa.code,
   );
 
   static int get defaultVideoQaCellular => _setting.get(

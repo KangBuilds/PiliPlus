@@ -75,8 +75,10 @@ List<SettingsModel> get videoSettings => [
   NormalModel(
     title: '默认画质',
     leading: const Icon(Icons.video_settings_outlined),
-    getSubtitle: () =>
-        '当前画质：${VideoQuality.fromCode(Pref.defaultVideoQa).desc}',
+    getSubtitle: () {
+      final quality = VideoQuality.fromCode(Pref.defaultVideoQa).desc;
+      return Pref.autoVideoQa ? '当前画质：自动（$quality）' : '当前画质：$quality';
+    },
     onTap: _showVideoQaDialog,
   ),
   NormalModel(
@@ -167,6 +169,9 @@ Future<void> _showCDNDialog(BuildContext context, VoidCallback setState) async {
   }
 }
 
+/// What the quality dialog returns for 自动: no quality has it.
+const _autoVideoQa = -1;
+
 Future<void> _showVideoQaDialog(
   BuildContext context,
   VoidCallback setState,
@@ -175,14 +180,21 @@ Future<void> _showVideoQaDialog(
     context: context,
     builder: (context) => SelectDialog<int>(
       title: '默认画质',
-      value: Pref.defaultVideoQa,
-      values: VideoQuality.values.map((e) => (e.code, e.desc)).toList(),
+      value: Pref.autoVideoQa ? _autoVideoQa : Pref.defaultVideoQa,
+      values: [
+        (_autoVideoQa, '自动（按屏幕，最高${Pref.screenVideoQa.desc}）'),
+        ...VideoQuality.values.map((e) => (e.code, e.desc)),
+      ],
     ),
   );
-  if (res != null) {
+  if (res == null) return;
+  // 自动 is no quality saved: the screen's applies
+  if (res == _autoVideoQa) {
+    await GStorage.setting.delete(SettingBoxKey.defaultVideoQa);
+  } else {
     await GStorage.setting.put(SettingBoxKey.defaultVideoQa, res);
-    setState();
   }
+  setState();
 }
 
 Future<void> _showVideoCellularQaDialog(
