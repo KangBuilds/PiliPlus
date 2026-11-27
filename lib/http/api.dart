@@ -596,9 +596,6 @@ abstract final class Api {
   /// 排行榜
   static const String getRankApi = "/x/web-interface/ranking/v2";
 
-  /// 取消订阅-播单
-  static const String unfavFolder = '/x/v3/fav/folder/unfav';
-
   // static const String videoTags = '/x/tag/archive/tags';
   static const String videoTags = '/x/web-interface/view/detail/tag';
 
@@ -739,8 +736,6 @@ abstract final class Api {
   static const String vipExpAdd = '/x/vip/experience/add';
 
   static const String coinLog = '/x/member/web/coin/log';
-
-  static const String dynTopicRcmd = '/x/topic/web/dynamic/rcmd';
 
   static const String matchInfo = '/x/esports/match/info';
 

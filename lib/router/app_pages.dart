@@ -8,7 +8,6 @@ import 'package:PiliPlus/pages/download/view.dart';
 import 'package:PiliPlus/pages/dynamics/view.dart';
 import 'package:PiliPlus/pages/dynamics_detail/view.dart';
 import 'package:PiliPlus/pages/dynamics_topic/view.dart';
-import 'package:PiliPlus/pages/dynamics_topic_rcmd/view.dart';
 import 'package:PiliPlus/pages/fan/view.dart';
 import 'package:PiliPlus/pages/fav/view.dart';
 import 'package:PiliPlus/pages/fav_create/view.dart';
@@ -55,7 +54,6 @@ import 'package:PiliPlus/pages/setting/view.dart';
 import 'package:PiliPlus/pages/settings_search/view.dart';
 import 'package:PiliPlus/pages/space_setting/view.dart';
 import 'package:PiliPlus/pages/sponsor_block/view.dart';
-import 'package:PiliPlus/pages/subscription/view.dart';
 import 'package:PiliPlus/pages/subscription_detail/view.dart';
 import 'package:PiliPlus/pages/video/view.dart';
 import 'package:PiliPlus/pages/webview/view.dart';
@@ -130,8 +128,6 @@ class Routes {
     GetPage(name: '/memberDynamics', page: () => const MemberDynamicsPage()),
     // 日志
     GetPage(name: '/logs', page: () => const LogsPage()),
-    // 订阅
-    GetPage(name: '/subscription', page: () => const SubPage()),
     // 订阅详情
     GetPage(name: '/subDetail', page: () => const SubDetailPage()),
     // 弹幕屏蔽管理
@@ -146,7 +142,6 @@ class Routes {
     GetPage(name: '/barSetting', page: () => const BarSetPage()),
     GetPage(name: '/upowerRank', page: () => const UpowerRankPage()),
     GetPage(name: '/spaceSetting', page: () => const SpaceSettingPage()),
-    GetPage(name: '/dynTopicRcmd', page: () => const DynTopicRcmdPage()),
     GetPage(name: '/matchInfo', page: () => const MatchInfoPage()),
     GetPage(name: '/msgLikeDetail', page: () => const LikeDetailPage()),
     GetPage(name: '/musicDetail', page: () => const MusicDetailPage()),

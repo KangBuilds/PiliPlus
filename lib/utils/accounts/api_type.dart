@@ -64,7 +64,6 @@ abstract final class ApiType {
       Api.popularSeriesList,
       Api.popularPrecious,
       Api.bgmRecommend,
-      Api.dynTopicRcmd,
       Api.topicFeed,
       Api.topicTop,
     },

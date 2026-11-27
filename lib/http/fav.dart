@@ -77,36 +77,6 @@ abstract final class FavHttp {
     }
   }
 
-  // 取消订阅
-  static Future<LoadingState<void>> cancelSub({
-    required int id,
-    required int type,
-  }) async {
-    final res = type == 11
-        ? await Request().post(
-            Api.unfavFolder,
-            data: {
-              'media_id': id,
-              'csrf': Accounts.main.csrf,
-            },
-            options: Options(contentType: Headers.formUrlEncodedContentType),
-          )
-        : await Request().post(
-            Api.unfavSeason,
-            data: {
-              'platform': 'web',
-              'season_id': id,
-              'csrf': Accounts.main.csrf,
-            },
-            options: Options(contentType: Headers.formUrlEncodedContentType),
-          );
-    if (res.data['code'] == 0) {
-      return const Success(null);
-    } else {
-      return Error(res.data['message']);
-    }
-  }
-
   static Future<LoadingState<SubDetailData>> favSeasonList({
     required int id,
     required int pn,
