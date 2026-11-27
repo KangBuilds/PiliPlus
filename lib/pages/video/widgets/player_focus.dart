@@ -192,11 +192,7 @@ class PlayerFocus extends StatelessWidget {
           if (hasPlayer) {
             final isMuted = !plPlayerController.isMuted;
             plPlayerController.isMuted = isMuted;
-            unawaited(
-              plPlayerController.setPlayerVolume(
-                plPlayerController.volume.value,
-              ),
-            );
+            unawaited(plPlayerController.syncPlayerMute());
             SmartDialog.showToast('${isMuted ? '' : '取消'}静音');
           }
           return true;

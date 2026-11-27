@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:audio_session/audio_session.dart';
@@ -71,7 +73,7 @@ class AudioSessionHandler {
         switch (event.type) {
           case AudioInterruptionType.duck:
             PlPlayerController.setVolumeIfExists(
-              (PlPlayerController.getVolumeIfExists() ?? 0) * 2,
+              math.min((PlPlayerController.getVolumeIfExists() ?? 0) * 2, 1.0),
               showIndicator: false,
             );
             // player.setVolume(player.volume.value * 2);

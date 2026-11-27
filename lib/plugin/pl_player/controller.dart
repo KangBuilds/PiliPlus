@@ -1,6 +1,6 @@
 import 'dart:async' show FutureRecord2, StreamSubscription, Timer, unawaited;
 import 'dart:convert' show ascii;
-import 'dart:math' show max, sqrt;
+import 'dart:math' show max;
 import 'dart:ui' as ui;
 
 import 'package:PiliPlus/http/browser_ua.dart';
@@ -1229,15 +1229,16 @@ class PlPlayerController with BlockConfigMixin {
   Timer? volumeTimer;
   bool volumeInterceptEventStream = false;
 
-  Future<void> setPlayerVolume(double volume) =>
-      _videoPlayerController?.setVolume(isMuted ? 0 : sqrt(volume) * 100) ??
+  /// mpv stays at full volume and the system volume does the lowering, so
+  /// the sound is never lowered twice. mpv only drops to 0 while muted.
+  Future<void> syncPlayerMute() =>
+      _videoPlayerController?.setVolume(isMuted ? 0 : 100) ??
       Future<void>.value();
 
   Future<void> setVolume(double volume, {bool showIndicator = true}) async {
     if (this.volume.value != volume) {
       this.volume.value = volume;
       try {
-        await setPlayerVolume(volume);
         FlutterVolumeController.updateShowSystemUI(false);
         await FlutterVolumeController.setVolume(volume);
       } catch (err) {
