@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/font_awesome_icons.dart';
 import 'package:PiliPlus/grpc/bilibili/main/community/reply/v1.pb.dart'
     show ReplyInfo;
 import 'package:PiliPlus/http/reply.dart';
@@ -6,7 +7,6 @@ import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ZanButtonGrpc extends StatelessWidget {
   const ZanButtonGrpc({

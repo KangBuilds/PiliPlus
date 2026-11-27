@@ -717,15 +717,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
-  font_awesome_flutter:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: "v10.9.0"
-      resolved-ref: cf4a19ece5cb296d73d90f0d73106f779c85fa26
-      url: "https://github.com/bggRGjQaUbCoE/font_awesome_flutter.git"
-    source: git
-    version: "10.9.0"
   get:
     dependency: "direct main"
     description:

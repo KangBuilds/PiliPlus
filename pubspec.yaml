@@ -83,10 +83,6 @@ dependencies:
       ref: main
   flutter_svg: ^2.0.14
   flutter_volume_controller: ^2.0.0
-  font_awesome_flutter:
-    git:
-      url: https://github.com/bggRGjQaUbCoE/font_awesome_flutter.git
-      ref: v10.9.0
   get:
     git:
       url: https://github.com/bggRGjQaUbCoE/getx.git
@@ -185,3 +181,11 @@ flutter:
     - family: custom_icon
       fonts:
         - asset: assets/fonts/custom_icon.ttf
+    - family: FontAwesomeRegular
+      fonts:
+        - asset: assets/fonts/fa-regular-400.ttf
+          weight: 400
+    - family: FontAwesomeSolid
+      fonts:
+        - asset: assets/fonts/fa-solid-900.ttf
+          weight: 900
