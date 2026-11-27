@@ -200,7 +200,7 @@ packages:
     description:
       path: "."
       ref: "codex/baseline-smooth-danmaku"
-      resolved-ref: a08e2004e24396ae8ccb5a544eb87f22341cfa06
+      resolved-ref: e1e8064ac67125660e5076be03419913af0f5534
       url: "https://github.com/KangBuilds/canvas_danmaku.git"
     source: git
     version: "0.2.6"

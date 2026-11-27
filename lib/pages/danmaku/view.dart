@@ -198,10 +198,11 @@ class _PlDanmakuState extends State<PlDanmaku> {
       speed: playerController.playbackSpeed,
     );
     return Obx(
+      // Only the fade on and off: at 1 it draws nothing offscreen. The
+      // danmaku opacity is drawn into each danmaku, as below 1 here it drew
+      // every layer offscreen first, every frame
       () => AnimatedOpacity(
-        opacity: playerController.enableShowDanmaku.value
-            ? playerController.danmakuOpacity.value
-            : 0,
+        opacity: playerController.enableShowDanmaku.value ? 1 : 0,
         duration: const Duration(milliseconds: 100),
         child: DanmakuScreen<DanmakuExtra>(
           createdController: (e) {
@@ -209,6 +210,7 @@ class _PlDanmakuState extends State<PlDanmaku> {
           },
           option: option,
           size: widget.size,
+          opacity: playerController.danmakuOpacity.value,
         ),
       ),
     );
